@@ -48,8 +48,8 @@ class Settings:
     file_prefix_tpl: str = "{symbol} {timeframe} {direction}"
     
     # symbols_db: Path = Path("D:/SQX/user/data/data.db").resolve()
-    symbols_db: Path = Path("/home/user/SQX/user/data/data.db").resolve()
-    # symbols_db: Path = (script_dir / "../../user/data/data.db").resolve()
+    # symbols_db: Path = Path("/home/user/SQX/user/data/data.db").resolve()
+    symbols_db: Path = (script_dir / "../../user/data/data.db").resolve()
 
 SETTINGS = Settings()
 
