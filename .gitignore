@@ -1,0 +1,41 @@
+Projects/*
+!Projects/.gitkeep
+
+# Python virtual environment
+.venv/
+
+# Log files
+src/sqx-tool.log
+
+# Template contents
+src/Templates/*
+!src/Templates/*.cfx
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+*.pyzwz
+
+# Include Python embedded files
+!src/python/*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDB
+.AppleDesktop
+.apdisk
+.fseventsd
+.net
+.vol
+.VolumeIcon.icns
+
