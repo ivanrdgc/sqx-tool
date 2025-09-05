@@ -47,6 +47,9 @@ class Settings:
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
     unix_sh: Path = (script_dir / "../run.sh").resolve()
+    # Default log level when no -v/-q flags are provided.
+    # One of: "trace", "debug", "info", "warning", "error", "critical"
+    default_log_level: str = "info"
     
     project_dir_tpl: str = "{symbol}/{timestamp}_{symbol}_{timeframe}_{direction}"
     file_prefix_tpl: str = "{symbol} {timeframe} {direction}"
@@ -70,9 +73,40 @@ def require_symbols_db() -> None:
 #  Logging helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging to file with appropriate level."""
-    level = logging.DEBUG if verbose else logging.INFO
+# Add a TRACE level below DEBUG for ultra-verbose logging
+TRACE_LEVEL = 5
+logging.addLevelName(TRACE_LEVEL, "TRACE")
+
+def _trace(self, msg, *args, **kwargs):
+    if self.isEnabledFor(TRACE_LEVEL):
+        self._log(TRACE_LEVEL, msg, args, **kwargs)
+
+logging.Logger.trace = _trace  # type: ignore[attr-defined]
+
+
+def configure_logging(verbosity: int = 0, quiet: int = 0) -> None:
+    """Configure logging to file with multiple verbosity levels.
+
+    - quiet: 0=default, 1=WARNING, 2=ERROR, 3=CRITICAL
+    - verbosity: 0=INFO, 1=DEBUG, >=2=TRACE
+    """
+    # Quiet overrides verbosity; otherwise derive from flags or Settings.default_log_level
+    if quiet > 0:
+        quiet = min(quiet, 3)
+        level = [logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL][quiet]
+    elif verbosity > 0:
+        level = logging.DEBUG if verbosity == 1 else TRACE_LEVEL
+    else:
+        level_map = {
+            "trace": TRACE_LEVEL,
+            "debug": logging.DEBUG,
+            "info": logging.INFO,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+            "critical": logging.CRITICAL,
+        }
+        level = level_map.get(SETTINGS.default_log_level.lower(), logging.INFO)
+
     fh = logging.FileHandler(SETTINGS.log_file, encoding="utf-8")
     fh.setLevel(level)
     fh.setFormatter(
@@ -81,9 +115,14 @@ def configure_logging(verbose: bool = False) -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
-    logging.basicConfig(level=logging.DEBUG, handlers=[fh], force=True)
+    # Only file handler; never log to stdout
+    logging.basicConfig(level=level, handlers=[fh], force=True)
 
-log = logging.getLogger(__name__).info
+# Module logger shortcuts
+logger = logging.getLogger(__name__)
+log = logger.info
+
+# Replaced below with module-level logger after configure_logging
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  XMLMutator type for patching XML
@@ -105,7 +144,7 @@ class ZipEditor:
 
     def patch(self, entry_name: str, mutator: XMLMutator, *args, **kwargs) -> None:
         if entry_name not in self._files:
-            logging.debug(f"Entry {entry_name} not found in zip archive.")
+            logger.debug("Entry %s not found in zip archive.", entry_name)
             return
         root = ET.fromstring(self._files[entry_name])
         mutator(root, *args, **kwargs)
@@ -238,14 +277,14 @@ def remove_eab(args: argparse.Namespace) -> None:
     dst_dir.mkdir(parents=True, exist_ok=True)
     files = [p for p in src_dir.iterdir() if p.suffix.lower() == ".sqx"]
     log("found %d .sqx files in %s", len(files), src_dir)
-    logging.debug(f"Files to process: {[str(f) for f in files]}")
+    logger.trace("Files to process: %s", [str(f) for f in files])
 
     tasks: List[Tuple[Path, Path]] = [(p, dst_dir) for p in files]
 
     with cf.ProcessPoolExecutor(max_workers=args.jobs) as pool:
         for basename, status in pool.map(_strip_eab_single, tasks):
             log("  %-30s %s", basename, status)
-            logging.debug(f"Processed {basename}: {status}")
+            logger.trace("Processed %s: %s", basename, status)
 
 
 def remove_eab_b64(args: argparse.Namespace) -> None:
@@ -254,14 +293,14 @@ def remove_eab_b64(args: argparse.Namespace) -> None:
     Works exactly like remove_eab but accepts base64-encoded paths.
     Decodes the paths and delegates to the core remove_eab functionality.
     """
-    logging.debug("remove_eab_b64(args=%s)", args)
+    logger.debug("remove_eab_b64(args=%s)", args)
     
     try:
         # Decode base64 strings to get the actual paths
         path_from_decoded = base64.b64decode(args.path_from_b64).decode('utf-8')
         path_to_decoded = base64.b64decode(args.path_to_b64).decode('utf-8')
         
-        logging.info("Decoded paths - from: %s, to: %s", path_from_decoded, path_to_decoded)
+        logger.debug("Decoded paths - from: %s, to: %s", path_from_decoded, path_to_decoded)
         
         # Create a new args object with decoded paths
         decoded_args = argparse.Namespace(
@@ -285,7 +324,7 @@ def remove_eab_b64(args: argparse.Namespace) -> None:
 def newproject(args: argparse.Namespace) -> None:
     """Scaffold a brand-new *StrategyQuant X* project from the template."""
     require_symbols_db()
-    logging.debug("newproject(args=%s)", args)
+    logger.debug("newproject(args=%s)", args)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     template: Path = Settings.template_path_ramon if args.template == "Ramon" else Settings.template_path_hc
@@ -323,7 +362,7 @@ def newproject(args: argparse.Namespace) -> None:
     project_dir = SETTINGS.projects_base / project_rel
     project_dir.mkdir(parents=True, exist_ok=True)
     log("project dir: %s", project_dir)
-    logging.debug(f"Created project directory: {project_dir}")
+    logger.debug("Created project directory: %s", project_dir)
 
     for sub in [
         "01 - Edge",
@@ -333,13 +372,13 @@ def newproject(args: argparse.Namespace) -> None:
         "04 - MQL/MQL4",
     ]:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
-        logging.debug(f"Created subdir {sub}")
+        logger.trace("Created subdir %s", sub)
 
     # ---- 4. Copy template --------------------------------------------------
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     shutil.copyfile(template, dest_cfx)
     log("copied template to %s", dest_cfx)
-    logging.debug(f"Copied template from {template} to {dest_cfx}")
+    logger.debug("Copied template from %s to %s", template, dest_cfx)
 
     # ----------------------------------------------------------------------
     #  Helper mutators – declared *inside* newproject so they can capture
@@ -347,13 +386,13 @@ def newproject(args: argparse.Namespace) -> None:
     # ----------------------------------------------------------------------
 
     def patch_config(root: ET.Element) -> None:
-        logging.debug("patch_config() – setting project name → %s", project_dir.name)
+        logger.debug("patch_config() – setting project name → %s", project_dir.name)
         root.set("name", project_dir.name)
 
     def patch_load_from_files(root: ET.Element, subdir: Path) -> None:
         node = root.find(".//LoadFromFiles/SourceDirectory")
         if node is not None:
-            logging.debug("patch_load_from_files() –%s", subdir)
+            logger.trace("patch_load_from_files() – %s", subdir)
             node.text = str(subdir.resolve())
 
     def patch_save_to_files(root: ET.Element,
@@ -362,18 +401,18 @@ def newproject(args: argparse.Namespace) -> None:
         if sqx_dir is not None:
             node = root.find(".//SaveToFiles/DestDirectorySqx")
             if node is not None:
-                logging.debug("patch_save_to_files() – sqx_dir=%s", sqx_dir)
+                logger.trace("patch_save_to_files() – sqx_dir=%s", sqx_dir)
                 node.text = str(sqx_dir.resolve())
         if sc_dir is not None:
             node_sc = root.find(".//SaveToFiles/DestDirectorySC")
             if node_sc is not None:
-                logging.debug("patch_save_to_files() – sc_dir=%s", sc_dir)
+                logger.trace("patch_save_to_files() – sc_dir=%s", sc_dir)
                 node_sc.text = str(sc_dir.resolve())
 
     def patch_call_external(root: ET.Element, command: str) -> None:
         call = root.find(".//CallExternalScript/File")
         if call is not None:
-            logging.debug("patch_call_external() – cmd=%s", command)
+            logger.debug("patch_call_external() – cmd=%s", command)
             if platform.system() == "Windows":
                 # Windows: use sys.executable directly
                 call.text = sys.executable
@@ -386,7 +425,7 @@ def newproject(args: argparse.Namespace) -> None:
     def patch_market_side(root: ET.Element) -> None:
         ms = root.find(".//MarketSides")
         if ms is not None:
-            logging.debug("patch_market_side() → %s", direction.lower())
+            logger.debug("patch_market_side() → %s", direction.lower())
             ms.set("type", direction.lower())
 
     def patch_setup(root: ET.Element) -> None:
@@ -396,7 +435,7 @@ def newproject(args: argparse.Namespace) -> None:
         # Chart -------------------------------------------------------------
         chart = setup.find("Chart")
         if chart is not None:
-            logging.debug("patch_setup.chart() – %s @ %s", symbol_dukascopy, timeframe)
+            logger.debug("patch_setup.chart() – %s @ %s", symbol_dukascopy, timeframe)
             chart.set("symbol", symbol_dukascopy)
             chart.set("timeframe", timeframe)
             if sym_info.spread is not None:
@@ -437,7 +476,7 @@ def newproject(args: argparse.Namespace) -> None:
           or length 3 → annotated            ``(from, to, type)`` where *type*
           is usually ``'oos'`` or ``'isv'``.  Unknown/None → treated as ``oos``.
         """
-        logging.debug("patch_dates(in_from=%s, in_to=%s, spans=%s)", in_from, in_to, oos_spans)
+        logger.debug("patch_dates(in_from=%s, in_to=%s, spans=%s)", in_from, in_to, oos_spans)
 
         def _fmt(d: Union[datetime, date, str]) -> str:
             return d.strftime("%Y.%m.%d") if isinstance(d, (datetime, date)) else str(d)
@@ -491,7 +530,7 @@ def newproject(args: argparse.Namespace) -> None:
 
     def patch_other_markets(root: ET.Element, end_date: Optional[datetime] = None) -> None:
         setups = root.findall(".//RetestOnAdditionalMarkets/Settings/Setups/Setup")
-        logging.debug("patch_other_markets() – found %d setups", len(setups))
+        logger.debug("patch_other_markets() – found %d setups", len(setups))
 
         # Defensive: ensure sym_info.last_date and sym_2_info.last_date are not None
         if sym_info.last_date is None or sym_2_info.last_date is None:
@@ -519,7 +558,7 @@ def newproject(args: argparse.Namespace) -> None:
                 setups[1].set("dateTo", end_date.strftime("%Y.%m.%d"))
 
     def patch_rhp_spread(root: ET.Element, spread: float) -> None:
-        logging.debug("patch_rhp_spread(spread=%s)", spread)
+        logger.debug("patch_rhp_spread(spread=%s)", spread)
         spread_el = root.find(".//RetestWithHigherPrecision/Settings/Spread")
         if spread_el is not None:
             spread_el.text = str(spread)
@@ -527,13 +566,13 @@ def newproject(args: argparse.Namespace) -> None:
     def patch_disable_task(root: ET.Element, xml_name: str) -> None:
         for task in root.findall(".//Tasks/Task"):
             if task.get("taskXMLFile") == xml_name:
-                logging.debug("patch_disable_task() – disabling %s", xml_name)
+                logger.debug("patch_disable_task() – disabling %s", xml_name)
                 task.set("active", "false")
 
     def patch_input_databank(root: ET.Element, new_value: str = "E-OOS1") -> None:
         for db in root.findall(".//Databank[@label='Input databank'][@name='Input']"):
             if db.get("value") != new_value:
-                logging.debug("patch_input_databank() – %s → %s", db.get("value"), new_value)
+                logger.debug("patch_input_databank() – %s → %s", db.get("value"), new_value)
                 db.set("value", new_value)
 
     def patch_mc_spread(root: ET.Element, min_spread: float, max_spread: float) -> None:
@@ -915,7 +954,7 @@ def rename_files_b64(args: argparse.Namespace) -> None:
 
 def main() -> None:
     # Configure basic logging first to capture all startup information
-    configure_logging(False)  # Start with basic logging, will be reconfigured later
+    configure_logging(0, 0)  # Start with basic logging, will be reconfigured later
     
     # Log script startup with all arguments
     logging.info("=== SQX Tool Started ===")
@@ -925,7 +964,14 @@ def main() -> None:
     logging.info("Script location: %s", __file__)
     
     parser = argparse.ArgumentParser(description="StrategyQuantX helper tool")
-    parser.add_argument("-v", "--verbose", action="store_true", help="chatty output + DEBUG log level")
+    parser.add_argument(
+        "-v", "--verbose", action="count", default=0,
+        help="Increase log verbosity (-v=DEBUG, -vv=TRACE)"
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="count", default=0,
+        help="Decrease log verbosity (-q=WARNING, -qq=ERROR, -qqq=CRITICAL)"
+    )
     subparsers = parser.add_subparsers(dest="command", required=False)
 
     # remove_eab ------------------------------------------------------------
@@ -965,8 +1011,8 @@ def main() -> None:
 
     try:
         args = parser.parse_args()
-        # Reconfigure logging with the correct verbose setting
-        configure_logging(args.verbose)
+        # Reconfigure logging with the correct verbosity/quiet settings
+        configure_logging(args.verbose, args.quiet)
         
         logging.info("Successfully parsed CLI arguments: %s", args)
         logging.info("Command: %s", args.command or "interactive_mode")
