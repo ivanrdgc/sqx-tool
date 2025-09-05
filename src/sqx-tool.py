@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 sqx-tool.py: StrategyQuant X project helper tool
 
@@ -13,15 +15,16 @@ from __future__ import annotations
 #  Standard library imports
 # ─────────────────────────────────────────────────────────────────────────────
 import argparse
+import base64
 import concurrent.futures as cf
 import io
 import logging
 import os
+import platform
 import re
 import shutil
 import sqlite3
 import sys
-import textwrap
 from datetime import datetime, date, timezone
 from dataclasses import dataclass
 from pathlib import Path
@@ -43,6 +46,7 @@ class Settings:
     template_path_hc: Path = (script_dir / "Templates" / "Hobbiecode.cfx").resolve()
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
+    unix_sh: Path = (script_dir / "../run.sh").resolve()
     
     project_dir_tpl: str = "{symbol}/{timestamp}_{symbol}_{timeframe}_{direction}"
     file_prefix_tpl: str = "{symbol} {timeframe} {direction}"
@@ -243,6 +247,37 @@ def remove_eab(args: argparse.Namespace) -> None:
             log("  %-30s %s", basename, status)
             logging.debug(f"Processed {basename}: {status}")
 
+
+def remove_eab_b64(args: argparse.Namespace) -> None:
+    """CLI entry point for **remove_eab_b64** sub-command.
+    
+    Works exactly like remove_eab but accepts base64-encoded paths.
+    Decodes the paths and delegates to the core remove_eab functionality.
+    """
+    logging.debug("remove_eab_b64(args=%s)", args)
+    
+    try:
+        # Decode base64 strings to get the actual paths
+        path_from_decoded = base64.b64decode(args.path_from_b64).decode('utf-8')
+        path_to_decoded = base64.b64decode(args.path_to_b64).decode('utf-8')
+        
+        logging.info("Decoded paths - from: %s, to: %s", path_from_decoded, path_to_decoded)
+        
+        # Create a new args object with decoded paths
+        decoded_args = argparse.Namespace(
+            path_from=path_from_decoded,
+            path_to=path_to_decoded,
+            jobs=args.jobs
+        )
+        
+        # Delegate to the existing remove_eab function
+        remove_eab(decoded_args)
+        
+    except Exception as e:
+        logging.error("Error in remove_eab_b64: %s", str(e))
+        print(f"Error decoding base64 paths: {e}")
+        raise
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  newproject implementation
 # ─────────────────────────────────────────────────────────────────────────────
@@ -339,8 +374,14 @@ def newproject(args: argparse.Namespace) -> None:
         call = root.find(".//CallExternalScript/File")
         if call is not None:
             logging.debug("patch_call_external() – cmd=%s", command)
-            call.text = sys.executable
-            call.set("params", f'"{Path(__file__).resolve()}" {command}')
+            if platform.system() == "Windows":
+                # Windows: use sys.executable directly
+                call.text = sys.executable
+                call.set("params", f'"{Path(__file__).resolve()}" {command}')
+            else:
+                # Linux / Mac
+                call.text = str(Settings.unix_sh)
+                call.set("params",  command)
 
     def patch_market_side(root: ET.Element) -> None:
         ms = root.find(".//MarketSides")
@@ -567,9 +608,10 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
         # External script -------------------------------------------------------
-        cmd = textwrap.dedent(
-            f"""remove_eab \"{(project_dir / '01 - Edge').resolve()}\" \"{(project_dir / '02 - To Strategy').resolve()}\"""".strip()
-        )
+        # Encode paths as base64 to avoid quoting issues on Unix
+        path_from_b64 = base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8')
+        path_to_b64 = base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8')
+        cmd = f"remove_eab_b64 {path_from_b64} {path_to_b64}"
         editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
         # Rename files in all project directories
@@ -578,9 +620,16 @@ def newproject(args: argparse.Namespace) -> None:
             timeframe=timeframe,
             direction=direction,
         )
-        rename_cmd = textwrap.dedent(
-            f"""rename_files \"{file_prefix}\" \"{(project_dir / '01 - Edge').resolve()}\" \"{(project_dir / '02 - To Strategy').resolve()}\" \"{(project_dir / '03 - Strategy').resolve()}\" \"{(project_dir / '04 - MQL/MQL5').resolve()}\" \"{(project_dir / '04 - MQL/MQL4').resolve()}\"""".strip()
-        )
+        # Encode prefix and directories as base64 to avoid quoting issues on Unix
+        prefix_b64 = base64.b64encode(file_prefix.encode('utf-8')).decode('utf-8')
+        dirs_b64 = [
+            base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '03 - Strategy').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '04 - MQL/MQL5').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '04 - MQL/MQL4').resolve()).encode('utf-8')).decode('utf-8')
+        ]
+        rename_cmd = f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
         editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
         # Date ranges -----------------------------------------------------------
@@ -655,9 +704,10 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
         # External script -------------------------------------------------------
-        cmd = textwrap.dedent(
-            f"""remove_eab \"{(project_dir / '01 - Edge').resolve()}\" \"{(project_dir / '02 - To Strategy').resolve()}\"""".strip()
-        )
+        # Encode paths as base64 to avoid quoting issues on Unix
+        path_from_b64 = base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8')
+        path_to_b64 = base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8')
+        cmd = f"remove_eab_b64 {path_from_b64} {path_to_b64}"
         editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
         # Rename files in all project directories
@@ -666,9 +716,16 @@ def newproject(args: argparse.Namespace) -> None:
             timeframe=timeframe,
             direction=direction,
         )
-        rename_cmd = textwrap.dedent(
-            f"""rename_files \"{file_prefix}\" \"{(project_dir / '01 - Edge').resolve()}\" \"{(project_dir / '02 - To Strategy').resolve()}\" \"{(project_dir / '03 - Strategy').resolve()}\" \"{(project_dir / '04 - MQL/MQL5').resolve()}\" \"{(project_dir / '04 - MQL/MQL4').resolve()}\"""".strip()
-        )
+        # Encode prefix and directories as base64 to avoid quoting issues on Unix
+        prefix_b64 = base64.b64encode(file_prefix.encode('utf-8')).decode('utf-8')
+        dirs_b64 = [
+            base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '03 - Strategy').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '04 - MQL/MQL5').resolve()).encode('utf-8')).decode('utf-8'),
+            base64.b64encode(str((project_dir / '04 - MQL/MQL4').resolve()).encode('utf-8')).decode('utf-8')
+        ]
+        rename_cmd = f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
         editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
         # Date ranges -----------------------------------------------------------
@@ -821,11 +878,52 @@ def rename_files(args: argparse.Namespace) -> None:
             logging.info(f"Renaming {file} -> {new_path}")
             file.rename(new_path)
 
+
+def rename_files_b64(args: argparse.Namespace) -> None:
+    """CLI entry point for **rename_files_b64** sub-command.
+    
+    Works exactly like rename_files but accepts base64-encoded prefix and directories.
+    Decodes the base64 strings and delegates to the core rename_files functionality.
+    """
+    logging.debug("rename_files_b64(args=%s)", args)
+    
+    try:
+        # Decode base64 strings to get the actual values
+        prefix_decoded = base64.b64decode(args.prefix_b64).decode('utf-8')
+        directories_decoded = [base64.b64decode(d).decode('utf-8') for d in args.directories_b64]
+        
+        logging.info("Decoded prefix: %s", prefix_decoded)
+        logging.info("Decoded directories: %s", directories_decoded)
+        
+        # Create a new args object with decoded values
+        decoded_args = argparse.Namespace(
+            prefix=prefix_decoded,
+            directories=directories_decoded
+        )
+        
+        # Delegate to the existing rename_files function
+        rename_files(decoded_args)
+        
+    except Exception as e:
+        logging.error("Error in rename_files_b64: %s", str(e))
+        print(f"Error decoding base64 parameters: {e}")
+        raise
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  CLI boilerplate – sub-commands & argument parsing
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    # Configure basic logging first to capture all startup information
+    configure_logging(False)  # Start with basic logging, will be reconfigured later
+    
+    # Log script startup with all arguments
+    logging.info("=== SQX Tool Started ===")
+    logging.info("Script started at: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logging.info("Command line arguments: %s", sys.argv)
+    logging.info("Working directory: %s", os.getcwd())
+    logging.info("Script location: %s", __file__)
+    
     parser = argparse.ArgumentParser(description="StrategyQuantX helper tool")
     parser.add_argument("-v", "--verbose", action="store_true", help="chatty output + DEBUG log level")
     subparsers = parser.add_subparsers(dest="command", required=False)
@@ -836,6 +934,13 @@ def main() -> None:
     p_eab.add_argument("path_to")
     p_eab.add_argument("-j", "--jobs", type=int, help="workers (default: CPU count)")
     p_eab.set_defaults(func=remove_eab)
+
+    # remove_eab_b64 --------------------------------------------------------
+    p_eab_b64 = subparsers.add_parser("remove_eab_b64", help="strip ExitAfterBars from .sqx files using base64-encoded paths")
+    p_eab_b64.add_argument("path_from_b64", help="base64-encoded source directory path")
+    p_eab_b64.add_argument("path_to_b64", help="base64-encoded destination directory path")
+    p_eab_b64.add_argument("-j", "--jobs", type=int, help="workers (default: CPU count)")
+    p_eab_b64.set_defaults(func=remove_eab_b64)
 
     # newproject ------------------------------------------------------------
     p_new = subparsers.add_parser("newproject", help="scaffold a new SQX project")
@@ -852,18 +957,48 @@ def main() -> None:
     p_rename.add_argument("directories", nargs='+', help="Directories to process")
     p_rename.set_defaults(func=rename_files)
 
-    args = parser.parse_args()
-    configure_logging(args.verbose)
+    # rename_files_b64 ------------------------------------------------------
+    p_rename_b64 = subparsers.add_parser("rename_files_b64", help="rename strategy files with a prefix using base64-encoded parameters")
+    p_rename_b64.add_argument("prefix_b64", help="base64-encoded prefix to use for renamed files")
+    p_rename_b64.add_argument("directories_b64", nargs='+', help="base64-encoded directories to process")
+    p_rename_b64.set_defaults(func=rename_files_b64)
 
-    logging.debug("Parsed CLI args: %s", args)
+    try:
+        args = parser.parse_args()
+        # Reconfigure logging with the correct verbose setting
+        configure_logging(args.verbose)
+        
+        logging.info("Successfully parsed CLI arguments: %s", args)
+        logging.info("Command: %s", args.command or "interactive_mode")
 
-    if not args.command:
-        launch_cli()
-    else:
-        # Default for jobs → CPU count when not specified
-        if args.command == "remove_eab" and args.jobs is None:
-            args.jobs = os.cpu_count() or 1
-        args.func(args)
+        if not args.command:
+            logging.info("No command specified, launching interactive CLI")
+            launch_cli()
+        else:
+            # Default for jobs → CPU count when not specified
+            if args.command in ("remove_eab", "remove_eab_b64") and args.jobs is None:
+                args.jobs = os.cpu_count() or 1
+                logging.info("Set jobs to CPU count: %s", args.jobs)
+            logging.info("Executing command: %s", args.command)
+            args.func(args)
+            logging.info("Command completed successfully: %s", args.command)
+            
+    except SystemExit as e:
+        # This catches argparse errors and help/version requests
+        if e.code == 2:  # Invalid arguments
+            logging.error("Invalid command line arguments provided")
+            logging.error("Arguments were: %s", sys.argv)
+        elif e.code == 0:  # Help or version requested
+            logging.info("Help or version information requested")
+        else:
+            logging.error("SystemExit with code %s", e.code)
+        raise
+    except Exception as e:
+        logging.error("Unexpected error during argument parsing or execution: %s", str(e))
+        logging.error("Arguments were: %s", sys.argv)
+        raise
+    finally:
+        logging.info("=== SQX Tool Finished ===")
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Guard – freeze-support for pyinstaller, spawn on Windows
