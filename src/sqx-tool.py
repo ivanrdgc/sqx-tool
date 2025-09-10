@@ -44,6 +44,7 @@ class Settings:
     script_dir: Path = Path(__file__).resolve().parent
     template_path_ramon: Path = (script_dir / "Templates" / "Ramon_Mensual.cfx").resolve()
     template_path_hc: Path = (script_dir / "Templates" / "Hobbiecode.cfx").resolve()
+    template_path_ivan: Path = (script_dir / "Templates" / "Ivan.cfx").resolve()
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
     unix_sh: Path = (script_dir / "../run.sh").resolve()
@@ -327,7 +328,7 @@ def newproject(args: argparse.Namespace) -> None:
     logger.debug("newproject(args=%s)", args)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    template: Path = Settings.template_path_ramon if args.template == "Ramon" else Settings.template_path_hc
+    template: Path = Settings.template_path_ramon if args.template == "Ramon" else Settings.template_path_hc if args.template == "Hobbiecode" else Settings.template_path_ivan if args.template == "Ivan" else None
     symbol_dukascopy: str = args.symbol_dukascopy
     symbol_darwinex: Optional[str] = args.symbol_darwinex or None
     timeframe: str = args.timeframe.upper()
@@ -337,6 +338,12 @@ def newproject(args: argparse.Namespace) -> None:
                  symbol_dukascopy, symbol_darwinex or "no DWX", timeframe, direction)
 
     # ---- 1. Preconditions --------------------------------------------------
+    if template is None:
+        logging.error("template not found in %s", template)
+        print(f"template not found in {template}")
+        return
+
+
     for sym in filter(None, (symbol_dukascopy, symbol_darwinex)):
         if not symbol_exists(sym):
             logging.error("symbol '%s' not found in symbols DB – aborting", sym)
@@ -701,7 +708,7 @@ def newproject(args: argparse.Namespace) -> None:
             xml = f"Retest-Task{i}.xml"
             editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
-    elif template == Settings.template_path_hc:
+    elif template == Settings.template_path_hc or template == Settings.template_path_ivan:
         # Build tasks -----------------------------------------------------------
         for i in range(1, 4):
             xml = f"Build-Task{i}.xml"
@@ -831,9 +838,9 @@ def launch_cli() -> None:
     QUESTIONS = [
         Question(
             key="template",
-            prompt="Project Template (R=Ramon / H=Hobbiecode): ",
-            validate=lambda s: s.upper() in {"R", "RAMON", "RAMÓN", "H", "HOBBIECODE"},
-            transform=lambda s: "Ramon" if s.upper().startswith("R") else "Hobbiecode",
+            prompt="Project Template (I=Ivan / R=Ramon / H=Hobbiecode): ",
+            validate=lambda s: s.upper() in {"I", "IVAN", "R", "RAMON", "RAMÓN", "H", "HOBBIECODE"},
+            transform=lambda s: "Ramon" if s.upper().startswith("R") else "Hobbiecode" if s.upper().startswith("H") else "Ivan",
         ),
         Question(
             key="symbol_dukascopy",
@@ -990,7 +997,7 @@ def main() -> None:
 
     # newproject ------------------------------------------------------------
     p_new = subparsers.add_parser("newproject", help="scaffold a new SQX project")
-    p_new.add_argument("template", choices=["Ramon", "Hobbiecode"])
+    p_new.add_argument("template", choices=["Ivan", "Ramon", "Hobbiecode"])
     p_new.add_argument("symbol_dukascopy")
     p_new.add_argument("symbol_darwinex")
     p_new.add_argument("timeframe")
