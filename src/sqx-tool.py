@@ -858,7 +858,7 @@ def launch_cli() -> None:
         Question(
             key="timeframe",
             prompt="Time-frame (e.g. H4, H1, D1): ",
-            validate=lambda s: bool(re.fullmatch(r"[A-Z]\d?", s.strip(), re.I)),
+            validate=lambda s: bool(re.fullmatch(r"[A-Z]\d+", s.strip(), re.I)),
             transform=str.upper,
         ),
         Question(
