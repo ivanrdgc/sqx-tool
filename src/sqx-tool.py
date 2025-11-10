@@ -387,6 +387,33 @@ def newproject(args: argparse.Namespace) -> None:
     log("copied template to %s", dest_cfx)
     logger.debug("Copied template from %s to %s", template, dest_cfx)
 
+    edge_dir = (project_dir / "01 - Edge").resolve()
+    to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
+    strategy_dir = (project_dir / "03 - Strategy").resolve()
+    mql5_dir = (project_dir / "04 - MQL/MQL5").resolve()
+    mql4_dir = (project_dir / "04 - MQL/MQL4").resolve()
+    project_dirs = [edge_dir, to_strategy_dir, strategy_dir, mql5_dir, mql4_dir]
+
+    is_windows = platform.system() == "Windows"
+
+    def make_remove_eab_command(src_dir: Path, dst_dir: Path) -> str:
+        if is_windows:
+            return f'remove_eab "{src_dir}" "{dst_dir}"'
+        src_b64 = base64.b64encode(str(src_dir).encode("utf-8")).decode("utf-8")
+        dst_b64 = base64.b64encode(str(dst_dir).encode("utf-8")).decode("utf-8")
+        return f"remove_eab_b64 {src_b64} {dst_b64}"
+
+    def make_rename_command(prefix: str, directories: List[Path]) -> str:
+        if is_windows:
+            quoted_dirs = " ".join(f'"{str(d)}"' for d in directories)
+            return f'rename_files "{prefix}" {quoted_dirs}'
+        prefix_b64 = base64.b64encode(prefix.encode("utf-8")).decode("utf-8")
+        dirs_b64 = [
+            base64.b64encode(str(d).encode("utf-8")).decode("utf-8")
+            for d in directories
+        ]
+        return f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
+
     # ----------------------------------------------------------------------
     #  Helper mutators – declared *inside* newproject so they can capture
     #  surrounding variables without global state.
@@ -654,10 +681,7 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
         # External script -------------------------------------------------------
-        # Encode paths as base64 to avoid quoting issues on Unix
-        path_from_b64 = base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8')
-        path_to_b64 = base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8')
-        cmd = f"remove_eab_b64 {path_from_b64} {path_to_b64}"
+        cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
         editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
         # Rename files in all project directories
@@ -666,16 +690,7 @@ def newproject(args: argparse.Namespace) -> None:
             timeframe=timeframe,
             direction=direction,
         )
-        # Encode prefix and directories as base64 to avoid quoting issues on Unix
-        prefix_b64 = base64.b64encode(file_prefix.encode('utf-8')).decode('utf-8')
-        dirs_b64 = [
-            base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '03 - Strategy').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '04 - MQL/MQL5').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '04 - MQL/MQL4').resolve()).encode('utf-8')).decode('utf-8')
-        ]
-        rename_cmd = f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
+        rename_cmd = make_rename_command(file_prefix, project_dirs)
         editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
         # Date ranges -----------------------------------------------------------
@@ -750,10 +765,7 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
         # External script -------------------------------------------------------
-        # Encode paths as base64 to avoid quoting issues on Unix
-        path_from_b64 = base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8')
-        path_to_b64 = base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8')
-        cmd = f"remove_eab_b64 {path_from_b64} {path_to_b64}"
+        cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
         editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
         # Rename files in all project directories
@@ -762,16 +774,7 @@ def newproject(args: argparse.Namespace) -> None:
             timeframe=timeframe,
             direction=direction,
         )
-        # Encode prefix and directories as base64 to avoid quoting issues on Unix
-        prefix_b64 = base64.b64encode(file_prefix.encode('utf-8')).decode('utf-8')
-        dirs_b64 = [
-            base64.b64encode(str((project_dir / '01 - Edge').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '02 - To Strategy').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '03 - Strategy').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '04 - MQL/MQL5').resolve()).encode('utf-8')).decode('utf-8'),
-            base64.b64encode(str((project_dir / '04 - MQL/MQL4').resolve()).encode('utf-8')).decode('utf-8')
-        ]
-        rename_cmd = f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
+        rename_cmd = make_rename_command(file_prefix, project_dirs)
         editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
         # Date ranges -----------------------------------------------------------
