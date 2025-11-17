@@ -200,6 +200,41 @@ def get_symbol_info(key: str) -> SymbolInfo:
     return SymbolInfo(first_dt, last_dt, row["DEFAULTSPREAD"], row["COMMISSIONS"], row["SWAP"])
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  Path cleaning helper
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _clean_path(path_str: str) -> str:
+    """Clean a path string by removing quotes and trailing flags.
+    
+    On Windows, paths with spaces can sometimes include trailing quotes or flags
+    if not properly quoted in the command line. This function strips those.
+    """
+    # Strip leading/trailing whitespace
+    path_str = path_str.strip()
+    # Remove surrounding quotes if present
+    if (path_str.startswith('"') and path_str.endswith('"')) or \
+       (path_str.startswith("'") and path_str.endswith("'")):
+        path_str = path_str[1:-1]
+    
+    # Remove any trailing flags that might have been accidentally included
+    # (e.g., " -vv", " -v", " -q", etc.) - do this before removing quotes
+    # to handle cases like: 'path" -vv'
+    path_str = re.sub(r'\s+-[vq]+$', '', path_str)
+    
+    # Remove any trailing quote that might be left (after flag removal)
+    path_str = path_str.rstrip('"').rstrip("'")
+    
+    # Strip trailing whitespace, but preserve trailing backslashes/slashes
+    # by temporarily removing them, stripping, then adding back
+    trailing_slash = path_str.endswith('\\') or path_str.endswith('/')
+    if trailing_slash:
+        path_str = path_str[:-1].rstrip() + path_str[-1]
+    else:
+        path_str = path_str.rstrip()
+    
+    return path_str
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  remove_eab implementation
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -272,8 +307,9 @@ def remove_eab(args: argparse.Namespace) -> None:
     """CLI entry point for **remove_eab** sub-command."""
     logging.debug("remove_eab(args=%s)", args)
 
-    src_dir = Path(args.path_from).expanduser().resolve()
-    dst_dir = Path(args.path_to).expanduser().resolve()
+    # Clean paths to handle Windows quoting issues
+    src_dir = Path(_clean_path(args.path_from)).expanduser().resolve()
+    dst_dir = Path(_clean_path(args.path_to)).expanduser().resolve()
 
     dst_dir.mkdir(parents=True, exist_ok=True)
     files = [p for p in src_dir.iterdir() if p.suffix.lower() == ".sqx"]
@@ -935,8 +971,12 @@ def remove_duplicates(args: argparse.Namespace) -> None:
     """CLI entry point for **remove_duplicates** sub-command."""
     logging.debug("remove_duplicates(args=%s)", args)
     
-    src_dir = Path(args.src_dir).expanduser().resolve()
-    dest_dir = Path(args.dest_dir).expanduser().resolve()
+    # Clean paths to handle Windows quoting issues
+    src_dir_str = _clean_path(args.src_dir)
+    dest_dir_str = _clean_path(args.dest_dir)
+    
+    src_dir = Path(src_dir_str).expanduser().resolve()
+    dest_dir = Path(dest_dir_str).expanduser().resolve()
     
     remove_duplicate_files(src_dir, dest_dir)
 
@@ -955,7 +995,8 @@ def rename_files(args: argparse.Namespace) -> None:
     # Regex for Format 2: Strategy XXX - Improved YYY.sqx/mq4/mq5
     re_fmt2 = re.compile(r'^Strategy (.+?) - Improved (.+?)(\.[sm]q[45x])$')
     for dir_path in directories:
-        dir_path = Path(dir_path).expanduser().resolve()
+        # Clean path to handle Windows quoting issues
+        dir_path = Path(_clean_path(dir_path)).expanduser().resolve()
         if not dir_path.is_dir():
             logging.warning(f"Directory not found: {dir_path}")
             continue
