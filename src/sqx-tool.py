@@ -886,6 +886,61 @@ def launch_cli() -> None:
         print("\nYou can close this window…\n")
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  remove_duplicates implementation
+# ─────────────────────────────────────────────────────────────────────────────
+
+def remove_duplicate_files(src_dir: Path, dest_dir: Path) -> None:
+    """Remove all files from src_dir that are present in dest_dir (matching by filename).
+    
+    Args:
+        src_dir: Source directory containing files to potentially remove
+        dest_dir: Destination directory to check for matching filenames
+    """
+    src_dir = Path(src_dir).expanduser().resolve()
+    dest_dir = Path(dest_dir).expanduser().resolve()
+    
+    logging.debug("remove_duplicate_files(src_dir=%s, dest_dir=%s)", src_dir, dest_dir)
+    
+    if not src_dir.is_dir():
+        logging.warning("Source directory not found: %s", src_dir)
+        return
+    
+    if not dest_dir.is_dir():
+        logging.warning("Destination directory not found: %s", dest_dir)
+        return
+    
+    # Get all filenames in dest_dir
+    dest_files = {f.name for f in dest_dir.iterdir() if f.is_file()}
+    log("Found %d files in destination directory %s", len(dest_files), dest_dir)
+    logger.trace("Destination files: %s", sorted(dest_files))
+    
+    # Find and remove matching files from src_dir
+    removed_count = 0
+    for file in src_dir.iterdir():
+        if not file.is_file():
+            continue
+        if file.name in dest_files:
+            try:
+                file.unlink()
+                removed_count += 1
+                log("Removed %s (exists in %s)", file.name, dest_dir)
+                logger.debug("Deleted file: %s", file)
+            except Exception as exc:
+                logging.error("Error removing file %s: %s", file, exc)
+    
+    log("Removed %d duplicate file(s) from %s", removed_count, src_dir)
+
+
+def remove_duplicates(args: argparse.Namespace) -> None:
+    """CLI entry point for **remove_duplicates** sub-command."""
+    logging.debug("remove_duplicates(args=%s)", args)
+    
+    src_dir = Path(args.src_dir).expanduser().resolve()
+    dest_dir = Path(args.dest_dir).expanduser().resolve()
+    
+    remove_duplicate_files(src_dir, dest_dir)
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  rename_files implementation
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1018,6 +1073,12 @@ def main() -> None:
     p_rename_b64.add_argument("prefix_b64", help="base64-encoded prefix to use for renamed files")
     p_rename_b64.add_argument("directories_b64", nargs='+', help="base64-encoded directories to process")
     p_rename_b64.set_defaults(func=rename_files_b64)
+
+    # remove_duplicates ------------------------------------------------------
+    p_remove_dup = subparsers.add_parser("remove_duplicates", help="remove files from src_dir that exist in dest_dir (matching by filename)")
+    p_remove_dup.add_argument("src_dir", help="source directory containing files to potentially remove")
+    p_remove_dup.add_argument("dest_dir", help="destination directory to check for matching filenames")
+    p_remove_dup.set_defaults(func=remove_duplicates)
 
     try:
         args = parser.parse_args()
