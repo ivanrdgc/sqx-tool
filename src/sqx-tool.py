@@ -971,9 +971,59 @@ def remove_duplicates(args: argparse.Namespace) -> None:
     """CLI entry point for **remove_duplicates** sub-command."""
     logging.debug("remove_duplicates(args=%s)", args)
     
+    # Handle case where paths might be combined into one argument (Windows quoting issues)
+    paths = args.paths if hasattr(args, 'paths') else [args.src_dir, args.dest_dir]
+    
+    # If we only got one argument, try to split it intelligently
+    if len(paths) == 1:
+        # Try to split on patterns like: path" path or path' path
+        # Look for quote followed by space and what looks like a path
+        combined = paths[0]
+        logger.debug("Attempting to split combined path argument: %s", combined)
+        
+        # Try to find a split point: quote (possibly after backslash) followed by space and a path-like string
+        # Pattern: ...Param\" .\path or ...Param" .\path
+        match = re.search(r'\\?["\']\s+(.+)$', combined)
+        if match:
+            # Split at the quote - find the position of the quote
+            quote_pos = combined.rfind('"')
+            if quote_pos == -1:
+                quote_pos = combined.rfind("'")
+            if quote_pos > 0:
+                src_dir_str = combined[:quote_pos].rstrip()
+                dest_dir_str = match.group(1)
+                logger.debug("Split at quote: src=%s, dest=%s", src_dir_str, dest_dir_str)
+            else:
+                # Quote found but at start, which is odd - try the match group approach
+                src_dir_str = combined[:match.start()].rstrip().rstrip('"').rstrip("'")
+                dest_dir_str = match.group(1)
+        else:
+            # Try splitting on a pattern like: ...Param\ ...WFM
+            # Look for a space followed by a path-like pattern (starts with . or letter, has backslashes)
+            match = re.search(r'\s+([.\\a-zA-Z].*)$', combined)
+            if match:
+                # Estimate split point - find the last space before what looks like a second path
+                split_pos = combined.rfind(' ', 0, match.start())
+                if split_pos > 0:
+                    src_dir_str = combined[:split_pos].rstrip()
+                    dest_dir_str = match.group(1)
+                    logger.debug("Split at space pattern: src=%s, dest=%s", src_dir_str, dest_dir_str)
+                else:
+                    # Can't split intelligently
+                    raise ValueError(f"Could not parse combined paths. Got: {combined}")
+            else:
+                raise ValueError(f"Expected 2 paths but got 1 combined argument: {combined}")
+    elif len(paths) == 2:
+        src_dir_str = paths[0]
+        dest_dir_str = paths[1]
+    else:
+        # More than 2 - combine extras into dest_dir
+        src_dir_str = paths[0]
+        dest_dir_str = ' '.join(paths[1:])
+    
     # Clean paths to handle Windows quoting issues
-    src_dir_str = _clean_path(args.src_dir)
-    dest_dir_str = _clean_path(args.dest_dir)
+    src_dir_str = _clean_path(src_dir_str)
+    dest_dir_str = _clean_path(dest_dir_str)
     
     src_dir = Path(src_dir_str).expanduser().resolve()
     dest_dir = Path(dest_dir_str).expanduser().resolve()
@@ -1117,8 +1167,8 @@ def main() -> None:
 
     # remove_duplicates ------------------------------------------------------
     p_remove_dup = subparsers.add_parser("remove_duplicates", help="remove files from src_dir that exist in dest_dir (matching by filename)")
-    p_remove_dup.add_argument("src_dir", help="source directory containing files to potentially remove")
-    p_remove_dup.add_argument("dest_dir", help="destination directory to check for matching filenames")
+    # Use nargs='+' to handle cases where paths might be combined due to Windows quoting issues
+    p_remove_dup.add_argument("paths", nargs='+', help="source directory and destination directory (2 paths, or 1 combined path that will be split)")
     p_remove_dup.set_defaults(func=remove_duplicates)
 
     try:
