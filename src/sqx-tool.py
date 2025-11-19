@@ -57,6 +57,7 @@ class Settings:
     
     # symbols_db: Path = Path("D:/SQX/user/data/data.db").resolve()
     # symbols_db: Path = Path("/home/user/SQX/user/data/data.db").resolve()
+    # symbols_db: Path = Path("/Applications/StrategyQuantXB143.app/Contents/Resources/user/data/data.db").resolve()
     symbols_db: Path = (script_dir / "../../user/data/data.db").resolve()
 
 SETTINGS = Settings()
@@ -411,6 +412,11 @@ def newproject(args: argparse.Namespace) -> None:
         "01 - Edge",
         "02 - To Strategy",
         "03 - Strategy",
+        "04 - MQL5",
+    ] if template == Settings.template_path_ivan else [
+        "01 - Edge",
+        "02 - To Strategy",
+        "03 - Strategy",
         "04 - MQL/MQL5",
         "04 - MQL/MQL4",
     ]:
@@ -426,7 +432,10 @@ def newproject(args: argparse.Namespace) -> None:
     edge_dir = (project_dir / "01 - Edge").resolve()
     to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
     strategy_dir = (project_dir / "03 - Strategy").resolve()
-    mql5_dir = (project_dir / "04 - MQL/MQL5").resolve()
+    if template == Settings.template_path_ivan:
+        mql5_dir = (project_dir / "04 - MQL5").resolve()
+    else:
+        mql5_dir = (project_dir / "04 - MQL/MQL5").resolve()
     mql4_dir = (project_dir / "04 - MQL/MQL4").resolve()
     project_dirs = [edge_dir, to_strategy_dir, strategy_dir, mql5_dir, mql4_dir]
 
@@ -680,7 +689,7 @@ def newproject(args: argparse.Namespace) -> None:
     # Config & global market side
     editor.patch("config.xml", patch_config)
 
-    if template == Settings.template_path_ramon:
+    if template == Settings.template_path_ramon or template == Settings.template_path_ivan:
         # Build tasks -----------------------------------------------------------
         for i in range(1, 3):
             xml = f"Build-Task{i}.xml"
@@ -711,23 +720,36 @@ def newproject(args: argparse.Namespace) -> None:
         # Save / Load folders ---------------------------------------------------
         editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, project_dir / "01 - Edge")
         editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, project_dir / "03 - Strategy")
-        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL5")
-        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL4")
+        if template == Settings.template_path_ramon:
+            editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL5")
+            editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL4")
+        else:
+            editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL5")
 
-        editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
+        if template == Settings.template_path_ramon:
+            editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
-        # External script -------------------------------------------------------
-        cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
-        editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
+            # External script -------------------------------------------------------
+            cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
+            editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
-        # Rename files in all project directories
-        file_prefix = SETTINGS.file_prefix_tpl.format(
-            symbol=symbol_dukascopy,
-            timeframe=timeframe,
-            direction=direction,
-        )
-        rename_cmd = make_rename_command(file_prefix, project_dirs)
-        editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
+            # Rename files in all project directories
+            file_prefix = SETTINGS.file_prefix_tpl.format(
+                symbol=symbol_dukascopy,
+                timeframe=timeframe,
+                direction=direction,
+            )
+            rename_cmd = make_rename_command(file_prefix, project_dirs)
+            editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
+        else:
+            # Rename files in all project directories
+            file_prefix = SETTINGS.file_prefix_tpl.format(
+                symbol=symbol_dukascopy,
+                timeframe=timeframe,
+                direction=direction,
+            )
+            rename_cmd = make_rename_command(file_prefix, project_dirs)
+            editor.patch("CallExternalScript-Task1.xml", patch_call_external, rename_cmd)
 
         # Date ranges -----------------------------------------------------------
         build_start = datetime(2018, 1, 1)
@@ -759,7 +781,7 @@ def newproject(args: argparse.Namespace) -> None:
             xml = f"Retest-Task{i}.xml"
             editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
-    elif template == Settings.template_path_hc or template == Settings.template_path_ivan:
+    elif template == Settings.template_path_hc:
         # Build tasks -----------------------------------------------------------
         for i in range(1, 4):
             xml = f"Build-Task{i}.xml"
