@@ -409,10 +409,14 @@ def newproject(args: argparse.Namespace) -> None:
     logger.debug("Created project directory: %s", project_dir)
 
     for sub in [
-        "01 - Edge",
-        "02 - To Strategy",
-        "03 - Strategy",
-        "04 - MQL5",
+        "01 - E-Build",
+        "02 - E-Retest 1",
+        "03 - E-Retest 2",
+        "04 - E-Final",
+        "05 - S-Build",
+        "06 - S-Retest 1",
+        "07 - S-Retest 2",
+        "08 - S-Final",
     ] if template == Settings.template_path_ivan else [
         "01 - Edge",
         "02 - To Strategy",
@@ -428,16 +432,26 @@ def newproject(args: argparse.Namespace) -> None:
     shutil.copyfile(template, dest_cfx)
     log("copied template to %s", dest_cfx)
     logger.debug("Copied template from %s to %s", template, dest_cfx)
+    project_dirs = []
 
-    edge_dir = (project_dir / "01 - Edge").resolve()
-    to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
-    strategy_dir = (project_dir / "03 - Strategy").resolve()
     if template == Settings.template_path_ivan:
-        mql5_dir = (project_dir / "04 - MQL5").resolve()
+        e_build_dir = (project_dir / "01 - E-Build").resolve()
+        e_retest_1_dir = (project_dir / "02 - E-Retest 1").resolve()
+        e_retest_2_dir = (project_dir / "03 - E-Retest 2").resolve()
+        e_final_dir = (project_dir / "04 - E-Final").resolve()
+        s_build_dir = (project_dir / "05 - S-Build").resolve()
+        s_retest_1_dir = (project_dir / "06 - S-Retest 1").resolve()
+        s_retest_2_dir = (project_dir / "07 - S-Retest 2").resolve()
+        s_final_dir = (project_dir / "08 - S-Final").resolve()
+        project_dirs = [e_build_dir, e_retest_1_dir, e_retest_2_dir, e_final_dir, s_build_dir, s_retest_1_dir, s_retest_2_dir, s_final_dir]
+    
     else:
+        edge_dir = (project_dir / "01 - Edge").resolve()
+        to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
+        strategy_dir = (project_dir / "03 - Strategy").resolve()
         mql5_dir = (project_dir / "04 - MQL/MQL5").resolve()
-    mql4_dir = (project_dir / "04 - MQL/MQL4").resolve()
-    project_dirs = [edge_dir, to_strategy_dir, strategy_dir, mql5_dir, mql4_dir]
+        mql4_dir = (project_dir / "04 - MQL/MQL4").resolve()
+        project_dirs.extend([edge_dir, to_strategy_dir, strategy_dir, mql5_dir, mql4_dir])
 
     is_windows = platform.system() == "Windows"
 
@@ -507,7 +521,7 @@ def newproject(args: argparse.Namespace) -> None:
             logger.debug("patch_market_side() → %s", direction.lower())
             ms.set("type", direction.lower())
 
-    def patch_setup(root: ET.Element) -> None:
+    def patch_setup(root: ET.Element, use: bool = True) -> None:
         setup = root.find(".//Setups/Setup")
         if setup is None:
             return
@@ -537,7 +551,9 @@ def newproject(args: argparse.Namespace) -> None:
             if old is not None:
                 setup.remove(old)
             try:
-                setup.append(ET.fromstring(sym_info.swap))
+                swap_elem = ET.fromstring(sym_info.swap)
+                swap_elem.set("use", "true" if use else "false")
+                setup.append(swap_elem)
             except ET.ParseError as exc:
                 logging.warning("bad swap XML for %s: %s", symbol_dukascopy, exc)
 
@@ -689,7 +705,7 @@ def newproject(args: argparse.Namespace) -> None:
     # Config & global market side
     editor.patch("config.xml", patch_config)
 
-    if template == Settings.template_path_ramon or template == Settings.template_path_ivan:
+    if template == Settings.template_path_ramon:
         # Build tasks -----------------------------------------------------------
         for i in range(1, 3):
             xml = f"Build-Task{i}.xml"
@@ -855,6 +871,63 @@ def newproject(args: argparse.Namespace) -> None:
         for i in range(7, 14):
             xml = f"Retest-Task{i}.xml"
             editor.patch(xml, patch_dates, retest_start, retest_end, oos_ranges)
+
+    elif template == Settings.template_path_ivan:
+        # Build tasks -----------------------------------------------------------
+        for i in range(1, 3):
+            xml = f"Build-Task{i}.xml"
+            editor.patch(xml, patch_market_side)
+            editor.patch(xml, patch_setup, False)
+
+        # Retest tasks ----------------------------------------------------------
+        for i in range(1, 8):
+            xml = f"Retest-Task{i}.xml"
+            editor.patch(xml, patch_setup, False)
+        editor.patch("Retest-Task8.xml", patch_setup, True)
+
+        # Other markets / Spread / Dates ---------------------------------------
+        editor.patch("Retest-Task1.xml", patch_other_markets, datetime(2025, 1, 1))
+        editor.patch("Retest-Task5.xml", patch_other_markets)
+
+        if symbol_darwinex is None:
+            raise ValueError("symbol_darwinex is required for Ivan template")
+
+        editor.patch("Retest-Task1.xml", patch_rhp_spread, sym_info.spread * 2)
+        editor.patch("Retest-Task5.xml", patch_rhp_spread, sym_info.spread * 3)
+
+        # Save / Load folders ---------------------------------------------------
+        editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
+        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_retest_1_dir)
+        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, e_retest_2_dir)
+        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, e_final_dir)
+        editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_build_dir)
+        editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_retest_1_dir)
+        editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_retest_2_dir)
+        editor.patch("SaveToFiles-Task8.xml", patch_save_to_files, s_final_dir)
+
+        # Date ranges -----------------------------------------------------------
+        build_start = datetime(2018, 1, 1)
+        build_end = datetime(2025, 1, 1)
+
+        retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
+        retest_end_edge = datetime(2025, 1, 1)
+        retest_end_strategy = sym_info.last_date
+
+        oos_ranges_edge = [(retest_start, datetime(2018, 1, 1))]
+        oos_ranges_strategy = [
+            (retest_start, datetime(2018, 1, 1)),
+            (datetime(2025, 1, 1), sym_info.last_date, "isv"),
+        ]
+
+        editor.patch("Build-Task1.xml", patch_dates, build_start, build_end)
+
+        for i in range(1, 5):
+            xml = f"Retest-Task{i}.xml"
+            editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
+
+        for i in range(5, 9):
+            xml = f"Retest-Task{i}.xml"
+            editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
     # ---- finally write out -------------------------------------------------
     editor.write()
