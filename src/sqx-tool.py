@@ -929,6 +929,16 @@ def newproject(args: argparse.Namespace) -> None:
             xml = f"Retest-Task{i}.xml"
             editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
+        # External script -------------------------------------------------------
+        # Rename files in all project directories
+        file_prefix = SETTINGS.file_prefix_tpl.format(
+            symbol=symbol_dukascopy,
+            timeframe=timeframe,
+            direction=direction,
+        )
+        rename_cmd = make_rename_command(file_prefix, project_dirs)
+        editor.patch("CallExternalScript-Task1.xml", patch_call_external, rename_cmd)
+
     # ---- finally write out -------------------------------------------------
     editor.write()
     log("project %s created successfully", project_dir.name)
