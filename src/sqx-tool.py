@@ -25,7 +25,7 @@ import re
 import shutil
 import sqlite3
 import sys
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, Callable, Optional, Tuple, Any, List, Union
@@ -410,13 +410,9 @@ def newproject(args: argparse.Namespace) -> None:
 
     for sub in [
         "01 - E-Build",
-        "02 - E-Retest 1",
-        "03 - E-Retest 2",
-        "04 - E-Final",
-        "05 - S-Build",
-        "06 - S-Retest 1",
-        "07 - S-Retest 2",
-        "08 - S-Final",
+        "02 - S-Build",
+        "03 - S-Retest",
+        "04 - S-Final",
     ] if template == Settings.template_path_ivan else [
         "01 - Edge",
         "02 - To Strategy",
@@ -436,14 +432,10 @@ def newproject(args: argparse.Namespace) -> None:
 
     if template == Settings.template_path_ivan:
         e_build_dir = (project_dir / "01 - E-Build").resolve()
-        e_retest_1_dir = (project_dir / "02 - E-Retest 1").resolve()
-        e_retest_2_dir = (project_dir / "03 - E-Retest 2").resolve()
-        e_final_dir = (project_dir / "04 - E-Final").resolve()
-        s_build_dir = (project_dir / "05 - S-Build").resolve()
-        s_retest_1_dir = (project_dir / "06 - S-Retest 1").resolve()
-        s_retest_2_dir = (project_dir / "07 - S-Retest 2").resolve()
-        s_final_dir = (project_dir / "08 - S-Final").resolve()
-        project_dirs = [e_build_dir, e_retest_1_dir, e_retest_2_dir, e_final_dir, s_build_dir, s_retest_1_dir, s_retest_2_dir, s_final_dir]
+        s_build_dir = (project_dir / "02 - S-Build").resolve()
+        s_retest_dir = (project_dir / "03 - S-Retest").resolve()
+        s_final_dir = (project_dir / "04 - S-Final").resolve()
+        project_dirs = [e_build_dir, s_build_dir, s_retest_dir, s_final_dir]
     
     else:
         edge_dir = (project_dir / "01 - Edge").resolve()
@@ -531,11 +523,11 @@ def newproject(args: argparse.Namespace) -> None:
             logger.debug("patch_setup.chart() – %s @ %s", symbol_dukascopy, timeframe)
             chart.set("symbol", symbol_dukascopy)
             chart.set("timeframe", timeframe)
-            if sym_info.spread is not None:
+            if sym_info.spread is not None and use:
                 chart.set("spread", str(sym_info.spread))
 
         # Commissions -------------------------------------------------------
-        if sym_info.commission:
+        if sym_info.commission and use:
             comm_parent = setup.find("Commissions")
             if comm_parent is None:
                 comm_parent = ET.SubElement(setup, "Commissions")
@@ -546,13 +538,12 @@ def newproject(args: argparse.Namespace) -> None:
                 logging.warning("bad commission XML for %s: %s", symbol_dukascopy, exc)
 
         # Swap --------------------------------------------------------------
-        if sym_info.swap:
+        if sym_info.swap and use:
             old = setup.find("Swap")
             if old is not None:
                 setup.remove(old)
             try:
                 swap_elem = ET.fromstring(sym_info.swap)
-                swap_elem.set("use", "true" if use else "false")
                 setup.append(swap_elem)
             except ET.ParseError as exc:
                 logging.warning("bad swap XML for %s: %s", symbol_dukascopy, exc)
@@ -880,54 +871,40 @@ def newproject(args: argparse.Namespace) -> None:
             editor.patch(xml, patch_setup, False)
 
         # Retest tasks ----------------------------------------------------------
-        for i in range(1, 8):
+        for i in range(1, 4):
             xml = f"Retest-Task{i}.xml"
             editor.patch(xml, patch_setup, False)
-        editor.patch("Retest-Task8.xml", patch_setup, True)
+        editor.patch("Retest-Task4.xml", patch_setup, True)
 
         # Other markets / Spread / Dates ---------------------------------------
-        editor.patch("Retest-Task1.xml", patch_other_markets, datetime(2025, 1, 1))
-        editor.patch("Retest-Task5.xml", patch_other_markets)
+        editor.patch("Retest-Task4.xml", patch_other_markets)
 
         if symbol_darwinex is None:
             raise ValueError("symbol_darwinex is required for Ivan template")
 
-        editor.patch("Retest-Task1.xml", patch_rhp_spread, sym_info.spread * 2)
-        editor.patch("Retest-Task5.xml", patch_rhp_spread, sym_info.spread * 3)
-
         # Save / Load folders ---------------------------------------------------
         editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
-        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_retest_1_dir)
-        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, e_retest_2_dir)
-        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, e_final_dir)
-        editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_build_dir)
-        editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_retest_1_dir)
-        editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_retest_2_dir)
-        editor.patch("SaveToFiles-Task8.xml", patch_save_to_files, s_final_dir)
+        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, s_build_dir)
+        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_retest_dir)
+        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
 
         # Date ranges -----------------------------------------------------------
-        build_start = datetime(2018, 1, 1)
-        build_end = datetime(2025, 1, 1)
+        date_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
+        date_end = sym_info.last_date
 
-        retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
-        retest_end_edge = datetime(2025, 1, 1)
-        retest_end_strategy = sym_info.last_date
-
-        oos_ranges_edge = [(retest_start, datetime(2018, 1, 1))]
-        oos_ranges_strategy = [
-            (retest_start, datetime(2018, 1, 1)),
-            (datetime(2025, 1, 1), sym_info.last_date, "isv"),
+        oos_ranges = [
+            (date_start, datetime(2018, 1, 1)),
+            (datetime(2018, 1, 1), datetime(2020, 1, 1), "isv"),
+            (date_end - timedelta(days=365), date_end),
         ]
 
-        editor.patch("Build-Task1.xml", patch_dates, build_start, build_end)
+        for i in range(1, 3):
+            xml = f"Build-Task{i}.xml"
+            editor.patch(xml, patch_dates, date_start, date_end, oos_ranges)
 
         for i in range(1, 5):
             xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
-
-        for i in range(5, 9):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
+            editor.patch(xml, patch_dates, date_start, date_end, oos_ranges)
 
         # External script -------------------------------------------------------
         # Rename files in all project directories
