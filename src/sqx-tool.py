@@ -410,9 +410,12 @@ def newproject(args: argparse.Namespace) -> None:
 
     for sub in [
         "01 - E-Build",
-        "02 - S-Build",
-        "03 - S-Retest",
-        "04 - S-Final",
+        "02 - E-Build Clean",
+        "03 - E-Build Base",
+        "04 - S-Build",
+        "05 - S-Retest",
+        "06 - S-Final Retest",
+        "07 - S-Final",
     ] if template == Settings.template_path_ivan else [
         "01 - Edge",
         "02 - To Strategy",
@@ -432,10 +435,13 @@ def newproject(args: argparse.Namespace) -> None:
 
     if template == Settings.template_path_ivan:
         e_build_dir = (project_dir / "01 - E-Build").resolve()
-        s_build_dir = (project_dir / "02 - S-Build").resolve()
-        s_retest_dir = (project_dir / "03 - S-Retest").resolve()
-        s_final_dir = (project_dir / "04 - S-Final").resolve()
-        project_dirs = [e_build_dir, s_build_dir, s_retest_dir, s_final_dir]
+        e_build_clean_dir = (project_dir / "02 - E-Build Clean").resolve()
+        e_build_base_dir = (project_dir / "03 - E-Build Base").resolve()
+        s_build_dir = (project_dir / "04 - S-Build").resolve()
+        s_retest_dir = (project_dir / "05 - S-Retest").resolve()
+        s_final_retest_dir = (project_dir / "06 - S-Final Retest").resolve()
+        s_final_dir = (project_dir / "07 - S-Final").resolve()
+        project_dirs = [e_build_dir, e_build_clean_dir, e_build_base_dir, s_build_dir, s_retest_dir, s_final_retest_dir, s_final_dir]
     
     else:
         edge_dir = (project_dir / "01 - Edge").resolve()
@@ -884,9 +890,13 @@ def newproject(args: argparse.Namespace) -> None:
 
         # Save / Load folders ---------------------------------------------------
         editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
-        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, s_build_dir)
-        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_retest_dir)
-        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
+        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_build_clean_dir)
+        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
+        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_retest_dir)
+        editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_retest_dir)
+        editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_dir)
+
+        editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, e_build_base_dir)
 
         # Date ranges -----------------------------------------------------------
         date_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
@@ -907,6 +917,10 @@ def newproject(args: argparse.Namespace) -> None:
             editor.patch(xml, patch_dates, date_start, date_end, oos_ranges)
 
         # External script -------------------------------------------------------
+        # Remove ExitAfterBars
+        cmd = make_remove_eab_command(e_build_clean_dir, e_build_base_dir)
+        editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
+
         # Rename files in all project directories
         file_prefix = SETTINGS.file_prefix_tpl.format(
             symbol=symbol_dukascopy,
@@ -914,7 +928,7 @@ def newproject(args: argparse.Namespace) -> None:
             direction=direction,
         )
         rename_cmd = make_rename_command(file_prefix, project_dirs)
-        editor.patch("CallExternalScript-Task1.xml", patch_call_external, rename_cmd)
+        editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
     # ---- finally write out -------------------------------------------------
     editor.write()
