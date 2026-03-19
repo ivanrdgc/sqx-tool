@@ -42,9 +42,7 @@ class Settings:
     """All file‑system locations & naming conventions live here."""
     
     script_dir: Path = Path(__file__).resolve().parent
-    template_path_ramon: Path = (script_dir / "Templates" / "Ramon_Mensual.cfx").resolve()
-    template_path_hc: Path = (script_dir / "Templates" / "Hobbiecode.cfx").resolve()
-    template_path_ivan: Path = (script_dir / "Templates" / "Ivan.cfx").resolve()
+    template_path: Path = (script_dir / "Templates" / "Template.cfx").resolve()
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
     unix_sh: Path = (script_dir / "../run.sh").resolve()
@@ -365,7 +363,7 @@ def newproject(args: argparse.Namespace) -> None:
     logger.debug("newproject(args=%s)", args)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    template: Path = Settings.template_path_ramon if args.template == "Ramon" else Settings.template_path_hc if args.template == "Hobbiecode" else Settings.template_path_ivan if args.template == "Ivan" else None
+    template: Path = SETTINGS.template_path
     symbol_dukascopy: str = args.symbol_dukascopy
     symbol_darwinex: Optional[str] = args.symbol_darwinex or None
     timeframe: str = args.timeframe.upper()
@@ -375,12 +373,6 @@ def newproject(args: argparse.Namespace) -> None:
                  symbol_dukascopy, symbol_darwinex or "no DWX", timeframe, direction)
 
     # ---- 1. Preconditions --------------------------------------------------
-    if template is None:
-        logging.error("template not found in %s", template)
-        print(f"template not found in {template}")
-        return
-
-
     for sym in filter(None, (symbol_dukascopy, symbol_darwinex)):
         if not symbol_exists(sym):
             logging.error("symbol '%s' not found in symbols DB – aborting", sym)
@@ -409,19 +401,9 @@ def newproject(args: argparse.Namespace) -> None:
     logger.debug("Created project directory: %s", project_dir)
 
     for sub in [
-        "01 - E-Build",
-        "02 - E-Build Clean",
-        "03 - E-Build Base",
-        "04 - S-Build",
-        "05 - S-Retest",
-        "06 - S-Final Retest",
-        "07 - S-Final",
-    ] if template == Settings.template_path_ivan else [
         "01 - Edge",
         "02 - To Strategy",
         "03 - Strategy",
-        "04 - MQL/MQL5",
-        "04 - MQL/MQL4",
     ]:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.trace("Created subdir %s", sub)
@@ -431,25 +413,10 @@ def newproject(args: argparse.Namespace) -> None:
     shutil.copyfile(template, dest_cfx)
     log("copied template to %s", dest_cfx)
     logger.debug("Copied template from %s to %s", template, dest_cfx)
-    project_dirs = []
-
-    if template == Settings.template_path_ivan:
-        e_build_dir = (project_dir / "01 - E-Build").resolve()
-        e_build_clean_dir = (project_dir / "02 - E-Build Clean").resolve()
-        e_build_base_dir = (project_dir / "03 - E-Build Base").resolve()
-        s_build_dir = (project_dir / "04 - S-Build").resolve()
-        s_retest_dir = (project_dir / "05 - S-Retest").resolve()
-        s_final_retest_dir = (project_dir / "06 - S-Final Retest").resolve()
-        s_final_dir = (project_dir / "07 - S-Final").resolve()
-        project_dirs = [e_build_dir, e_build_clean_dir, e_build_base_dir, s_build_dir, s_retest_dir, s_final_retest_dir, s_final_dir]
-    
-    else:
-        edge_dir = (project_dir / "01 - Edge").resolve()
-        to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
-        strategy_dir = (project_dir / "03 - Strategy").resolve()
-        mql5_dir = (project_dir / "04 - MQL/MQL5").resolve()
-        mql4_dir = (project_dir / "04 - MQL/MQL4").resolve()
-        project_dirs.extend([edge_dir, to_strategy_dir, strategy_dir, mql5_dir, mql4_dir])
+    edge_dir = (project_dir / "01 - Edge").resolve()
+    to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
+    strategy_dir = (project_dir / "03 - Strategy").resolve()
+    project_dirs = [edge_dir, to_strategy_dir, strategy_dir]
 
     is_windows = platform.system() == "Windows"
 
@@ -667,268 +634,88 @@ def newproject(args: argparse.Namespace) -> None:
                 logger.debug("patch_input_databank() – %s → %s", db.get("value"), new_value)
                 db.set("value", new_value)
 
-    def patch_mc_spread(root: ET.Element, min_spread: float, max_spread: float) -> None:
-        if sym_info.spread is None:
-            return
-
-        params = root.find(
-            ".//MonteCarloRetest/Settings/Methods/"
-            "Method[@type='RandomizeSpread']/Params"
-        )
-        if params is None:
-            return
-
-        for p in params.findall("Param"):
-            key = p.get("key")
-            if key == "Min":
-                p.text = str(min_spread)
-            elif key == "Max":
-                p.text = str(max_spread)
-
-    def patch_hbp_spread(root: ET.Element, spread: float) -> None:
-        """Patch the spread value in HigherPrecision settings."""
-        logging.debug("patch_hbp_spread(spread=%s)", spread)
-        spread_el = root.find(".//RetestWithHigherPrecision/Settings/Spread")
-        if spread_el is not None:
-            spread_el.text = str(spread)
-        else:
-            logging.warning("patch_hbp_spread: Spread element not found in RetestWithHigherPrecision/Settings")
-
     # ------------------------------------------------------------------
     #  Perform all mutations in a *single* ZipEditor instance ---------------
     # ------------------------------------------------------------------
     editor = ZipEditor(dest_cfx)
 
+    # Date ranges -----------------------------------------------------------
+    first_day = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
+    last_day = sym_info.last_date
+    
+    build_start = max(datetime(2018, 1, 1, tzinfo=timezone.utc), first_day)
+    build_end = min(datetime(2025, 6, 1, tzinfo=timezone.utc), last_day)
+
+    retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), first_day)
+    retest_end_edge = build_end
+    retest_end_strategy = last_day
+
+    oos_ranges_edge = [(retest_start, build_start)]
+    oos_ranges_strategy = [
+        (retest_start, build_start),
+        (build_end, retest_end_strategy, "isv"),
+    ]
+
+    for i in range(1, 3):
+        xml = f"Build-Task{i}.xml"
+        editor.patch(xml, patch_dates, build_start, build_end)
+
+    for i in range(1, 6):
+        xml = f"Retest-Task{i}.xml"
+        editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
+
+    for i in range(6, 14):
+        xml = f"Retest-Task{i}.xml"
+        editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
+
     # Config & global market side
     editor.patch("config.xml", patch_config)
 
-    if template == Settings.template_path_ramon:
-        # Build tasks -----------------------------------------------------------
-        for i in range(1, 3):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_market_side)
-            editor.patch(xml, patch_setup)
+    # Build tasks -----------------------------------------------------------
+    for i in range(1, 3):
+        xml = f"Build-Task{i}.xml"
+        editor.patch(xml, patch_market_side)
+        editor.patch(xml, patch_setup)
 
-        # Retest tasks ----------------------------------------------------------
-        for i in range(1, 14):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_setup)
+    # Retest tasks ----------------------------------------------------------
+    for i in range(1, 14):
+        xml = f"Retest-Task{i}.xml"
+        editor.patch(xml, patch_setup)
 
-        # Other markets / Spread / Dates ---------------------------------------
-        editor.patch("Retest-Task2.xml", patch_other_markets, datetime(2025, 1, 1))
-        editor.patch("Retest-Task8.xml", patch_other_markets)
+    # Other markets / Spread / Dates ---------------------------------------
+    editor.patch("Retest-Task2.xml", patch_other_markets, build_end)
+    editor.patch("Retest-Task8.xml", patch_other_markets)
 
-        if symbol_darwinex is None:
-            editor.patch("config.xml", patch_disable_task, "Retest-Task2.xml")
-            editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
-            editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
-            editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
+    if symbol_darwinex is None:
+        editor.patch("config.xml", patch_disable_task, "Retest-Task2.xml")
+        editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
+        editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
+        editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
 
-        if sym_info.spread is not None:
-            editor.patch("Retest-Task3.xml", patch_rhp_spread, sym_info.spread * 2)
-            editor.patch("Retest-Task9.xml", patch_rhp_spread, sym_info.spread * 3)
-        else:
-            logging.warning("sym_info.spread is None; skipping patch_rhp_spread.")
+    if sym_info.spread is not None:
+        editor.patch("Retest-Task3.xml", patch_rhp_spread, sym_info.spread * 2)
+        editor.patch("Retest-Task9.xml", patch_rhp_spread, sym_info.spread * 3)
+    else:
+        logging.warning("sym_info.spread is None; skipping patch_rhp_spread.")
 
-        # Save / Load folders ---------------------------------------------------
-        editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, project_dir / "01 - Edge")
-        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, project_dir / "03 - Strategy")
-        if template == Settings.template_path_ramon:
-            editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL5")
-            editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL4")
-        else:
-            editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL5")
+    # Save / Load folders ---------------------------------------------------
+    editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, project_dir / "01 - Edge")
+    editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, project_dir / "03 - Strategy")
+    editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
-        if template == Settings.template_path_ramon:
-            editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
+    # External script -------------------------------------------------------
+    cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
+    editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
-            # External script -------------------------------------------------------
-            cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
-            editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
-
-            # Rename files in all project directories
-            file_prefix = SETTINGS.file_prefix_tpl.format(
-                symbol=symbol_dukascopy,
-                timeframe=timeframe,
-                direction=direction,
-            )
-            rename_cmd = make_rename_command(file_prefix, project_dirs)
-            editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
-        else:
-            # Rename files in all project directories
-            file_prefix = SETTINGS.file_prefix_tpl.format(
-                symbol=symbol_dukascopy,
-                timeframe=timeframe,
-                direction=direction,
-            )
-            rename_cmd = make_rename_command(file_prefix, project_dirs)
-            editor.patch("CallExternalScript-Task1.xml", patch_call_external, rename_cmd)
-
-        # Date ranges -----------------------------------------------------------
-        build_start = datetime(2018, 1, 1)
-        build_end = datetime(2025, 1, 1)
-
-        if sym_info.first_date is not None:
-            retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
-        else:
-            logging.warning("sym_info.first_date is None; using default retest_start.")
-            retest_start = datetime(2008, 1, 1, tzinfo=timezone.utc)
-        retest_end_edge = datetime(2025, 1, 1)
-        retest_end_strategy = sym_info.last_date if sym_info.last_date is not None else datetime(2025, 1, 1)
-
-        oos_ranges_edge = [(retest_start, datetime(2018, 1, 1))]
-        oos_ranges_strategy = [
-            (retest_start, datetime(2018, 1, 1)),
-            (datetime(2025, 1, 1), sym_info.last_date, "isv") if sym_info.last_date is not None else (datetime(2025, 1, 1), datetime(2025, 1, 1), "isv"),
-        ]
-
-        for i in range(1, 3):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_dates, build_start, build_end)
-
-        for i in range(1, 7):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
-
-        for i in range(7, 14):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
-
-    elif template == Settings.template_path_hc:
-        # Build tasks -----------------------------------------------------------
-        for i in range(1, 4):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_market_side)
-            editor.patch(xml, patch_setup)
-
-        # Retest tasks ----------------------------------------------------------
-        for i in range(1, 14):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_setup)
-
-        # Other markets / Spread / Dates ---------------------------------------
-        editor.patch("Retest-Task3.xml", patch_other_markets)
-        editor.patch("Retest-Task9.xml", patch_other_markets)
-
-        if symbol_darwinex is None:
-            editor.patch("config.xml", patch_disable_task, "Retest-Task3.xml")
-            editor.patch("config.xml", patch_disable_task, "Retest-Task9.xml")
-            editor.patch("Retest-Task4.xml", patch_input_databank, "E-MonteCarlo")
-            editor.patch("Retest-Task10.xml", patch_input_databank, "S-MonteCarlo")
-
-        if sym_info.spread is not None:
-            editor.patch("Retest-Task2.xml", patch_mc_spread, sym_info.spread, sym_info.spread * 3)
-            editor.patch("Retest-Task8.xml", patch_mc_spread, sym_info.spread, sym_info.spread * 3)
-            
-            # Patch HigherPrecision spread for specific tasks
-            editor.patch("Retest-Task1.xml", patch_hbp_spread, sym_info.spread)
-            editor.patch("Retest-Task7.xml", patch_hbp_spread, sym_info.spread)
-
-        else:
-            logging.warning("sym_info.spread is None; skipping patch_mc_spread and patch_hbp_spread.")
-
-        # Save / Load folders ---------------------------------------------------
-        editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, project_dir / "01 - Edge")
-        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, project_dir / "03 - Strategy")
-        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL5")
-        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, None, project_dir / "04 - MQL/MQL4")
-
-        editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
-
-        # External script -------------------------------------------------------
-        cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
-        editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
-
-        # Rename files in all project directories
-        file_prefix = SETTINGS.file_prefix_tpl.format(
-            symbol=symbol_dukascopy,
-            timeframe=timeframe,
-            direction=direction,
-        )
-        rename_cmd = make_rename_command(file_prefix, project_dirs)
-        editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
-
-        # Date ranges -----------------------------------------------------------
-        build_start = datetime(2006, 1, 1) if sym_info.first_date < datetime(2010, 1, 1, tzinfo=timezone.utc) else sym_info.first_date
-        build_end = datetime(2020, 1, 1) if sym_info.first_date < datetime(2010, 1, 1, tzinfo=timezone.utc) else datetime(2021, 1, 1)
-
-        retest_start = build_start
-        retest_end = sym_info.last_date
-
-        oos_ranges = [(build_end, retest_end)]
-
-        for i in range(1, 4):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_dates, build_start, build_end)
-
-        for i in range(1, 7):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end, oos_ranges)
-
-        for i in range(7, 14):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, retest_start, retest_end, oos_ranges)
-
-    elif template == Settings.template_path_ivan:
-        # Build tasks -----------------------------------------------------------
-        for i in range(1, 3):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_market_side)
-            editor.patch(xml, patch_setup, False)
-
-        # Retest tasks ----------------------------------------------------------
-        for i in range(1, 4):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_setup, False)
-        editor.patch("Retest-Task4.xml", patch_setup, True)
-
-        # Other markets / Spread / Dates ---------------------------------------
-        editor.patch("Retest-Task4.xml", patch_other_markets)
-
-        if symbol_darwinex is None:
-            raise ValueError("symbol_darwinex is required for Ivan template")
-
-        # Save / Load folders ---------------------------------------------------
-        editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
-        editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_build_clean_dir)
-        editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
-        editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_retest_dir)
-        editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_retest_dir)
-        editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_dir)
-
-        editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, e_build_base_dir)
-
-        # Date ranges -----------------------------------------------------------
-        date_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
-        date_end = sym_info.last_date
-
-        oos_ranges = [
-            (date_start, datetime(2018, 1, 1)),
-            (datetime(2018, 1, 1), datetime(2020, 1, 1), "isv"),
-            (date_end - timedelta(days=365), date_end),
-        ]
-
-        for i in range(1, 3):
-            xml = f"Build-Task{i}.xml"
-            editor.patch(xml, patch_dates, date_start, date_end, oos_ranges)
-
-        for i in range(1, 5):
-            xml = f"Retest-Task{i}.xml"
-            editor.patch(xml, patch_dates, date_start, date_end, oos_ranges)
-
-        # External script -------------------------------------------------------
-        # Remove ExitAfterBars
-        cmd = make_remove_eab_command(e_build_clean_dir, e_build_base_dir)
-        editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
-
-        # Rename files in all project directories
-        file_prefix = SETTINGS.file_prefix_tpl.format(
-            symbol=symbol_dukascopy,
-            timeframe=timeframe,
-            direction=direction,
-        )
-        rename_cmd = make_rename_command(file_prefix, project_dirs)
-        editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
+    # Rename files in all project directories (symbol = base name before first '_')
+    symbol_base = symbol_dukascopy.split("_")[0]
+    file_prefix = SETTINGS.file_prefix_tpl.format(
+        symbol=symbol_base,
+        timeframe=timeframe,
+        direction=direction,
+    )
+    rename_cmd = make_rename_command(file_prefix, project_dirs)
+    editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
     # ---- finally write out -------------------------------------------------
     editor.write()
@@ -971,12 +758,6 @@ def launch_cli() -> None:
     """Interactive wizard for non-technical users."""
     require_symbols_db()
     QUESTIONS = [
-        Question(
-            key="template",
-            prompt="Project Template (I=Ivan / R=Ramon / H=Hobbiecode): ",
-            validate=lambda s: s.upper() in {"I", "IVAN", "R", "RAMON", "RAMÓN", "H", "HOBBIECODE"},
-            transform=lambda s: "Ramon" if s.upper().startswith("R") else "Hobbiecode" if s.upper().startswith("H") else "Ivan",
-        ),
         Question(
             key="symbol_dukascopy",
             prompt="Symbol Name with Dukascopy data (e.g. EURUSD_dukascopy_darwinex): ",
@@ -1242,7 +1023,6 @@ def main() -> None:
 
     # newproject ------------------------------------------------------------
     p_new = subparsers.add_parser("newproject", help="scaffold a new SQX project")
-    p_new.add_argument("template", choices=["Ivan", "Ramon", "Hobbiecode"])
     p_new.add_argument("symbol_dukascopy")
     p_new.add_argument("symbol_darwinex")
     p_new.add_argument("timeframe")

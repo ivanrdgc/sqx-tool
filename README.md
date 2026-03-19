@@ -46,7 +46,7 @@ Ejecuta el archivo **`run.bat`** (en Windows) o **`run.sh`** (en Linux/Mac) para
 - Creación automática de proyectos SQX desde plantillas
 - Configuración automática de símbolos, timeframes y direcciones
 - Gestión de comisiones y swaps
-- Soporte para múltiples plantillas (Ivan, Ramon, Hobbiecode)
+- Creación de proyectos desde plantilla Ramon Mensual
 - Eliminación automática de ExitAfterBars
 - Renombrado automático de archivos según convenciones
 
