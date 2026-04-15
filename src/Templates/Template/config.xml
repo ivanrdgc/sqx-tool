@@ -1,0 +1,48 @@
+<Project name="Template" version="143.2708">
+  <Tasks>
+    <Task type="Build" name="Build strategies" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Build-Task1.xml" title="E-Build Edge" />
+    <Task type="Retest" name="Retest strategies" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task1.xml" title="E-OOS1" />
+    <Task type="Retest" name="Retest strategies 2" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task2.xml" title="E-Other Markets" />
+    <Task type="Retest" name="Retest strategies 3" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task3.xml" title="E-Spread" />
+    <Task type="Retest" name="Retest strategies 4" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task4.xml" title="E-Sys Param" />
+    <Task type="Retest" name="Retest strategies 5" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task5.xml" title="E-WFM" />
+    <Task type="Retest" name="Retest strategies 6" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task6.xml" title="E-Clean Edge" />
+    <Task type="ClearDatabanks" name="Clear databanks" taskXMLFile="ClearDatabanks-Task1.xml" title="E-Clear databanks Edge" active="true" />
+    <Task type="GoToTask" name="Go To Task" taskXMLFile="GoToTask-Task1.xml" title="Back to Build Edge" active="true" />
+    <Task type="SaveToFiles" name="Save to files" taskXMLFile="SaveToFiles-Task1.xml" active="true" />
+    <Task type="Notification" name="Notification" taskXMLFile="Notification-Task1.xml" />
+    <Task type="CallExternalScript" name="Call external script" taskXMLFile="CallExternalScript-Task1.xml" title="S-Remove Exit After Bars" active="true" />
+    <Task type="LoadFromFiles" name="Load from files" taskXMLFile="LoadFromFiles-Task1.xml" title="S-Load Edges" active="true" />
+    <Task type="Build" name="Build strategies 2" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Build-Task2.xml" title="S-Build Strategy" />
+    <Task type="ClearDatabanks" name="Clear databanks 2" taskXMLFile="ClearDatabanks-Task2.xml" title="E-Clear Edges" />
+    <Task type="Retest" name="Retest strategies 7" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task7.xml" title="S-OOS1" />
+    <Task type="Retest" name="Retest strategies 8" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task8.xml" title="S-Other Markets" />
+    <Task type="Retest" name="Retest strategies 9" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task9.xml" title="S-Spread" />
+    <Task type="Retest" name="Retest strategies 10" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task10.xml" title="S-Sys Param" />
+    <Task type="Retest" name="Retest strategies 11" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task11.xml" title="S-WFM" />
+    <Task type="Retest" name="Retest strategies 12" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task12.xml" title="S-Clean Strategy" />
+    <Task type="ClearDatabanks" name="Clear databanks 3" taskXMLFile="ClearDatabanks-Task3.xml" title="Clear databanks Strategy" active="true" />
+    <Task type="SaveToFiles" name="Save to files 2" taskXMLFile="SaveToFiles-Task2.xml" title="Save Strategy" active="true" />
+    <Task type="Retest" name="Retest strategies 13" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task13.xml" title="S-Darwinex Tick" />
+    <Task type="SaveToFiles" name="Save to files 3" taskXMLFile="SaveToFiles-Task3.xml" title="Save Darwinex" />
+    <Task type="CallExternalScript" name="Call external script 2" taskXMLFile="CallExternalScript-Task2.xml" title="Rename Filenames" active="true" />
+  </Tasks>
+  <Databanks>
+    <Databank name="E-Build" view="Default - Main data" syncType="Auto-sync every 1 hour" position="100" />
+    <Databank name="E-OOS1" view="Default - Main data" syncType="Auto-sync every 1 hour" position="200" />
+    <Databank name="E-Other Markets" view="Default - Main data" syncType="Auto-sync every 1 hour" position="300" />
+    <Databank name="E-Spread" view="Default - Main data" syncType="Auto-sync every 1 hour" position="400" />
+    <Databank name="E-Sys Param" view="Default - Main data" syncType="Auto-sync every 1 hour" position="500" />
+    <Databank name="E-WFM" view="Default - Main data" syncType="Auto-sync every 1 hour" position="600" />
+    <Databank name="E-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="700" />
+    <Databank name="To Strategy" view="Default - Main data" syncType="Auto-sync every 1 hour" position="800" />
+    <Databank name="S-Build" view="Default - Main data" syncType="Auto-sync every 1 hour" position="900" />
+    <Databank name="S-OOS1" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1000" />
+    <Databank name="S-Other Markets" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1100" />
+    <Databank name="S-Spread" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1200" />
+    <Databank name="S-Sys Param" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1300" />
+    <Databank name="S-WFM" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1400" />
+    <Databank name="S-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1500" />
+    <Databank name="S-Darwinex" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1600" />
+  </Databanks>
+</Project>

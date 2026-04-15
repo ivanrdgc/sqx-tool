@@ -1,0 +1,28 @@
+<Settings>
+  <ClearDatabanks>
+    <Databank name="S-Build" />
+    <Databank name="S-Other Markets" />
+    <Databank name="S-Spread" />
+    <Databank name="S-OOS1" />
+    <Databank name="S-Sys Param" />
+    <Databank name="S-WFM" />
+  </ClearDatabanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

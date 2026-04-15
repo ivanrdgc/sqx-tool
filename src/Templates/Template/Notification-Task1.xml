@@ -1,0 +1,31 @@
+<Settings>
+  <Notification>
+    <Type>email</Type>
+    <Email>ivanrdgc@gmail.com</Email>
+    <Wait>true</Wait>
+  </Notification>
+  <Databanks>
+    <Databank label="Output databank" name="Output" value="Results" />
+  </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <WhatToBuild>
+    <StrategyType type="simple" additionalCharts="1" templateFile="" improveType="strategy" strategyFile="" improveDatabank="Strategies to improve" />
+  </WhatToBuild>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

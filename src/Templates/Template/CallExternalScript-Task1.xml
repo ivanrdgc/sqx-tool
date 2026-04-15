@@ -1,0 +1,44 @@
+<Settings>
+  <CallExternalScript>
+    <File params="&quot;C:\SQX_142\Hobbiecode_CustomProjects_v02_web\src\sqx_tool.py&quot; remove_eab &quot;C:\SQX_142\Hobbiecode_CustomProjects_v02_web\Projects\XAUUSD_M1_dukas\20251211_165203_XAUUSD_M1_dukas_H1_Long\01 - Edge&quot; &quot;C:\SQX_142\Hobbiecode_CustomProjects_v02_web\Projects\XAUUSD_M1_dukas\20251211_165203_XAUUSD_M1_dukas_H1_Long\02 - To Strategy&quot;">C:\SQX_142\Hobbiecode_CustomProjects_v02_web\src\python\python.exe</File>
+    <WaitFor hours="0" minutes="0">end</WaitFor>
+  </CallExternalScript>
+  <Databanks>
+    <Databank label="Output databank" name="Output" value="Results" />
+  </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <PartsToImprove improveATM="false">
+    <EntryRules symmetry="false">
+      <LongImprovement use="false" action="replace" />
+      <ShortImprovement use="false" action="replace" />
+    </EntryRules>
+    <OrderTypes>
+      <LongImprovement use="true" />
+      <ShortImprovement use="true" />
+    </OrderTypes>
+    <ExitRules symmetry="false">
+      <LongImprovement use="true" action="add-or-replace" />
+      <ShortImprovement use="true" action="add-or-replace" />
+    </ExitRules>
+  </PartsToImprove>
+  <WhatToBuild>
+    <StrategyType type="improve" additionalCharts="2" improveType="databank" improveDatabank="To Strategy" />
+  </WhatToBuild>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

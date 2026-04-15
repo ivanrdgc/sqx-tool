@@ -42,7 +42,7 @@ class Settings:
     """All file‑system locations & naming conventions live here."""
     
     script_dir: Path = Path(__file__).resolve().parent
-    template_path: Path = (script_dir / "Templates" / "Template.cfx").resolve()
+    template_dir: Path = (script_dir / "Templates" / "Template").resolve()
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
     unix_sh: Path = (script_dir / "../run.sh").resolve()
@@ -136,11 +136,21 @@ XMLMutator = Callable[..., None]
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ZipEditor:
-    """Utility for reading, patching, and writing zip archives containing XML files."""
-    def __init__(self, zip_path: Path) -> None:
-        self.zip_path = zip_path
-        with zipfile.ZipFile(zip_path, "r") as zin:
-            self._files = {i.filename: zin.read(i.filename) for i in zin.infolist()}
+    """Utility for reading, patching, and writing zip archives containing XML files.
+
+    Accepts either a zip archive or a directory of extracted files as source.
+    """
+    def __init__(self, source: Path) -> None:
+        self.zip_path = source
+        self._files: dict[str, bytes] = {}
+        if source.is_dir():
+            for p in sorted(source.rglob("*")):
+                if p.is_file():
+                    entry = p.relative_to(source).as_posix()
+                    self._files[entry] = p.read_bytes()
+        else:
+            with zipfile.ZipFile(source, "r") as zin:
+                self._files = {i.filename: zin.read(i.filename) for i in zin.infolist()}
 
     def patch(self, entry_name: str, mutator: XMLMutator, *args, **kwargs) -> None:
         if entry_name not in self._files:
@@ -363,7 +373,7 @@ def newproject(args: argparse.Namespace) -> None:
     logger.debug("newproject(args=%s)", args)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    template: Path = SETTINGS.template_path
+    template: Path = SETTINGS.template_dir
     symbol_dukascopy: str = args.symbol_dukascopy
     symbol_darwinex: Optional[str] = args.symbol_darwinex or None
     timeframe: str = args.timeframe.upper()
@@ -383,7 +393,7 @@ def newproject(args: argparse.Namespace) -> None:
     sym_info = get_symbol_info(symbol_dukascopy)
     sym_2_info = get_symbol_info(symbol_darwinex) if symbol_darwinex else sym_info
 
-    if not template.is_file():
+    if not template.is_dir():
         logging.error("template not found in %s", template)
         print(f"template not found in {template}")
         return
@@ -408,11 +418,9 @@ def newproject(args: argparse.Namespace) -> None:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.trace("Created subdir %s", sub)
 
-    # ---- 4. Copy template --------------------------------------------------
+    # ---- 4. Prepare output .cfx path --------------------------------------
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
-    shutil.copyfile(template, dest_cfx)
-    log("copied template to %s", dest_cfx)
-    logger.debug("Copied template from %s to %s", template, dest_cfx)
+    logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
     edge_dir = (project_dir / "01 - Edge").resolve()
     to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
     strategy_dir = (project_dir / "03 - Strategy").resolve()
@@ -637,7 +645,7 @@ def newproject(args: argparse.Namespace) -> None:
     # ------------------------------------------------------------------
     #  Perform all mutations in a *single* ZipEditor instance ---------------
     # ------------------------------------------------------------------
-    editor = ZipEditor(dest_cfx)
+    editor = ZipEditor(SETTINGS.template_dir)
 
     # Date ranges -----------------------------------------------------------
     first_day = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
@@ -718,7 +726,7 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
 
     # ---- finally write out -------------------------------------------------
-    editor.write()
+    editor.write(dest_cfx)
     log("project %s created successfully", project_dir.name)
     logging.debug(f"Project {project_dir.name} created successfully at {project_dir}")
 

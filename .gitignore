@@ -7,9 +7,8 @@ Projects/*
 # Log files
 src/sqx-tool.log
 
-# Template contents
-src/Templates/*
-!src/Templates/*.cfx
+# Template .cfx is built on demand from src/Templates/Template/
+src/Templates/*.cfx
 
 # Python cache files
 __pycache__/

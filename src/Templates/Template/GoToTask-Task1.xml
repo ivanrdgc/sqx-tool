@@ -1,0 +1,30 @@
+<Settings>
+  <GoToTask task="Build strategies" resetEvaluatedCycles="false" resetActivatedCycles="false">
+    <Conditions>
+      <Condition type="ResultsCount">
+        <Field type="databank">E-Final</Field>
+        <Field type="comparator">&lt;</Field>
+        <Field type="number">500</Field>
+      </Condition>
+    </Conditions>
+  </GoToTask>
+  <Databanks />
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <SequentialOptimization />
+    <RetestWithHigherPrecision />
+  </CrossChecks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

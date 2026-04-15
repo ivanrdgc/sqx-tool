@@ -1,0 +1,672 @@
+<Settings>
+  <Data>
+    <Setups>
+      <Setup dateFrom="2008.01.01" dateTo="2025.12.11" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+        <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
+        <Commissions>
+          <Method type="PercentageBased" use="true">
+            <Params>
+              <Param key="Commission" className="PercentageBased">0.01</Param>
+            </Params>
+          </Method>
+        </Commissions>
+        <Swap use="true" type="points" long="-67.80" short="38.40" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+      </Setup>
+    </Setups>
+    <OutOfSample showGraph="false">
+      <Range dateFrom="2008.01.01" dateTo="2018.01.01" />
+      <Range dateFrom="2025.01.01" dateTo="2025.12.11" type="isv" />
+    </OutOfSample>
+  </Data>
+  <Rankings type="never">
+    <MaxStrategies>1000</MaxStrategies>
+    <FitnessCriteria method="ComputeFromStrategyResult" useFitnessByIndex="false">
+      <Settings>
+        <Ranking type="ReturnDDRatio" />
+      </Settings>
+    </FitnessCriteria>
+    <ConditionsType>1</ConditionsType>
+    <Conditions>
+      <Condition use="false">
+        <Left-Side valueType="column">
+          <Column-Value column="NumberOfTrades" columnType="0" format="Integer" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NumberOfTrades" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="300" />
+        </Right-Side>
+      </Condition>
+      <Condition use="false">
+        <Left-Side valueType="column">
+          <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnDDRatio" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="3" />
+        </Right-Side>
+      </Condition>
+      <Condition use="false">
+        <Left-Side valueType="column">
+          <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2Pct" resultType="main" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnDDRatio" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="2" />
+        </Right-Side>
+      </Condition>
+    </Conditions>
+    <DeleteFailedStrategies>true</DeleteFailedStrategies>
+    <ForceRunCrossChecks>false</ForceRunCrossChecks>
+    <AutomaticDismissal warnings="true">
+      <Problem code="1" dismiss="true" />
+      <Problem code="4" dismiss="true" />
+      <Problem code="1024" dismiss="true" />
+      <Problem code="16" dismiss="true" />
+      <Problem code="32" dismiss="true" />
+      <Problem code="64" dismiss="true" />
+      <Problem code="256" dismiss="true" />
+      <Problem code="2" dismiss="true" />
+      <Problem code="512" dismiss="true" />
+      <Problem code="8" dismiss="true" />
+    </AutomaticDismissal>
+    <StopCondition type="databank-full" passedStrategies="1000" restartCount="5" days="0" hours="0" minutes="0" />
+    <FitPortfolio active="false" databank="Existing portfolio">
+      <Correlation max="0.3" type="ProfitLoss" period="10" allowNegative="false" addEmptyPeriods="false" />
+    </FitPortfolio>
+    <CustomAnalysis method="none" filter="false" inputArgs="" />
+  </Rankings>
+  <CrossChecks use="true" evaluateAll="false">
+    <RetestOnAdditionalMarkets use="false" />
+    <WalkForwardOptimization use="false">
+      <Settings>
+        <WalkForward type="1" period="10" optimization="15">
+          <Param1 value="20" />
+          <Param2 value="10" />
+        </WalkForward>
+        <OptimizePeriods>true</OptimizePeriods>
+        <OptimizeExitTypes>true</OptimizeExitTypes>
+        <MaxTests>100</MaxTests>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions thresholdPct="80">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="0" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="60" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="WFPctOfProfitableRuns" columnType="33" name="WF Special Percentage of profitable runs" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFPctOfProfitableRuns" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="70" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value name="WF Special Max profit in one run as % of total" column="WFMaxProfitByRunInPct" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxProfitByRunInPct" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="50" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="WFMinTradesInRun" columnType="33" name="WF Special Min trades in one run" format="Integer" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFMinTradesInRun" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="20" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value name="WF Special Max % Drawdown in one run" column="WFMaxPctDDbyRun" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxPctDDbyRun" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="25" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" name="Drawdown" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="130" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnDDRatio" columnType="0" name="Ret/DD Ratio" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ReturnDDRatio" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="60" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="StagnationPct" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="30" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </WalkForwardOptimization>
+    <RetestWithHigherPrecision use="true">
+      <Settings>
+        <Precision>2</Precision>
+        <Spread>45</Spread>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions CrossCheck="RetestWithHigherPrecision">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestWithHigherPrecision" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="0" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="NumberOfTrades" columnType="0" format="Integer" resultType="RetestWithHigherPrecision" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NumberOfTrades" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="NumberOfTrades" columnType="0" name="# of trades" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="undefined" market="undefined" subresult="undefined" pctRatio="80" class="NumberOfTrades" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" format="Decimal2Pct" resultType="RetestWithHigherPrecision" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="DrawdownPct" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" name="Max DD %" format="Decimal2Pct" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="undefined" market="undefined" subresult="undefined" pctRatio="130" class="DrawdownPct" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </RetestWithHigherPrecision>
+    <MonteCarloRetest use="false">
+      <Settings>
+        <Methods>
+          <Method use="true" type="RandomizeHistoryData">
+            <Params>
+              <Param key="ProbabilityUp" type="Integer">30</Param>
+              <Param key="ProbabilityDown" type="Integer">30</Param>
+              <Param key="MaxChangeUp" type="Integer">30</Param>
+              <Param key="MaxChangeDown" type="Integer">30</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeMinDistance">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">10.0</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeSlippage">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeSpread">
+            <Params>
+              <Param key="Min" type="Double">1.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeStartingBar">
+            <Params>
+              <Param key="MaxChange" type="Integer">100</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeStrategyParameters">
+            <Params>
+              <Param key="Probability" type="Integer">10</Param>
+              <Param key="MaxChange" type="Integer">20</Param>
+              <Param key="Symmetric" type="Boolean">true</Param>
+            </Params>
+          </Method>
+        </Methods>
+        <NumberOfSimulations>10</NumberOfSimulations>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions CrossCheck="MonteCarloRetest">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" name="Net profit" format="Decimal2PL" resultType="MonteCarloRetest" direction="0" sampleType="10" plType="10" confidenceLevel="80" market="1" subresult="30" pctRatio="0" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" name="Net profit" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="90" market="1" subresult="30" pctRatio="50" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" name="Max DD %" format="Decimal2Pct" resultType="MonteCarloRetest" direction="0" sampleType="127" plType="10" confidenceLevel="80" market="1" subresult="30" pctRatio="0" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" name="Max DD %" dataType="Decimal2Pct" direction="0" sampleType="127" resultType="main" pctRatio="200" confidenceLevel="90" chartSetup="10" plType="10" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </MonteCarloRetest>
+    <WalkForwardMatrix use="false">
+      <Settings>
+        <WalkForward type="1" period="10" optimization="15">
+          <Param1 value="undefined" start="10" stop="40" step="10" />
+          <Param2 value="undefined" start="5" stop="20" step="5" />
+        </WalkForward>
+        <OptimizePeriods>true</OptimizePeriods>
+        <OptimizeExitTypes>true</OptimizeExitTypes>
+        <MaxTests>100</MaxTests>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions thresholdPct="80" robCombRows="2" robCombCols="2" robMinComb="0">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="0" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="60" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="WFPctOfProfitableRuns" columnType="33" name="WF Special Percentage of profitable runs" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFPctOfProfitableRuns" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="70" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value name="WF Special Max profit in one run as % of total" column="WFMaxProfitByRunInPct" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxProfitByRunInPct" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="50" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="WFMinTradesInRun" columnType="33" name="WF Special Min trades in one run" format="Integer" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFMinTradesInRun" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="20" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value name="WF Special Max % Drawdown in one run" column="WFMaxPctDDbyRun" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxPctDDbyRun" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="25" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" name="Drawdown" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="130" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnDDRatio" columnType="0" name="Ret/DD Ratio" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ReturnDDRatio" />
+            </Left-Side>
+            <Comparator value="&gt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="60" />
+            </Right-Side>
+          </Condition>
+          <Condition use="false">
+            <Left-Side valueType="column">
+              <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="StagnationPct" />
+            </Left-Side>
+            <Comparator value="&lt;" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="30" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </WalkForwardMatrix>
+    <MonteCarloManipulation use="false">
+      <Settings>
+        <Methods>
+          <Method use="true" type="RandomizeTradesOrder">
+            <Params>
+              <Param key="Method" type="String">resampling</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomlySkipTrades">
+            <Params>
+              <Param key="Probability" type="Integer">10</Param>
+            </Params>
+          </Method>
+        </Methods>
+        <NumberOfSimulations>30</NumberOfSimulations>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions CrossCheck="MonteCarloManipulation">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" name="Net profit" format="Decimal2PL" resultType="MonteCarloManipulation" direction="0" sampleType="10" plType="10" confidenceLevel="80" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" name="Net profit" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="60" class="NetProfit" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" name="Max DD %" format="Decimal2Pct" resultType="MonteCarloManipulation" direction="0" sampleType="10" plType="10" confidenceLevel="80" market="1" subresult="30" pctRatio="0" class="DrawdownPct" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="DrawdownPct" columnType="0" name="Max DD %" format="Decimal2Pct" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="175" class="DrawdownPct" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </MonteCarloManipulation>
+    <OptProfileSysParamPermutation use="false">
+      <Settings>
+        <OptimPeriods>true</OptimPeriods>
+        <OptimExitTypes>true</OptimExitTypes>
+        <MaxTests>1000</MaxTests>
+      </Settings>
+      <AcceptanceSettings>
+        <ProfitOptPct>30</ProfitOptPct>
+        <AvgProfit>0</AvgProfit>
+        <UniformDistrChanges>5</UniformDistrChanges>
+        <StdevAvgProfit>1</StdevAvgProfit>
+        <EvalProfitOptCheck>true</EvalProfitOptCheck>
+        <EvalAvgProfitCheck>true</EvalAvgProfitCheck>
+        <EvalUniformDistrCheck>true</EvalUniformDistrCheck>
+        <EvalTopProfitCheck>true</EvalTopProfitCheck>
+        <Conditions />
+      </AcceptanceSettings>
+    </OptProfileSysParamPermutation>
+    <WhatIf use="false">
+      <Settings>
+        <Methods>
+          <Method use="false" type="ByDays">
+            <Params>
+              <Param key="Monday" type="Boolean">true</Param>
+              <Param key="Tuesday" type="Boolean">true</Param>
+              <Param key="Wednesday" type="Boolean">true</Param>
+              <Param key="Thursday" type="Boolean">true</Param>
+              <Param key="Friday" type="Boolean">true</Param>
+              <Param key="Saturday" type="Boolean">true</Param>
+              <Param key="Sunday" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ByHours">
+            <Params>
+              <Param key="H0" type="Boolean">true</Param>
+              <Param key="H1" type="Boolean">true</Param>
+              <Param key="H2" type="Boolean">true</Param>
+              <Param key="H3" type="Boolean">true</Param>
+              <Param key="H4" type="Boolean">true</Param>
+              <Param key="H5" type="Boolean">true</Param>
+              <Param key="H6" type="Boolean">true</Param>
+              <Param key="H7" type="Boolean">true</Param>
+              <Param key="H8" type="Boolean">true</Param>
+              <Param key="H9" type="Boolean">true</Param>
+              <Param key="H10" type="Boolean">true</Param>
+              <Param key="H11" type="Boolean">true</Param>
+              <Param key="H12" type="Boolean">true</Param>
+              <Param key="H13" type="Boolean">true</Param>
+              <Param key="H14" type="Boolean">true</Param>
+              <Param key="H15" type="Boolean">true</Param>
+              <Param key="H16" type="Boolean">true</Param>
+              <Param key="H17" type="Boolean">true</Param>
+              <Param key="H18" type="Boolean">true</Param>
+              <Param key="H19" type="Boolean">true</Param>
+              <Param key="H20" type="Boolean">true</Param>
+              <Param key="H21" type="Boolean">true</Param>
+              <Param key="H22" type="Boolean">true</Param>
+              <Param key="H23" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ByMonths">
+            <Params>
+              <Param key="January" type="Boolean">true</Param>
+              <Param key="February" type="Boolean">true</Param>
+              <Param key="March" type="Boolean">true</Param>
+              <Param key="April" type="Boolean">true</Param>
+              <Param key="May" type="Boolean">true</Param>
+              <Param key="June" type="Boolean">true</Param>
+              <Param key="July" type="Boolean">true</Param>
+              <Param key="August" type="Boolean">true</Param>
+              <Param key="September" type="Boolean">true</Param>
+              <Param key="October" type="Boolean">true</Param>
+              <Param key="November" type="Boolean">true</Param>
+              <Param key="December" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ExcludePctTradesWithBiggestPl">
+            <Params>
+              <Param key="TradesPct" type="Integer">5</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ExcludePctTradesWithLowestPl">
+            <Params>
+              <Param key="TradesPct" type="Integer">5</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ExcludeShortTrades">
+            <Params>
+              <Param key="TradesPct" type="Integer">5</Param>
+              <Param key="Minutes" type="Integer">10</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="ExcludeTradesWithBiggestPl">
+            <Params>
+              <Param key="Trades" type="Integer">2</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="ExcludeTradesWithLowestPl">
+            <Params>
+              <Param key="Trades" type="Integer">2</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="ExludeOverlappingTrades">
+            <Params />
+          </Method>
+          <Method use="false" type="RemoveBalanceTransactions">
+            <Params />
+          </Method>
+          <Method use="false" type="RemovePendingTrades">
+            <Params />
+          </Method>
+          <Method use="false" type="Swap">
+            <Params>
+              <Param key="swapLongInput" type="Double">10.0</Param>
+              <Param key="swapShortInput" type="Double">-10.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="TakeEverySecondTrade">
+            <Params />
+          </Method>
+          <Method use="false" type="TakeMaxTradesPerDay">
+            <Params>
+              <Param key="Trades" type="Integer">2</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="UseFixedLots">
+            <Params>
+              <Param key="Size" type="Double">0.1</Param>
+            </Params>
+          </Method>
+        </Methods>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions />
+      </AcceptanceSettings>
+    </WhatIf>
+    <SequentialOptimization use="false" />
+  </CrossChecks>
+  <Notes>&lt;div&gt;&lt;br&gt;&lt;/div&gt;</Notes>
+  <ATMs enable="false" scaleOutType="1" sizeDecimals="1" minSize="0.1">
+    <ATM id="global">
+      <Exits />
+    </ATM>
+    <GenerateConfig>
+      <Types>
+        <SLMultiple use="false" minMultiplier="0.5" maxMultiplier="2" />
+        <PTMultiple use="false" minMultiplier="0.5" maxMultiplier="2" />
+        <FixedProfit use="false" useFixedPips="false" minPips="30" maxPips="80" useATR="false" minMultiplier="1.5" maxMultiplier="3" minATRPeriod="20" maxATRPeriod="20" />
+        <TrailingStop use="false" useFixedPips="false" minPips="30" maxPips="80" useATR="false" minMultiplier="1.5" maxMultiplier="3" minATRPeriod="20" maxATRPeriod="20" />
+        <None use="false" useLimit="false" minBars="50" maxBars="50" />
+      </Types>
+      <Scenarios>
+        <TwoExits exit5050="false" exit3366="false" exit6633="false" />
+        <ThreeExits exit333333="false" exit502525="false" exit255025="false" exit252550="false" />
+      </Scenarios>
+    </GenerateConfig>
+  </ATMs>
+  <Databanks retestSelected="false">
+    <Databank label="Output databank" name="Output" value="S-Spread" />
+    <Databank label="Input databank" name="Input" value="S-Other Markets" />
+  </Databanks>
+  <Databanks>
+    <Databank label="Output databank" name="Output" value="Results" />
+    <Databank label="Input databank" name="Input" value="Results" />
+  </Databanks>
+  <Options customSettings="false">
+    <BuildTradingOptions>
+      <Params>
+        <Param key="DontTradeOnWeekends" className="DontTradeOnWeekends">true</Param>
+        <Param key="FridayCloseTime" className="DontTradeOnWeekends">79200</Param>
+        <Param key="SundayOpenTime" className="DontTradeOnWeekends">3600</Param>
+        <Param key="ExitAtEndOfDay" className="ExitAtEndOfDay">false</Param>
+        <Param key="EODExitTime" className="ExitAtEndOfDay">83040</Param>
+        <Param key="ExitOnFriday" className="ExitOnFriday">true</Param>
+        <Param key="FridayExitTime" className="ExitOnFriday">78600</Param>
+        <Param key="LimitTimeRange" className="LimitTimeRange">true</Param>
+        <Param key="SignalTimeRangeFrom" className="LimitTimeRange">5400</Param>
+        <Param key="SignalTimeRangeTo" className="LimitTimeRange">84600</Param>
+        <Param key="ExitAtEndOfRange" className="LimitTimeRange">true</Param>
+        <Param key="OrderTypeToExit" className="LimitTimeRange">2</Param>
+        <Param key="MaxDistanceFromMarket" className="MaxDistanceFromMarket">false</Param>
+        <Param key="MaxDistancePct" className="MaxDistanceFromMarket">6</Param>
+        <Param key="MaxTradesPerDay" className="MaxTradesPerDay">0</Param>
+        <Param key="MinimumSL" className="MinMaxSLPT">0</Param>
+        <Param key="MaximumSL" className="MinMaxSLPT">0</Param>
+        <Param key="MinimumPT" className="MinMaxSLPT">0</Param>
+        <Param key="MaximumPT" className="MinMaxSLPT">0</Param>
+        <Param key="UseInitialSLPT" className="UseInitialSLPT">false</Param>
+        <Param key="Session" className="SessionOption">No Session</Param>
+        <Param key="ReservedBars" className="ReservedBars">50</Param>
+        <Param key="StoreChartData" className="StoreChartData">false</Param>
+        <Param key="RealisticGapsHandling" className="RealisticGapsHandling">true</Param>
+        <Param key="PickerEntryType" className="StockpickerOptions">5</Param>
+        <Param key="PickerExitType" className="StockpickerOptions">5</Param>
+        <Param key="PickerEndOfDayLong" className="StockpickerOptions">5</Param>
+        <Param key="PickerEndOfDayShort" className="StockpickerOptions">5</Param>
+        <Param key="PickerMaxOpenPositionsLong" className="StockpickerOptions">8</Param>
+        <Param key="PickerMaxOpenPositionsShort" className="StockpickerOptions">8</Param>
+        <Param key="PickerStoreLogs" className="StockpickerOptions">false</Param>
+        <Param key="PickerAllowBetterLimitFill" className="StockpickerOptions">false</Param>
+        <Param key="PickerBroker" className="BrokerOption">No filter</Param>
+        <Param key="MarketOpenSession" className="MarketOpenSession">No Session</Param>
+        <Param key="LimitOver" className="LimitOver">0</Param>
+      </Params>
+    </BuildTradingOptions>
+  </Options>
+  <RiskMoneyManagement customSettings="false">
+    <MoneyManagement>
+      <Method type="FixedSize" use="false">
+        <Params>
+          <Param key="Size" className="FixedSize">1</Param>
+        </Params>
+      </Method>
+      <InitialCapital>100000</InitialCapital>
+      <Method type="RiskFixedBalancePct" use="false">
+        <Params>
+          <Param key="Risk" className="RiskFixedBalancePct">5</Param>
+          <Param key="Decimals" className="RiskFixedBalancePct">1</Param>
+          <Param key="LotsIfNoMM" className="RiskFixedBalancePct">1</Param>
+          <Param key="MaxLots" className="RiskFixedBalancePct">5</Param>
+        </Params>
+      </Method>
+      <Method type="RiskFixedPctOfAccount" use="false">
+        <Parameter key="Risk">5</Parameter>
+        <Parameter key="StopLoss">100</Parameter>
+        <Parameter key="Decimals">1</Parameter>
+        <Parameter key="LotsIfNoMM">1</Parameter>
+        <Parameter key="MaxLots">5</Parameter>
+      </Method>
+      <Method type="FixedAmount" use="true">
+        <Params>
+          <Param key="RiskedMoney" className="FixedAmount">100</Param>
+          <Param key="Decimals" className="FixedAmount">2</Param>
+          <Param key="LotsIfNoMM" className="FixedAmount">0</Param>
+          <Param key="MaxLots" className="FixedAmount">1000</Param>
+        </Params>
+      </Method>
+      <Method type="StocksSizeByPrice" use="false">
+        <Params>
+          <Param key="UseAccountBalance" className="StocksSizeByPrice">true</Param>
+          <Param key="MaxSize" className="StocksSizeByPrice">100</Param>
+        </Params>
+      </Method>
+    </MoneyManagement>
+    <RiskManagement maxDrawdown="30">
+      <Method type="AllowAllTrades" use="true">
+        <Params />
+      </Method>
+    </RiskManagement>
+  </RiskMoneyManagement>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

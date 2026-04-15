@@ -1,0 +1,29 @@
+<Settings>
+  <SaveToFiles>
+    <DestDirectorySqx />
+    <DestDirectoryStr />
+    <SaveInSqxFormat>true</SaveInSqxFormat>
+    <SaveInStrFormat>false</SaveInStrFormat>
+  </SaveToFiles>
+  <Databanks>
+    <Databank label="Input databank" name="Input" value="Results" />
+  </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

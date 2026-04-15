@@ -1,0 +1,38 @@
+<Settings>
+  <ClearDatabanks>
+    <Databank name="E-Final" />
+    <Databank name="To Strategy" />
+  </ClearDatabanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <PartsToImprove improveATM="false">
+    <EntryRules symmetry="true">
+      <LongImprovement use="false" action="replace" />
+      <ShortImprovement use="false" action="replace" />
+    </EntryRules>
+    <OrderTypes>
+      <LongImprovement use="false" />
+      <ShortImprovement use="false" />
+    </OrderTypes>
+    <ExitRules symmetry="true">
+      <LongImprovement use="true" action="add" />
+      <ShortImprovement use="true" action="add" />
+    </ExitRules>
+  </PartsToImprove>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>
