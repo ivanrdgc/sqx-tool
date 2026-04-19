@@ -22,13 +22,12 @@ import logging
 import os
 import platform
 import re
-import shutil
 import sqlite3
 import sys
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, date, timezone
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast, Callable, Optional, Tuple, Any, List, Union
+from typing import Callable, Optional, Tuple, Any, List, Union
 import zipfile
 import multiprocessing as mp
 import xml.etree.ElementTree as ET
@@ -42,7 +41,7 @@ class Settings:
     """All file‑system locations & naming conventions live here."""
     
     script_dir: Path = Path(__file__).resolve().parent
-    template_dir: Path = (script_dir / "Templates" / "Template").resolve()
+    template_dir: Path = (script_dir / "Template").resolve()
     projects_base: Path = (script_dir / "../Projects").resolve()
     log_file: Path = (script_dir / "sqx-tool.log").resolve()
     unix_sh: Path = (script_dir / "../run.sh").resolve()
@@ -76,12 +75,6 @@ def require_symbols_db() -> None:
 # Add a TRACE level below DEBUG for ultra-verbose logging
 TRACE_LEVEL = 5
 logging.addLevelName(TRACE_LEVEL, "TRACE")
-
-def _trace(self, msg, *args, **kwargs):
-    if self.isEnabledFor(TRACE_LEVEL):
-        self._log(TRACE_LEVEL, msg, args, **kwargs)
-
-logging.Logger.trace = _trace  # type: ignore[attr-defined]
 
 
 def configure_logging(verbosity: int = 0, quiet: int = 0) -> None:
@@ -152,7 +145,7 @@ class ZipEditor:
             with zipfile.ZipFile(source, "r") as zin:
                 self._files = {i.filename: zin.read(i.filename) for i in zin.infolist()}
 
-    def patch(self, entry_name: str, mutator: XMLMutator, *args, **kwargs) -> None:
+    def patch(self, entry_name: str, mutator: XMLMutator, *args: Any, **kwargs: Any) -> None:
         if entry_name not in self._files:
             logger.debug("Entry %s not found in zip archive.", entry_name)
             return
@@ -323,14 +316,14 @@ def remove_eab(args: argparse.Namespace) -> None:
     dst_dir.mkdir(parents=True, exist_ok=True)
     files = [p for p in src_dir.iterdir() if p.suffix.lower() == ".sqx"]
     log("found %d .sqx files in %s", len(files), src_dir)
-    logger.trace("Files to process: %s", [str(f) for f in files])
+    logger.log(TRACE_LEVEL, "Files to process: %s", [str(f) for f in files])
 
     tasks: List[Tuple[Path, Path]] = [(p, dst_dir) for p in files]
 
     with cf.ProcessPoolExecutor(max_workers=args.jobs) as pool:
         for basename, status in pool.map(_strip_eab_single, tasks):
             log("  %-30s %s", basename, status)
-            logger.trace("Processed %s: %s", basename, status)
+            logger.log(TRACE_LEVEL, "Processed %s: %s", basename, status)
 
 
 def remove_eab_b64(args: argparse.Namespace) -> None:
@@ -416,7 +409,7 @@ def newproject(args: argparse.Namespace) -> None:
         "03 - Strategy",
     ]:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
-        logger.trace("Created subdir %s", sub)
+        logger.log(TRACE_LEVEL, "Created subdir %s", sub)
 
     # ---- 4. Prepare output .cfx path --------------------------------------
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
@@ -458,7 +451,7 @@ def newproject(args: argparse.Namespace) -> None:
     def patch_load_from_files(root: ET.Element, subdir: Path) -> None:
         node = root.find(".//LoadFromFiles/SourceDirectory")
         if node is not None:
-            logger.trace("patch_load_from_files() – %s", subdir)
+            logger.log(TRACE_LEVEL, "patch_load_from_files() – %s", subdir)
             node.text = str(subdir.resolve())
 
     def patch_save_to_files(root: ET.Element,
@@ -467,12 +460,12 @@ def newproject(args: argparse.Namespace) -> None:
         if sqx_dir is not None:
             node = root.find(".//SaveToFiles/DestDirectorySqx")
             if node is not None:
-                logger.trace("patch_save_to_files() – sqx_dir=%s", sqx_dir)
+                logger.log(TRACE_LEVEL, "patch_save_to_files() – sqx_dir=%s", sqx_dir)
                 node.text = str(sqx_dir.resolve())
         if sc_dir is not None:
             node_sc = root.find(".//SaveToFiles/DestDirectorySC")
             if node_sc is not None:
-                logger.trace("patch_save_to_files() – sc_dir=%s", sc_dir)
+                logger.log(TRACE_LEVEL, "patch_save_to_files() – sc_dir=%s", sc_dir)
                 node_sc.text = str(sc_dir.resolve())
 
     def patch_call_external(root: ET.Element, command: str) -> None:
@@ -537,11 +530,8 @@ def newproject(args: argparse.Namespace) -> None:
     ) -> None:
         """Rewrite <Setup> date range and <OutOfSample> block in *root*.
 
-        Notes
-        -----
-        * *oos_spans* accepts tuples of length 2 → basic OOS    ``(from, to)``
-          or length 3 → annotated            ``(from, to, type)`` where *type*
-          is usually ``'oos'`` or ``'isv'``.  Unknown/None → treated as ``oos``.
+        *oos_spans* is a list of ``(from, to, type)`` tuples where *type* is
+        usually ``'oos'`` or ``'isv'``. ``None`` is treated as ``'oos'``.
         """
         logger.debug("patch_dates(in_from=%s, in_to=%s, spans=%s)", in_from, in_to, oos_spans)
 
@@ -556,22 +546,8 @@ def newproject(args: argparse.Namespace) -> None:
             return datetime.strptime(str(d), "%Y.%m.%d")
 
         ranges: List[Tuple[str, str, str]] = []
-        # Robust type narrowing for static checkers
-        if oos_spans is None:
-            oos_spans_list: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = []
-        else:
-            oos_spans_list = oos_spans
-        for tup in oos_spans_list:
-            if len(tup) == 2:
-                tup = cast(Tuple[Union[datetime, str], Union[datetime, str]], tup)
-                fr, to = tup
-                typ = "oos"
-            elif len(tup) == 3:
-                fr, to, typ = tup
-                typ = typ or "oos"
-            else:
-                raise ValueError("oos_spans tuples must have length 2 or 3")
-            ranges.append((_fmt(fr), _fmt(to), typ.lower()))
+        for fr, to, typ in oos_spans or []:
+            ranges.append((_fmt(fr), _fmt(to), (typ or "oos").lower()))
 
         ranges.sort(key=lambda r: _to_dt(r[0]))
 
@@ -613,16 +589,14 @@ def newproject(args: argparse.Namespace) -> None:
                 chart0.set("symbol", symbol_dukascopy)
             if sym_2_info.first_date is not None:
                 setups[0].set("dateFrom", sym_2_info.first_date.strftime("%Y.%m.%d"))
-            if end_date is not None:
-                setups[0].set("dateTo", end_date.strftime("%Y.%m.%d"))
+            setups[0].set("dateTo", end_date.strftime("%Y.%m.%d"))
 
             chart1 = setups[1].find("Chart")
             if chart1 is not None:
                 chart1.set("symbol", symbol_darwinex if symbol_darwinex is not None else symbol_dukascopy)
             if sym_2_info.first_date is not None:
                 setups[1].set("dateFrom", sym_2_info.first_date.strftime("%Y.%m.%d"))
-            if end_date is not None:
-                setups[1].set("dateTo", end_date.strftime("%Y.%m.%d"))
+            setups[1].set("dateTo", end_date.strftime("%Y.%m.%d"))
 
     def patch_rhp_spread(root: ET.Element, spread: float) -> None:
         logger.debug("patch_rhp_spread(spread=%s)", spread)
@@ -648,9 +622,14 @@ def newproject(args: argparse.Namespace) -> None:
     editor = ZipEditor(SETTINGS.template_dir)
 
     # Date ranges -----------------------------------------------------------
+    if sym_info.first_date is None or sym_info.last_date is None:
+        logging.error("symbol '%s' has no date range in symbols DB – aborting", symbol_dukascopy)
+        print(f"symbol '{symbol_dukascopy}' has no date range in symbols DB – aborting")
+        return
+
     first_day = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
     last_day = sym_info.last_date
-    
+
     build_start = max(datetime(2018, 1, 1, tzinfo=timezone.utc), first_day)
     build_end = min(datetime(2025, 6, 1, tzinfo=timezone.utc), last_day)
 
@@ -658,9 +637,11 @@ def newproject(args: argparse.Namespace) -> None:
     retest_end_edge = build_end
     retest_end_strategy = last_day
 
-    oos_ranges_edge = [(retest_start, build_start)]
-    oos_ranges_strategy = [
-        (retest_start, build_start),
+    oos_ranges_edge: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+        (retest_start, build_start, "oos"),
+    ]
+    oos_ranges_strategy: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+        (retest_start, build_start, "oos"),
         (build_end, retest_end_strategy, "isv"),
     ]
 
@@ -833,7 +814,7 @@ def remove_duplicate_files(src_dir: Path, dest_dir: Path) -> None:
     # Get all filenames in dest_dir
     dest_files = {f.name for f in dest_dir.iterdir() if f.is_file()}
     log("Found %d files in destination directory %s", len(dest_files), dest_dir)
-    logger.trace("Destination files: %s", sorted(dest_files))
+    logger.log(TRACE_LEVEL, "Destination files: %s", sorted(dest_files))
     
     # Find and remove matching files from src_dir
     removed_count = 0
