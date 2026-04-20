@@ -23,6 +23,8 @@ __pycache__/
 
 # Include Python embedded files
 !src/python/*
+!src/python/**/*.pyd
+!src/python/**/*.pyo
 
 # OS generated files
 .DS_Store
@@ -38,4 +40,5 @@ __pycache__/
 .vol
 .VolumeIcon.icns
 
+# vscode settings
 .vscode/
