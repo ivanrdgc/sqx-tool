@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-sqx-tool.py: StrategyQuant X project helper tool
+sqx_tool.py: StrategyQuant X project helper tool
 
 - Scaffolds new SQX projects from a template
 - Removes ExitAfterBars blocks from .sqx files
@@ -63,7 +63,7 @@ class Settings:
     script_dir: Path = _SCRIPT_DIR
     template_dir: Path = (_SCRIPT_DIR / "Template").resolve()
     projects_base: Path = (_SCRIPT_DIR / "../Projects").resolve()
-    log_file: Path = (_SCRIPT_DIR / "sqx-tool.log").resolve()
+    log_file: Path = (_SCRIPT_DIR / "sqx_tool.log").resolve()
     unix_sh: Path = (_SCRIPT_DIR / "../run.sh").resolve()
     # Default log level when no -v/-q flags are provided.
     # One of: "trace", "debug", "info", "warning", "error", "critical"

@@ -5,7 +5,7 @@ Projects/*
 .venv/
 
 # Log files
-src/sqx-tool.log
+src/sqx_tool.log
 
 # Template .cfx is built on demand from src/Templates/Template/
 src/Templates/*.cfx
