@@ -519,10 +519,6 @@
     <Databank label="Output databank" name="Output" value="S-WFM" />
     <Databank label="Input databank" name="Input" value="S-Sys Param" />
   </Databanks>
-  <Databanks>
-    <Databank label="Output databank" name="Output" value="Results" />
-    <Databank label="Input databank" name="Input" value="Results" />
-  </Databanks>
   <Options customSettings="false">
     <BuildTradingOptions>
       <Params>
@@ -578,17 +574,9 @@
     </MoneyManagement>
   </RiskMoneyManagement>
   <Resources>
-    <Symbols>
-      <Symbol name="XAUUSD_darwinex" source="2" barType="1" precision="TICK" timezone="EETUS" dateFrom="1199145600000" dateTo="1768262400000" uSymbol="XAUUSD" uSymbolName="XAUUSD" removeWeekends="false" broker="4">
-        <InstrumentInfo instrument="XAUUSD_darwinex" description="Futures_Commodities" tickSize="0.01" tickStep="0.01" minDistance="0.0" tickValueInMoney="0.0" dateFrom="0" dateTo="0" rows="0" totalDays="0" defaultSpread="69.0" defaultSlippage="0.0" decimals="2" commissions="&lt;Method type=&quot;PercentageBased&quot; use=&quot;true&quot;&gt;&lt;Params&gt;&lt;Param key=&quot;Commission&quot; className=&quot;PercentageBased&quot;&gt;0.01&lt;/Param&gt;&lt;/Params&gt;&lt;/Method&gt;" pointValue="100.0" dataType="4" recognizedFromOrders="false" exchange="" country="" sector="Commodities" swap="&lt;Swap use=&quot;true&quot; type=&quot;points&quot; long=&quot;-67.80&quot; short=&quot;38.40&quot; tripleSwapOn=&quot;WEDNESDAY&quot; rolloutHour=&quot;23:00&quot;/&gt;" orderSizeMultiplier="1.0" orderSizeStep="0.01" broker="4" />
-      </Symbol>
-    </Symbols>
-    <Brokers>
-      <Broker id="4" name="[[Darwinex]]" description="Darwinex CFDs" timezone="EETUS" postfix="_darwinex" mtUse="true" spUse="false" />
-    </Brokers>
-    <Instruments>
-      <InstrumentInfo instrument="XAUUSD_darwinex" description="Futures_Commodities" tickSize="0.01" tickStep="0.01" minDistance="0.0" tickValueInMoney="0.0" dateFrom="0" dateTo="0" rows="0" totalDays="0" defaultSpread="69.0" defaultSlippage="0.0" decimals="2" commissions="&lt;Method type=&quot;PercentageBased&quot; use=&quot;true&quot;&gt;&lt;Params&gt;&lt;Param key=&quot;Commission&quot; className=&quot;PercentageBased&quot;&gt;0.01&lt;/Param&gt;&lt;/Params&gt;&lt;/Method&gt;" pointValue="100.0" dataType="4" recognizedFromOrders="false" exchange="" country="" sector="Commodities" swap="&lt;Swap use=&quot;true&quot; type=&quot;points&quot; long=&quot;-67.80&quot; short=&quot;38.40&quot; tripleSwapOn=&quot;WEDNESDAY&quot; rolloutHour=&quot;23:00&quot;/&gt;" orderSizeMultiplier="1.0" orderSizeStep="0.01" broker="4" />
-    </Instruments>
+    <Symbols />
+    <Brokers />
+    <Instruments />
     <Sessions />
     <CustomIndicators />
   </Resources>
