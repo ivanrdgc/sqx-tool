@@ -1,12 +1,31 @@
 <Settings>
   <SaveToFiles>
-    <DestDirectorySqx />
+    <DestDirectorySqx>C:\Users\XtrategyQ\Documents\StrategyQuant\XAUUSD\20251211_165203_XAUUSD_M1_dukas_H1_Long\01 - Edge</DestDirectorySqx>
     <DestDirectoryStr />
     <SaveInSqxFormat>true</SaveInSqxFormat>
     <SaveInStrFormat>false</SaveInStrFormat>
+    <DestDirectoryDatabank />
+    <DestDirectoryTrades />
+    <DestDirectoryHtml />
+    <DestDirectoryPdf />
+    <DestDirectorySC />
+    <ExportDatabank>false</ExportDatabank>
+    <ExportTrades>false</ExportTrades>
+    <SaveInHtmlFormat>false</SaveInHtmlFormat>
+    <SaveInPdfFormat>false</SaveInPdfFormat>
+    <SaveSourceCode type="EasyLanguage for Tradestation / MultiCharts (*.el)">false</SaveSourceCode>
+    <OverwriteFiles>false</OverwriteFiles>
+    <MNActive>false</MNActive>
+    <MNValue>12345</MNValue>
+    <Data>all</Data>
+    <Format>xlsx</Format>
+    <UseComma>false</UseComma>
+    <SetNoteActive>false</SetNoteActive>
+    <SetNoteType>timeframe</SetNoteType>
+    <SetNoteCustom />
   </SaveToFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="Results" />
+    <Databank label="Input databank" name="Input" value="S-Build" />
   </Databanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
@@ -16,8 +35,8 @@
     <OptProfileSysParamPermutation />
     <WalkForwardOptimization />
     <WalkForwardMatrix />
-    <RetestWithHigherPrecision />
     <SequentialOptimization />
+    <RetestWithHigherPrecision />
   </CrossChecks>
   <Resources>
     <Symbols />

@@ -209,17 +209,17 @@
     </Conditions>
     <DeleteFailedStrategies>true</DeleteFailedStrategies>
     <ForceRunCrossChecks>false</ForceRunCrossChecks>
-    <AutomaticDismissal warnings="true">
-      <Problem code="1" dismiss="true" />
-      <Problem code="4" dismiss="true" />
-      <Problem code="1024" dismiss="true" />
-      <Problem code="16" dismiss="true" />
-      <Problem code="32" dismiss="true" />
-      <Problem code="64" dismiss="true" />
-      <Problem code="256" dismiss="true" />
-      <Problem code="2" dismiss="true" />
-      <Problem code="512" dismiss="true" />
-      <Problem code="8" dismiss="true" />
+    <AutomaticDismissal warnings="false">
+      <Problem code="1" dismiss="false" />
+      <Problem code="4" dismiss="false" />
+      <Problem code="1024" dismiss="false" />
+      <Problem code="16" dismiss="false" />
+      <Problem code="32" dismiss="false" />
+      <Problem code="64" dismiss="false" />
+      <Problem code="256" dismiss="false" />
+      <Problem code="2" dismiss="false" />
+      <Problem code="512" dismiss="false" />
+      <Problem code="8" dismiss="false" />
     </AutomaticDismissal>
     <StopCondition type="databank-full" passedStrategies="1000" restartCount="5" days="0" hours="0" minutes="0" />
     <FitPortfolio active="false" databank="Existing portfolio">
@@ -232,7 +232,7 @@
       <Settings>
         <Setups detailed="true">
           <Setup dateFrom="2017.10.02" dateTo="2025.01.01" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="15" />
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
             <Commissions>
               <Method type="PercentageBased" use="true">
                 <Params>
@@ -240,11 +240,11 @@
                 </Params>
               </Method>
             </Commissions>
-            <Swap use="true" type="money" long="-58.9" short="36.9" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+            <Swap use="true" type="points" long="-67.8" short="38.4" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
             <MainTestValues timeframe="true" dates="false" subcharts="false" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="true" session="false" />
           </Setup>
           <Setup dateFrom="2017.10.02" dateTo="2025.01.01" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="15" />
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
             <Commissions>
               <Method type="PercentageBased" use="true">
                 <Params>
@@ -252,7 +252,7 @@
                 </Params>
               </Method>
             </Commissions>
-            <Swap use="true" type="money" long="-58.9" short="36.9" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+            <Swap use="true" type="points" long="-67.8" short="38.4" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
             <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="true" session="true" />
           </Setup>
         </Setups>
@@ -264,11 +264,20 @@
         <Conditions>
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="NetProfit" />
+              <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="ReturnDDRatio" />
             </Left-Side>
             <Comparator value="&lt;=" />
             <Right-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="0" class="NetProfit" />
+              <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="0" class="ReturnDDRatio" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="StagnationPct" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="70" class="StagnationPct" />
             </Right-Side>
           </Condition>
         </Conditions>
@@ -816,9 +825,17 @@
     </BuildTradingOptions>
   </Options>
   <Resources>
-    <Symbols />
-    <Brokers />
-    <Instruments />
+    <Symbols>
+      <Symbol name="XAUUSD_darwinex" source="2" barType="1" precision="TICK" timezone="EETUS" dateFrom="1199145600000" dateTo="1735689600000" uSymbol="XAUUSD" uSymbolName="XAUUSD" removeWeekends="false" broker="4">
+        <InstrumentInfo instrument="XAUUSD_darwinex" description="Futures_Commodities" tickSize="0.01" tickStep="0.01" minDistance="0.0" tickValueInMoney="0.0" dateFrom="0" dateTo="0" rows="0" totalDays="0" defaultSpread="69.0" defaultSlippage="0.0" decimals="2" commissions="&lt;Method type=&quot;PercentageBased&quot; use=&quot;true&quot;&gt;&lt;Params&gt;&lt;Param key=&quot;Commission&quot; className=&quot;PercentageBased&quot;&gt;0.01&lt;/Param&gt;&lt;/Params&gt;&lt;/Method&gt;" pointValue="100.0" dataType="4" recognizedFromOrders="false" exchange="" country="" sector="Commodities" swap="&lt;Swap use=&quot;true&quot; type=&quot;points&quot; long=&quot;-67.80&quot; short=&quot;38.40&quot; tripleSwapOn=&quot;WEDNESDAY&quot; rolloutHour=&quot;23:00&quot;/&gt;" orderSizeMultiplier="1.0" orderSizeStep="0.01" broker="4" />
+      </Symbol>
+    </Symbols>
+    <Brokers>
+      <Broker id="4" name="[[Darwinex]]" description="Darwinex CFDs" timezone="EETUS" postfix="_darwinex" mtUse="true" spUse="false" />
+    </Brokers>
+    <Instruments>
+      <InstrumentInfo instrument="XAUUSD_darwinex" description="Futures_Commodities" tickSize="0.01" tickStep="0.01" minDistance="0.0" tickValueInMoney="0.0" dateFrom="0" dateTo="0" rows="0" totalDays="0" defaultSpread="69.0" defaultSlippage="0.0" decimals="2" commissions="&lt;Method type=&quot;PercentageBased&quot; use=&quot;true&quot;&gt;&lt;Params&gt;&lt;Param key=&quot;Commission&quot; className=&quot;PercentageBased&quot;&gt;0.01&lt;/Param&gt;&lt;/Params&gt;&lt;/Method&gt;" pointValue="100.0" dataType="4" recognizedFromOrders="false" exchange="" country="" sector="Commodities" swap="&lt;Swap use=&quot;true&quot; type=&quot;points&quot; long=&quot;-67.80&quot; short=&quot;38.40&quot; tripleSwapOn=&quot;WEDNESDAY&quot; rolloutHour=&quot;23:00&quot;/&gt;" orderSizeMultiplier="1.0" orderSizeStep="0.01" broker="4" />
+    </Instruments>
     <Sessions />
     <CustomIndicators />
   </Resources>

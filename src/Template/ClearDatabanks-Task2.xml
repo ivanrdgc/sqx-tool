@@ -1,7 +1,6 @@
 <Settings>
   <ClearDatabanks>
     <Databank name="E-Final" />
-    <Databank name="To Strategy" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
@@ -11,8 +10,8 @@
     <OptProfileSysParamPermutation />
     <WalkForwardOptimization />
     <WalkForwardMatrix />
-    <RetestWithHigherPrecision />
     <SequentialOptimization />
+    <RetestWithHigherPrecision />
   </CrossChecks>
   <PartsToImprove improveATM="false">
     <EntryRules symmetry="true">

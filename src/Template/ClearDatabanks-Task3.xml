@@ -1,11 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="S-Build" />
-    <Databank name="S-Other Markets" />
-    <Databank name="S-Spread" />
-    <Databank name="S-OOS1" />
-    <Databank name="S-Sys Param" />
-    <Databank name="S-WFM" />
+    <Databank name="To Strategy" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
@@ -18,6 +13,20 @@
     <RetestWithHigherPrecision />
     <SequentialOptimization />
   </CrossChecks>
+  <PartsToImprove improveATM="false">
+    <EntryRules symmetry="true">
+      <LongImprovement use="false" action="replace" />
+      <ShortImprovement use="false" action="replace" />
+    </EntryRules>
+    <OrderTypes>
+      <LongImprovement use="false" />
+      <ShortImprovement use="false" />
+    </OrderTypes>
+    <ExitRules symmetry="true">
+      <LongImprovement use="true" action="add" />
+      <ShortImprovement use="true" action="add" />
+    </ExitRules>
+  </PartsToImprove>
   <Resources>
     <Symbols />
     <Brokers />

@@ -487,40 +487,45 @@ def newproject(args: argparse.Namespace) -> None:
             logger.debug("patch_market_side() → %s", direction.lower())
             ms.set("type", direction.lower())
 
-    def patch_setup(root: ET.Element, use: bool = True) -> None:
+    def patch_setup(
+        root: ET.Element,
+        symbol: str = symbol_dukascopy,
+        info: SymbolInfo = sym_info,
+        use_swap: bool = True,
+    ) -> None:
         setup = root.find(".//Setups/Setup")
         if setup is None:
             return
         # Chart -------------------------------------------------------------
         chart = setup.find("Chart")
         if chart is not None:
-            logger.debug("patch_setup.chart() – %s @ %s", symbol_dukascopy, timeframe)
-            chart.set("symbol", symbol_dukascopy)
+            logger.debug("patch_setup.chart() – %s @ %s", symbol, timeframe)
+            chart.set("symbol", symbol)
             chart.set("timeframe", timeframe)
-            if sym_info.spread is not None and use:
-                chart.set("spread", str(sym_info.spread))
+            if info.spread is not None:
+                chart.set("spread", str(info.spread))
 
         # Commissions -------------------------------------------------------
-        if sym_info.commission and use:
+        if info.commission:
             comm_parent = setup.find("Commissions")
             if comm_parent is None:
                 comm_parent = ET.SubElement(setup, "Commissions")
             comm_parent.clear()
             try:
-                comm_parent.append(ET.fromstring(sym_info.commission))
+                comm_parent.append(ET.fromstring(info.commission))
             except ET.ParseError as exc:
-                logging.warning("bad commission XML for %s: %s", symbol_dukascopy, exc)
+                logging.warning("bad commission XML for %s: %s", symbol, exc)
 
         # Swap --------------------------------------------------------------
-        if sym_info.swap and use:
+        if info.swap and use_swap:
             old = setup.find("Swap")
             if old is not None:
                 setup.remove(old)
             try:
-                swap_elem = ET.fromstring(sym_info.swap)
+                swap_elem = ET.fromstring(info.swap)
                 setup.append(swap_elem)
             except ET.ParseError as exc:
-                logging.warning("bad swap XML for %s: %s", symbol_dukascopy, exc)
+                logging.warning("bad swap XML for %s: %s", symbol, exc)
 
     def patch_dates(
         root: ET.Element,
@@ -622,7 +627,7 @@ def newproject(args: argparse.Namespace) -> None:
     editor = ZipEditor(SETTINGS.template_dir)
 
     # Date ranges -----------------------------------------------------------
-    if sym_info.first_date is None or sym_info.last_date is None:
+    if sym_info.first_date is None or sym_info.last_date is None or sym_2_info.first_date is None or sym_2_info.last_date is None:
         logging.error("symbol '%s' has no date range in symbols DB – aborting", symbol_dukascopy)
         print(f"symbol '{symbol_dukascopy}' has no date range in symbols DB – aborting")
         return
@@ -630,12 +635,17 @@ def newproject(args: argparse.Namespace) -> None:
     first_day = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
     last_day = sym_info.last_date
 
+    first_day_dx = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_2_info.first_date)
+    last_day_dx = sym_2_info.last_date
+
     build_start = max(datetime(2018, 1, 1, tzinfo=timezone.utc), first_day)
     build_end = min(datetime(2025, 6, 1, tzinfo=timezone.utc), last_day)
 
     retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), first_day)
+    retest_start_dx = max(datetime(2008, 1, 1, tzinfo=timezone.utc), first_day_dx)
     retest_end_edge = build_end
     retest_end_strategy = last_day
+    retest_end_strategy_dx = last_day_dx
 
     oos_ranges_edge: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
         (retest_start, build_start, "oos"),
@@ -644,6 +654,11 @@ def newproject(args: argparse.Namespace) -> None:
         (retest_start, build_start, "oos"),
         (build_end, retest_end_strategy, "isv"),
     ]
+    oos_ranges_strategy_dx: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+        (build_end, retest_end_strategy, "isv"),
+    ]
+    if build_start > retest_start_dx:
+        oos_ranges_strategy_dx.insert(0, (retest_start_dx, build_start, "oos"))
 
     for i in range(1, 3):
         xml = f"Build-Task{i}.xml"
@@ -653,9 +668,12 @@ def newproject(args: argparse.Namespace) -> None:
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
 
-    for i in range(6, 14):
+    for i in range(6, 13):
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
+
+    # Darwinex
+    editor.patch("Retest-Task13.xml", patch_dates, retest_start_dx, retest_end_strategy_dx, oos_ranges_strategy_dx)
 
     # Config & global market side
     editor.patch("config.xml", patch_config)
@@ -664,12 +682,20 @@ def newproject(args: argparse.Namespace) -> None:
     for i in range(1, 3):
         xml = f"Build-Task{i}.xml"
         editor.patch(xml, patch_market_side)
-        editor.patch(xml, patch_setup)
+        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False)
 
     # Retest tasks ----------------------------------------------------------
-    for i in range(1, 14):
+    for i in range(1, 13):
         xml = f"Retest-Task{i}.xml"
-        editor.patch(xml, patch_setup)
+        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False)
+
+    # Darwinex
+    editor.patch(
+        "Retest-Task13.xml",
+        patch_setup,
+        symbol_darwinex or symbol_dukascopy,
+        sym_2_info,
+    )
 
     # Other markets / Spread / Dates ---------------------------------------
     editor.patch("Retest-Task2.xml", patch_other_markets, build_end)
@@ -748,17 +774,10 @@ def launch_cli() -> None:
     require_symbols_db()
     QUESTIONS = [
         Question(
-            key="symbol_dukascopy",
-            prompt="Symbol Name with Dukascopy data (e.g. EURUSD_dukascopy_darwinex): ",
-            validate=lambda s: symbol_exists(s),
-            error="→ invalid symbol\n",
-        ),
-        Question(
-            key="symbol_darwinex",
-            prompt="[Optional] Symbol Name with Darwinex data (e.g. EURUSD_darwinex_darwinex): ",
-            validate=lambda s: s == "" or symbol_exists(s),
-            error="→ invalid symbol\n",
-            default="",
+            key="symbol",
+            prompt="Symbol (e.g. XAUUSD): ",
+            validate=lambda s: symbol_exists(f"{s}_darwinex"),
+            error="→ invalid symbol (no *_darwinex entry in DB)\n",
         ),
         Question(
             key="timeframe",
@@ -777,8 +796,10 @@ def launch_cli() -> None:
     print("=== Create a New SQX Project === (Ctrl-C to exit)\n")
     try:
         answers = ask(QUESTIONS)
-        # Fire the project generator
-        import argparse
+        symbol = str(answers.pop("symbol"))
+        answers["symbol_dukascopy"] = f"{symbol}_darwinex"
+        dx_candidate = f"{symbol}_dx_darwinex"
+        answers["symbol_darwinex"] = dx_candidate if symbol_exists(dx_candidate) else ""
         newproject(argparse.Namespace(**answers))
         print("\nDone.")
         print("\nYou can close this window…")

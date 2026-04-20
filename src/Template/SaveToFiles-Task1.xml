@@ -25,7 +25,7 @@
     <SetNoteCustom />
   </SaveToFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="E-Final" />
+    <Databank label="Input databank" name="Input" value="E-Build" />
   </Databanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
