@@ -727,12 +727,15 @@ def newproject(args: argparse.Namespace) -> None:
         logging.warning("sym_info.spread is None; skipping patch_rhp_spread.")
 
     # Save / Load folders ---------------------------------------------------
-    editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, project_dir / "01 - Edge")
-    editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, project_dir / "03 - Strategy")
-    editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
+    editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
+    editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_final_dir)
+    editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, s_edges_dir)
+    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
+    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
+    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_darwinex_dir)
 
     # External script -------------------------------------------------------
-    cmd = make_remove_eab_command(e_final_dir, to_strategy_dir)
+    cmd = make_remove_eab_command(e_final_dir, s_edges_dir)
     editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
     # Rename files in all project directories (symbol = base name before first '_')
