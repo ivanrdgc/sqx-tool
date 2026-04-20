@@ -1,44 +1,11 @@
 <Settings>
   <LoadFromFiles>
-    <SourceDirectory>C:\Users\XtrategyQ\Documents\StrategyQuant\XAUUSD\20251211_165203_XAUUSD_M1_dukas_H1_Long\01 - Edge</SourceDirectory>
+    <SourceDirectory>C:\</SourceDirectory>
     <IncludeSubdirectories>false</IncludeSubdirectories>
-    <SourceDatabank>Results</SourceDatabank>
     <UnrecognizedInstrumentAction>0</UnrecognizedInstrumentAction>
-    <UnrecognizedInstrumentValue>.DE40Cash_roboforex</UnrecognizedInstrumentValue>
+    <UnrecognizedInstrumentValue></UnrecognizedInstrumentValue>
   </LoadFromFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="To Strategy" />
+    <Databank label="Input databank" name="Input" value="S-Edges" />
   </Databanks>
-  <CrossChecks>
-    <RetestOnAdditionalMarkets />
-    <WhatIf />
-    <MonteCarloManipulation />
-    <MonteCarloRetest />
-    <OptProfileSysParamPermutation />
-    <WalkForwardOptimization />
-    <WalkForwardMatrix />
-    <RetestWithHigherPrecision />
-    <SequentialOptimization />
-  </CrossChecks>
-  <PartsToImprove improveATM="false">
-    <EntryRules symmetry="false">
-      <LongImprovement use="false" action="replace" />
-      <ShortImprovement use="false" action="replace" />
-    </EntryRules>
-    <OrderTypes>
-      <LongImprovement use="true" />
-      <ShortImprovement use="true" />
-    </OrderTypes>
-    <ExitRules symmetry="false">
-      <LongImprovement use="true" action="add-or-replace" />
-      <ShortImprovement use="true" action="add-or-replace" />
-    </ExitRules>
-  </PartsToImprove>
-  <Resources>
-    <Symbols />
-    <Brokers />
-    <Instruments />
-    <Sessions />
-    <CustomIndicators />
-  </Resources>
 </Settings>

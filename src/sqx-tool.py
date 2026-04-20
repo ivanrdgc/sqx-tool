@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import base64
 import concurrent.futures as cf
+import configparser
 import io
 import logging
 import os
@@ -36,26 +37,43 @@ import xml.etree.ElementTree as ET
 #  Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _load_sqx_path(repo_root: Path) -> Path:
+    """Read SQX_PATH from config.ini at the repo root.
+
+    Defaults to C:\\SQX_143 when the file or key is missing. Backslashes in
+    the value are normalized so Path behaves sensibly on non-Windows hosts.
+    """
+    config_path = repo_root / "config.ini"
+    parser = configparser.ConfigParser()
+    parser.read(config_path, encoding="utf-8")
+    raw = parser.get("sqx", "SQX_PATH", fallback=r"C:\SQX_143")
+    if os.name != "nt":
+        raw = raw.replace("\\", "/")
+    return Path(raw)
+
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_SQX_PATH = _load_sqx_path(_SCRIPT_DIR.parent)
+
+
 @dataclass(frozen=True)
 class Settings:
     """All file‑system locations & naming conventions live here."""
-    
-    script_dir: Path = Path(__file__).resolve().parent
-    template_dir: Path = (script_dir / "Template").resolve()
-    projects_base: Path = (script_dir / "../Projects").resolve()
-    log_file: Path = (script_dir / "sqx-tool.log").resolve()
-    unix_sh: Path = (script_dir / "../run.sh").resolve()
+
+    script_dir: Path = _SCRIPT_DIR
+    template_dir: Path = (_SCRIPT_DIR / "Template").resolve()
+    projects_base: Path = (_SCRIPT_DIR / "../Projects").resolve()
+    log_file: Path = (_SCRIPT_DIR / "sqx-tool.log").resolve()
+    unix_sh: Path = (_SCRIPT_DIR / "../run.sh").resolve()
     # Default log level when no -v/-q flags are provided.
     # One of: "trace", "debug", "info", "warning", "error", "critical"
     default_log_level: str = "info"
-    
+
     project_dir_tpl: str = "{symbol}/{timestamp}_{symbol}_{timeframe}_{direction}"
     file_prefix_tpl: str = "{symbol} {timeframe} {direction}"
-    
-    # symbols_db: Path = Path("D:/SQX/user/data/data.db").resolve()
-    # symbols_db: Path = Path("/home/user/SQX/user/data/data.db").resolve()
-    # symbols_db: Path = Path("/Applications/StrategyQuantXB143.app/Contents/Resources/user/data/data.db").resolve()
-    symbols_db: Path = (script_dir / "../../user/data/data.db").resolve()
+
+    sqx_path: Path = _SQX_PATH
+    symbols_db: Path = (_SQX_PATH / "user" / "data" / "data.db")
 
 SETTINGS = Settings()
 
@@ -403,21 +421,16 @@ def newproject(args: argparse.Namespace) -> None:
     log("project dir: %s", project_dir)
     logger.debug("Created project directory: %s", project_dir)
 
-    for sub in [
-        "01 - Edge",
-        "02 - To Strategy",
-        "03 - Strategy",
-    ]:
+    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Edges", "04 - S-Build", "05 - S-Final", "06 - S-Darwinex")
+    for sub in subdirs:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.log(TRACE_LEVEL, "Created subdir %s", sub)
 
     # ---- 4. Prepare output .cfx path --------------------------------------
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
-    edge_dir = (project_dir / "01 - Edge").resolve()
-    to_strategy_dir = (project_dir / "02 - To Strategy").resolve()
-    strategy_dir = (project_dir / "03 - Strategy").resolve()
-    project_dirs = [edge_dir, to_strategy_dir, strategy_dir]
+    project_dirs = [(project_dir / sub).resolve() for sub in subdirs]
+    e_build_dir, e_final_dir, s_edges_dir, s_build_dir, s_final_dir, s_darwinex_dir = project_dirs
 
     is_windows = platform.system() == "Windows"
 
@@ -719,7 +732,7 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, project_dir / "02 - To Strategy")
 
     # External script -------------------------------------------------------
-    cmd = make_remove_eab_command(edge_dir, to_strategy_dir)
+    cmd = make_remove_eab_command(e_final_dir, to_strategy_dir)
     editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
 
     # Rename files in all project directories (symbol = base name before first '_')

@@ -38,7 +38,7 @@
     <Databank name="E-Sys Param" view="Default - Main data" syncType="Auto-sync every 1 hour" position="500" />
     <Databank name="E-WFM" view="Default - Main data" syncType="Auto-sync every 1 hour" position="600" />
     <Databank name="E-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="700" />
-    <Databank name="To Strategy" view="Default - Main data" syncType="Auto-sync every 1 hour" position="800" />
+    <Databank name="S-Edges" view="Default - Main data" syncType="Auto-sync every 1 hour" position="800" />
     <Databank name="S-Build" view="Default - Main data" syncType="Auto-sync every 1 hour" position="900" />
     <Databank name="S-OOS1" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1000" />
     <Databank name="S-Other Markets" view="Default - Main data" syncType="Auto-sync every 1 hour" position="1100" />

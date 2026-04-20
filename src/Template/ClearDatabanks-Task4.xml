@@ -7,22 +7,4 @@
     <Databank name="S-Sys Param" />
     <Databank name="S-WFM" />
   </ClearDatabanks>
-  <CrossChecks>
-    <RetestOnAdditionalMarkets />
-    <WhatIf />
-    <MonteCarloManipulation />
-    <MonteCarloRetest />
-    <OptProfileSysParamPermutation />
-    <WalkForwardOptimization />
-    <WalkForwardMatrix />
-    <RetestWithHigherPrecision />
-    <SequentialOptimization />
-  </CrossChecks>
-  <Resources>
-    <Symbols />
-    <Brokers />
-    <Instruments />
-    <Sessions />
-    <CustomIndicators />
-  </Resources>
 </Settings>

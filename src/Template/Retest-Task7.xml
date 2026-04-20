@@ -19,7 +19,6 @@
     </OutOfSample>
   </Data>
   <Rankings type="never">
-    <MaxStrategies>1000</MaxStrategies>
     <FitnessCriteria method="ComputeFromStrategyResult" useFitnessByIndex="false">
       <Settings>
         <Ranking type="ReturnDDRatio" />
@@ -612,27 +611,7 @@
   </Options>
   <RiskMoneyManagement customSettings="false">
     <MoneyManagement>
-      <Method type="FixedSize" use="false">
-        <Params>
-          <Param key="Size" className="FixedSize">1</Param>
-        </Params>
-      </Method>
       <InitialCapital>100000</InitialCapital>
-      <Method type="RiskFixedBalancePct" use="false">
-        <Params>
-          <Param key="Risk" className="RiskFixedBalancePct">5</Param>
-          <Param key="Decimals" className="RiskFixedBalancePct">1</Param>
-          <Param key="LotsIfNoMM" className="RiskFixedBalancePct">1</Param>
-          <Param key="MaxLots" className="RiskFixedBalancePct">5</Param>
-        </Params>
-      </Method>
-      <Method type="RiskFixedPctOfAccount" use="false">
-        <Parameter key="Risk">5</Parameter>
-        <Parameter key="StopLoss">100</Parameter>
-        <Parameter key="Decimals">1</Parameter>
-        <Parameter key="LotsIfNoMM">1</Parameter>
-        <Parameter key="MaxLots">5</Parameter>
-      </Method>
       <Method type="FixedAmount" use="true">
         <Params>
           <Param key="RiskedMoney" className="FixedAmount">100</Param>
@@ -641,18 +620,7 @@
           <Param key="MaxLots" className="FixedAmount">1000</Param>
         </Params>
       </Method>
-      <Method type="StocksSizeByPrice" use="false">
-        <Params>
-          <Param key="UseAccountBalance" className="StocksSizeByPrice">true</Param>
-          <Param key="MaxSize" className="StocksSizeByPrice">100</Param>
-        </Params>
-      </Method>
     </MoneyManagement>
-    <RiskManagement maxDrawdown="30">
-      <Method type="AllowAllTrades" use="true">
-        <Params />
-      </Method>
-    </RiskManagement>
   </RiskMoneyManagement>
   <Resources>
     <Symbols>

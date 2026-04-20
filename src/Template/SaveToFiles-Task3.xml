@@ -1,6 +1,6 @@
 <Settings>
   <SaveToFiles>
-    <DestDirectorySqx>C:\Users\XtrategyQ\Documents\StrategyQuant\XAUUSD\20251211_165203_XAUUSD_M1_dukas_H1_Long\01 - Edge</DestDirectorySqx>
+    <DestDirectorySqx>C:\</DestDirectorySqx>
     <DestDirectoryStr />
     <SaveInSqxFormat>true</SaveInSqxFormat>
     <SaveInStrFormat>false</SaveInStrFormat>
@@ -27,22 +27,4 @@
   <Databanks>
     <Databank label="Input databank" name="Input" value="S-Build" />
   </Databanks>
-  <CrossChecks>
-    <RetestOnAdditionalMarkets />
-    <WhatIf />
-    <MonteCarloManipulation />
-    <MonteCarloRetest />
-    <OptProfileSysParamPermutation />
-    <WalkForwardOptimization />
-    <WalkForwardMatrix />
-    <SequentialOptimization />
-    <RetestWithHigherPrecision />
-  </CrossChecks>
-  <Resources>
-    <Symbols />
-    <Brokers />
-    <Instruments />
-    <Sessions />
-    <CustomIndicators />
-  </Resources>
 </Settings>
