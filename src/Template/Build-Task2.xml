@@ -132,7 +132,7 @@
             </Params>
           </Method>
         </Commissions>
-        <Swap use="true" type="points" long="-67.80" short="38.40" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+        <Swap use="false" />
       </Setup>
     </Setups>
     <OutOfSample />

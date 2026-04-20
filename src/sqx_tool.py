@@ -722,7 +722,9 @@ def newproject(args: argparse.Namespace) -> None:
 
     if sym_info.spread is not None:
         editor.patch("Retest-Task3.xml", patch_rhp_spread, sym_info.spread * 2)
+        editor.patch("Retest-Task6.xml", patch_rhp_spread, sym_info.spread)
         editor.patch("Retest-Task9.xml", patch_rhp_spread, sym_info.spread * 3)
+        editor.patch("Retest-Task12.xml", patch_rhp_spread, sym_info.spread)
     else:
         logging.warning("sym_info.spread is None; skipping patch_rhp_spread.")
 

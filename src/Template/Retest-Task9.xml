@@ -10,7 +10,7 @@
             </Params>
           </Method>
         </Commissions>
-        <Swap use="true" type="points" long="-67.80" short="38.40" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+        <Swap use="false" />
       </Setup>
     </Setups>
     <OutOfSample showGraph="false">
@@ -549,25 +549,8 @@
     </WhatIf>
     <SequentialOptimization use="false" />
   </CrossChecks>
-  <Notes>&lt;div&gt;&lt;br&gt;&lt;/div&gt;</Notes>
-  <ATMs enable="false" scaleOutType="1" sizeDecimals="1" minSize="0.1">
-    <ATM id="global">
-      <Exits />
-    </ATM>
-    <GenerateConfig>
-      <Types>
-        <SLMultiple use="false" minMultiplier="0.5" maxMultiplier="2" />
-        <PTMultiple use="false" minMultiplier="0.5" maxMultiplier="2" />
-        <FixedProfit use="false" useFixedPips="false" minPips="30" maxPips="80" useATR="false" minMultiplier="1.5" maxMultiplier="3" minATRPeriod="20" maxATRPeriod="20" />
-        <TrailingStop use="false" useFixedPips="false" minPips="30" maxPips="80" useATR="false" minMultiplier="1.5" maxMultiplier="3" minATRPeriod="20" maxATRPeriod="20" />
-        <None use="false" useLimit="false" minBars="50" maxBars="50" />
-      </Types>
-      <Scenarios>
-        <TwoExits exit5050="false" exit3366="false" exit6633="false" />
-        <ThreeExits exit333333="false" exit502525="false" exit255025="false" exit252550="false" />
-      </Scenarios>
-    </GenerateConfig>
-  </ATMs>
+  <Notes></Notes>
+  <ATMs enable="false" />
   <Databanks retestSelected="false">
     <Databank label="Output databank" name="Output" value="S-Spread" />
     <Databank label="Input databank" name="Input" value="S-Other Markets" />
