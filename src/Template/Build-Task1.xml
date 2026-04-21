@@ -93,7 +93,7 @@
       <CrossoverProbability>93</CrossoverProbability>
       <MutationProbability>30</MutationProbability>
       <ShowAdvancedGeneticSettings>false</ShowAdvancedGeneticSettings>
-      <Islands>10</Islands>
+      <Islands>50</Islands>
       <MigrationModulo>87</MigrationModulo>
       <MigrationRate>6</MigrationRate>
       <ShowLastGenerationDatabank>false</ShowLastGenerationDatabank>

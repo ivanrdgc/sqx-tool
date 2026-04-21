@@ -11,7 +11,7 @@
   </RiskMoneyManagement>
   <Data>
     <Setups>
-      <Setup dateFrom="2008.01.01" dateTo="2025.12.11" testPrecision="4" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+      <Setup dateFrom="2008.01.01" dateTo="2025.12.11" testPrecision="2" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
         <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
         <Commissions>
           <Method type="PercentageBased" use="true">

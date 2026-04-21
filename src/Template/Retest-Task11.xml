@@ -284,16 +284,7 @@
         </WalkForward>
         <MaxTests>10000</MaxTests>
         <WhatToParametrize type="1" symmetricVariables="false">
-          <Recommended>false</Recommended>
-          <Periods>true</Periods>
-          <Shifts>false</Shifts>
-          <Constants>false</Constants>
-          <OtherParams>false</OtherParams>
-          <EntryParams>false</EntryParams>
-          <EntryLogic>false</EntryLogic>
-          <ExitParamsUsed>true</ExitParamsUsed>
-          <ExitParamsUnused>false</ExitParamsUnused>
-          <BooleanParams>false</BooleanParams>
+          <Recommended>true</Recommended>
         </WhatToParametrize>
       </Settings>
       <AcceptanceSettings>
