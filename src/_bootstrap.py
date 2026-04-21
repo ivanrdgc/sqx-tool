@@ -1,6 +1,7 @@
-"""Bootstrap for notebooks in this folder.
+"""Bootstrap for notebooks.
 
-Usage from any notebook in Notebooks/:
+Lives in src/ and is importable because start_notebook.bat puts src/ on
+PYTHONPATH. Usage from any notebook:
 
     from _bootstrap import sqx_tool
     sqx_tool.newproject(sqx_tool.argparse.Namespace(
@@ -11,22 +12,19 @@ Usage from any notebook in Notebooks/:
     ))
 """
 
-import sys
 from pathlib import Path
 from typing import Any
 
-_SRC = (Path(__file__).resolve().parent.parent / "src")
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
-
-import sqx_tool  # noqa: E402
-import update_instruments_db  # noqa: E402
-import calculate_spreads  # noqa: E402
-from calculate_spreads import (  # noqa: E402
+import sqx_tool
+import update_instruments_db
+import calculate_spreads
+from calculate_spreads import (
     csv_to_daily_spread_cache,
     load_daily_spread_cache,
     compute_spread_px_py_from_cache,
 )
+
+_SRC = Path(__file__).resolve().parent
 
 __all__ = [
     "sqx_tool",
