@@ -3,6 +3,7 @@ Projects/*
 
 # Python virtual environment
 .venv/
+venv/
 
 # Log files
 src/sqx_tool.log
@@ -20,7 +21,8 @@ __pycache__/
 *.pywz
 *.pyzw
 *.pyzwz
-venv/
+Notebooks/.ipynb_checkpoints/
+src/jupyter/
 
 # Include Python embedded files
 !src/python/*

@@ -39,18 +39,21 @@ pip install \
     --only-binary=:all: \
     "${PACKAGES[@]}"
 
-echo "==> Enabling 'import site' in $PTH_FILE"
+echo "==> Configuring $PTH_FILE (import site, Lib/site-packages, parent src/)"
 if [[ ! -f "$PTH_FILE" ]]; then
     echo "ERROR: $PTH_FILE not found" >&2
     exit 1
 fi
-# Add Lib/site-packages path and uncomment `import site`
+# Add Lib/site-packages, add parent src/ dir (..), and uncomment `import site`.
+# The parent entry puts src/ on sys.path so notebooks can `from _bootstrap import ...`.
+# Embedded Python ignores PYTHONPATH when a ._pth file exists, so this must live here.
 python3 - "$PTH_FILE" <<'PY'
 import sys, pathlib
 p = pathlib.Path(sys.argv[1])
 lines = p.read_text().splitlines()
 out = []
 has_site_packages = any(l.strip() == "Lib/site-packages" for l in lines)
+has_parent = any(l.strip() == ".." for l in lines)
 for line in lines:
     if line.strip() == "#import site":
         out.append("import site")
@@ -63,6 +66,13 @@ if not has_site_packages:
     except ValueError:
         idx = 0
     out.insert(idx, "Lib/site-packages")
+if not has_parent:
+    # Insert after Lib/site-packages
+    try:
+        idx = out.index("Lib/site-packages") + 1
+    except ValueError:
+        idx = len(out)
+    out.insert(idx, "..")
 p.write_text("\n".join(out) + "\n")
 PY
 
