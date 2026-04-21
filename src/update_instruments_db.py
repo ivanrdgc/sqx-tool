@@ -13,13 +13,14 @@ import sqlite3
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Any, Callable, Iterator
 
 # ---------------------------------------------------------------------------
 # Configuration helpers
 # ---------------------------------------------------------------------------
 
 #: XML → DB column mapping (xml_attribute -> db_column, type)
-FIELD_MAP = {
+FIELD_MAP: dict[str, tuple[str, Callable[[str], Any]]] = {
     "instrument":            ("INSTRUMENT",          str),
     "description":           ("DESCRIPTION",         str),
     "pointValue":            ("POINTVALUE",          float),
@@ -40,7 +41,7 @@ FIELD_MAP = {
 }
 
 # Columns that have sensible defaults even when the attribute is missing
-DEFAULTS = {
+DEFAULTS: dict[str, Any] = {
     "DEFAULTSPREAD":       0.0,
     "DEFAULTSLIPPAGE":     0.0,
     "SWAP":                None,
@@ -58,11 +59,15 @@ DEFAULTS = {
 # Core logic
 # ---------------------------------------------------------------------------
 
-def parse_xml(path: Path, broker_suffix: str = "", broker_id: int | None = None):
+def parse_xml(
+    path: Path,
+    broker_suffix: str = "",
+    broker_id: int | None = None,
+) -> Iterator[dict[str, Any]]:
     """Yield dicts ready for insertion into the DB."""
     tree = ET.parse(path)
     for elem in tree.findall(".//InstrumentInfo"):
-        row: dict[str, object] = {}
+        row: dict[str, Any] = {}
 
         for xml_attr, (db_col, coercer) in FIELD_MAP.items():
             raw_val = elem.attrib.get(xml_attr)
@@ -92,13 +97,13 @@ def parse_xml(path: Path, broker_suffix: str = "", broker_id: int | None = None)
         yield row
 
 
-def upsert_rows(db_path: Path, rows: list[dict]):
+def upsert_rows(db_path: Path, rows: list[dict[str, Any]]) -> None:
     """Insert or update rows using SQLite’s ON CONFLICT syntax."""
     if not rows:
         return
 
     # All rows share the same set of columns
-    columns = list(rows[0].keys())
+    columns: list[str] = list(rows[0].keys())
     placeholders = ", ".join(["?"] * len(columns))
     cols_joined = ", ".join(columns)
     update_set = ", ".join(f"{col}=excluded.{col}" for col in columns if col != "INSTRUMENT")
@@ -118,7 +123,7 @@ def upsert_rows(db_path: Path, rows: list[dict]):
 # CLI wrapper
 # ---------------------------------------------------------------------------
 
-def main(argv: list[str] | None = None):
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Update INSTRUMENTS table from XML.")
     parser.add_argument("xml_path", type=Path, help="Path to XML file exported by the broker")
     parser.add_argument("db_path",  type=Path, help="SQLite database (*.db)")

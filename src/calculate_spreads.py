@@ -11,18 +11,20 @@ then ``compute_spread_px_py_from_cache`` to compute pX(pY) statistics.
 import pickle
 import time
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 
-def count_lines(path, buffer_size=1024 * 1024):
+def count_lines(path: str | Path, buffer_size: int = 1024 * 1024) -> int:
     with open(path, "rb") as f:
         return sum(buf.count(b"\n") for buf in iter(lambda: f.read(buffer_size), b""))
 
 
-def csv_has_header(csv_path, datetime_format="%Y%m%d %H:%M:%S"):
+def csv_has_header(csv_path: str | Path, datetime_format: str = "%Y%m%d %H:%M:%S") -> bool:
     """
     Detect whether the CSV has a header row by attempting to parse the
     first field of the first non-empty line as a DateTime.
@@ -40,7 +42,12 @@ def csv_has_header(csv_path, datetime_format="%Y%m%d %H:%M:%S"):
     return False
 
 
-def csv_to_daily_spread_cache(csv_path, cache_path, chunksize=2_000_000, sort_values=True):
+def csv_to_daily_spread_cache(
+    csv_path: str | Path,
+    cache_path: str | Path,
+    chunksize: int = 2_000_000,
+    sort_values: bool = True,
+) -> dict[pd.Timestamp, NDArray[np.float32]]:
     """
     Read CSV in chunks and build a pickle cache:
         { Day -> np.array(sorted daily spreads) }
@@ -79,35 +86,33 @@ def csv_to_daily_spread_cache(csv_path, cache_path, chunksize=2_000_000, sort_va
         tqdm.write(f"Removing temp cache: {tmp_path}")
         tmp_path.unlink()
 
-    day_data = {}
+    day_data: dict[Any, list[NDArray[np.float32]]] = {}
     rows_read = 0
     rows_kept = 0
     rows_dropped = 0
 
     t0 = time.perf_counter()
 
-    read_csv_kwargs = dict(
+    reader = pd.read_csv(
+        csv_path,
         usecols=[0, 1],
         chunksize=chunksize,
         header=0 if has_header else None,
         names=["DateTime", "Spread"],
     )
 
-    reader = pd.read_csv(csv_path, **read_csv_kwargs)
-
-    for chunk in tqdm(reader, total=total_chunks, desc="CSV -> chunk parse", unit="chunk"):
+    for raw_chunk in tqdm(reader, total=total_chunks, desc="CSV -> chunk parse", unit="chunk"):
+        chunk = cast(pd.DataFrame, raw_chunk)
         rows_read += len(chunk)
 
         chunk["DateTime"] = pd.to_datetime(
             chunk["DateTime"],
             format="%Y%m%d %H:%M:%S",
-            errors="coerce"
+            errors="coerce",
         )
 
-        chunk["Spread"] = pd.to_numeric(
-            chunk["Spread"],
-            errors="coerce"
-        ).astype("float32")
+        chunk["Spread"] = pd.to_numeric(chunk["Spread"], errors="coerce")
+        chunk["Spread"] = chunk["Spread"].astype("float32")
 
         before = len(chunk)
         chunk = chunk.dropna(subset=["DateTime", "Spread"])
@@ -120,13 +125,13 @@ def csv_to_daily_spread_cache(csv_path, cache_path, chunksize=2_000_000, sort_va
         rows_kept += len(chunk)
 
         for day, group in chunk.groupby("Day", sort=False):
-            arr = group["Spread"].to_numpy(dtype=np.float32, copy=True)
+            arr: NDArray[np.float32] = group["Spread"].to_numpy(dtype=np.float32, copy=True)
             day_data.setdefault(day, []).append(arr)
 
-    daily_cache = {}
+    daily_cache: dict[pd.Timestamp, NDArray[np.float32]] = {}
 
     for day in tqdm(sorted(day_data.keys()), desc="Merging daily arrays", unit="day"):
-        values = np.concatenate(day_data[day]).astype(np.float32, copy=False)
+        values: NDArray[np.float32] = np.concatenate(day_data[day]).astype(np.float32, copy=False)
         if sort_values:
             values.sort()
         daily_cache[pd.Timestamp(day)] = values
@@ -149,33 +154,39 @@ def csv_to_daily_spread_cache(csv_path, cache_path, chunksize=2_000_000, sort_va
     return daily_cache
 
 
-def load_daily_spread_cache(cache_path):
+def load_daily_spread_cache(
+    cache_path: str | Path,
+) -> dict[pd.Timestamp, NDArray[np.float32]]:
     cache_path = Path(cache_path)
     tqdm.write(f"Loading cache: {cache_path}")
     with open(cache_path, "rb") as f:
-        return pickle.load(f)
+        return cast(dict[pd.Timestamp, NDArray[np.float32]], pickle.load(f))
 
 
-def compute_spread_px_py_from_cache(daily_cache, daily_percentile, total_percentile):
+def compute_spread_px_py_from_cache(
+    daily_cache: dict[pd.Timestamp, NDArray[np.float32]],
+    daily_percentile: float,
+    total_percentile: float,
+) -> tuple[float, pd.DataFrame]:
     """
     Compute pX(pY) from daily cache.
 
     Example:
         daily_percentile=90, total_percentile=70 -> p70(p90)
     """
-    days = sorted(daily_cache.keys())
-    daily_vals = np.empty(len(days), dtype=np.float32)
+    days: list[pd.Timestamp] = sorted(daily_cache.keys())
+    daily_vals: NDArray[np.float32] = np.empty(len(days), dtype=np.float32)
 
     for i, day in enumerate(tqdm(days, desc=f"Daily p{daily_percentile}", unit="day")):
         values = daily_cache[day]
         daily_vals[i] = np.percentile(values, daily_percentile)
 
     tqdm.write(f"Computing p{total_percentile}(p{daily_percentile})...")
-    final_value = np.percentile(daily_vals, total_percentile)
+    final_value = float(np.percentile(daily_vals, total_percentile))
 
     daily_df = pd.DataFrame({
         "Day": days,
-        f"p{daily_percentile}": daily_vals
+        f"p{daily_percentile}": daily_vals,
     })
 
     return final_value, daily_df

@@ -20,6 +20,7 @@ __pycache__/
 *.pywz
 *.pyzw
 *.pyzwz
+venv/
 
 # Include Python embedded files
 !src/python/*
