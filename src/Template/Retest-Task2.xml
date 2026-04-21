@@ -99,8 +99,8 @@
                 </Params>
               </Method>
             </Commissions>
-            <Swap use="true" type="points" long="-67.8" short="38.4" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
-            <MainTestValues timeframe="true" dates="false" subcharts="false" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="true" session="false" />
+            <Swap use="false" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
           </Setup>
           <Setup dateFrom="2017.10.02" dateTo="2025.01.01" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
             <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
@@ -111,8 +111,8 @@
                 </Params>
               </Method>
             </Commissions>
-            <Swap use="true" type="points" long="-67.8" short="38.4" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
-            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="true" session="true" />
+            <Swap use="false" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
           </Setup>
         </Setups>
       </Settings>
@@ -134,7 +134,7 @@
             <Left-Side valueType="column">
               <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="StagnationPct" />
             </Left-Side>
-            <Comparator value="&lt;=" />
+            <Comparator value="&gt;=" />
             <Right-Side valueType="column">
               <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="70" class="StagnationPct" />
             </Right-Side>
