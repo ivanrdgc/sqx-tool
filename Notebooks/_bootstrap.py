@@ -20,6 +20,12 @@ if str(_SRC) not in sys.path:
 
 import sqx_tool  # noqa: E402,F401
 import update_instruments_db  # noqa: E402
+import calculate_spreads  # noqa: E402,F401
+from calculate_spreads import (  # noqa: E402,F401
+    csv_to_daily_spread_cache,
+    load_daily_spread_cache,
+    compute_spread_px_py_from_cache,
+)
 
 sqx_tool.configure_logging()
 
