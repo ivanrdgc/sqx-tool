@@ -24,7 +24,20 @@ def count_lines(path: str | Path, buffer_size: int = 1024 * 1024) -> int:
         return sum(buf.count(b"\n") for buf in iter(lambda: f.read(buffer_size), b""))
 
 
-def csv_has_header(csv_path: str | Path, datetime_format: str = "%Y%m%d %H:%M:%S") -> bool:
+DATETIME_FORMATS: tuple[str, ...] = ("%Y%m%d %H:%M:%S.%f", "%Y%m%d %H:%M:%S")
+
+
+def _match_datetime_format(value: str) -> str | None:
+    for fmt in DATETIME_FORMATS:
+        try:
+            pd.to_datetime(value, format=fmt)
+            return fmt
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def csv_has_header(csv_path: str | Path) -> bool:
     """
     Detect whether the CSV has a header row by attempting to parse the
     first field of the first non-empty line as a DateTime.
@@ -34,12 +47,31 @@ def csv_has_header(csv_path: str | Path, datetime_format: str = "%Y%m%d %H:%M:%S
             line = line.strip()
             if line:
                 first_field = line.split(",", 1)[0].strip().strip('"').strip("'")
-                try:
-                    pd.to_datetime(first_field, format=datetime_format)
-                    return False
-                except (ValueError, TypeError):
-                    return True
+                return _match_datetime_format(first_field) is None
     return False
+
+
+def detect_datetime_format(csv_path: str | Path, has_header: bool) -> str:
+    """
+    Return the first format from DATETIME_FORMATS that parses the first
+    data row's DateTime field.
+    """
+    with open(csv_path, "r", encoding="utf-8", errors="replace") as f:
+        if has_header:
+            next(f, None)
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            first_field = line.split(",", 1)[0].strip().strip('"').strip("'")
+            fmt = _match_datetime_format(first_field)
+            if fmt is not None:
+                return fmt
+            break
+    raise ValueError(
+        f"Could not detect DateTime format in {csv_path}. "
+        f"Expected one of: {DATETIME_FORMATS}"
+    )
 
 
 def csv_to_daily_spread_cache(
@@ -65,7 +97,9 @@ def csv_to_daily_spread_cache(
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
 
     has_header = csv_has_header(csv_path)
+    datetime_format = detect_datetime_format(csv_path, has_header)
     tqdm.write(f"Header detected: {has_header}")
+    tqdm.write(f"DateTime format: {datetime_format}")
 
     tqdm.write("Counting CSV rows...")
     t_count_0 = time.perf_counter()
@@ -107,7 +141,7 @@ def csv_to_daily_spread_cache(
 
         chunk["DateTime"] = pd.to_datetime(
             chunk["DateTime"],
-            format="%Y%m%d %H:%M:%S",
+            format=datetime_format,
             errors="coerce",
         )
 
