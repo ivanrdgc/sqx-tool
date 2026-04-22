@@ -3,15 +3,18 @@ calculate_spreads.py
 
 Build and query a per-day spread cache from a tick CSV.
 
-The CSV is expected to have DateTime in column 1 and Spread in column 2, and
-may or may not include a header row. Use ``csv_to_daily_spread_cache`` to
-produce a pickle cache of ``{ Day -> np.array(sorted daily spreads) }``,
-then ``compute_spread_px_py_from_cache`` to compute pX(pY) statistics.
+Two CSV layouts are supported (with or without a header row):
+  - ``DateTime, Spread``               (spread precomputed)
+  - ``DateTime, Bid, Ask, Volume``     (spread derived as Ask - Bid; Volume ignored)
+
+Use ``csv_to_daily_spread_cache`` to produce a pickle cache of
+``{ Day -> np.array(sorted daily spreads) }``, then
+``compute_spread_px_py_from_cache`` to compute pX(pY) statistics.
 """
 import pickle
 import time
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -74,6 +77,38 @@ def detect_datetime_format(csv_path: str | Path, has_header: bool) -> str:
     )
 
 
+CsvSchema = Literal["spread", "bid_ask"]
+
+
+def detect_csv_schema(csv_path: str | Path, has_header: bool) -> CsvSchema:
+    """
+    Return ``"spread"`` for ``DateTime, Spread`` CSVs or ``"bid_ask"`` for
+    ``DateTime, Bid, Ask[, Volume]`` CSVs.
+
+    Detection uses the header column names when present, otherwise falls
+    back to the field count of the first data row.
+    """
+    with open(csv_path, "r", encoding="utf-8", errors="replace") as f:
+        if has_header:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                cols = [c.strip().strip('"').strip("'").lower() for c in line.split(",")]
+                if "bid" in cols and "ask" in cols:
+                    return "bid_ask"
+                if "spread" in cols:
+                    return "spread"
+                break
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            n_cols = len(line.split(","))
+            return "bid_ask" if n_cols >= 3 else "spread"
+    raise ValueError(f"Could not detect CSV schema in {csv_path}")
+
+
 def csv_to_daily_spread_cache(
     csv_path: str | Path,
     cache_path: str | Path,
@@ -84,8 +119,10 @@ def csv_to_daily_spread_cache(
     Read CSV in chunks and build a pickle cache:
         { Day -> np.array(sorted daily spreads) }
 
-    Accepts CSVs with or without a header row. Columns are assumed to be
-    DateTime (column 1) and Spread (column 2).
+    Accepts CSVs with or without a header row, in either layout:
+      - ``DateTime, Spread``
+      - ``DateTime, Bid, Ask[, Volume]``  (Spread is computed as Ask - Bid;
+        Volume, if present, is ignored)
 
     This is optimized for later pX(pY) calculations.
     """
@@ -98,8 +135,10 @@ def csv_to_daily_spread_cache(
 
     has_header = csv_has_header(csv_path)
     datetime_format = detect_datetime_format(csv_path, has_header)
+    schema = detect_csv_schema(csv_path, has_header)
     tqdm.write(f"Header detected: {has_header}")
     tqdm.write(f"DateTime format: {datetime_format}")
+    tqdm.write(f"CSV schema: {schema}")
 
     tqdm.write("Counting CSV rows...")
     t_count_0 = time.perf_counter()
@@ -127,12 +166,19 @@ def csv_to_daily_spread_cache(
 
     t0 = time.perf_counter()
 
+    if schema == "bid_ask":
+        usecols = [0, 1, 2]
+        names = ["DateTime", "Bid", "Ask"]
+    else:
+        usecols = [0, 1]
+        names = ["DateTime", "Spread"]
+
     reader = pd.read_csv(
         csv_path,
-        usecols=[0, 1],
+        usecols=usecols,
         chunksize=chunksize,
         header=0 if has_header else None,
-        names=["DateTime", "Spread"],
+        names=names,
     )
 
     for raw_chunk in tqdm(reader, total=total_chunks, desc="CSV -> chunk parse", unit="chunk"):
@@ -145,8 +191,12 @@ def csv_to_daily_spread_cache(
             errors="coerce",
         )
 
-        chunk["Spread"] = pd.to_numeric(chunk["Spread"], errors="coerce")
-        chunk["Spread"] = chunk["Spread"].astype("float32")
+        if schema == "bid_ask":
+            bid = pd.to_numeric(chunk["Bid"], errors="coerce")
+            ask = pd.to_numeric(chunk["Ask"], errors="coerce")
+            chunk["Spread"] = (ask - bid).astype("float32")
+        else:
+            chunk["Spread"] = pd.to_numeric(chunk["Spread"], errors="coerce").astype("float32")
 
         before = len(chunk)
         chunk = chunk.dropna(subset=["DateTime", "Spread"])
