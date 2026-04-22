@@ -678,12 +678,12 @@ def newproject(args: argparse.Namespace) -> None:
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
 
-    for i in range(6, 13):
+    for i in range(6, 11):
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
     # Darwinex
-    editor.patch("Retest-Task13.xml", patch_dates, retest_start_dx, retest_end_strategy_dx, oos_ranges_strategy_dx)
+    editor.patch("Retest-Task11.xml", patch_dates, retest_start_dx, retest_end_strategy_dx, oos_ranges_strategy_dx)
 
     # Config & global market side
     editor.patch("config.xml", patch_config)
@@ -695,13 +695,13 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Retest tasks ----------------------------------------------------------
-    for i in range(1, 13):
+    for i in range(1, 11):
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Darwinex
     editor.patch(
-        "Retest-Task13.xml",
+        "Retest-Task11.xml",
         patch_setup,
         symbol_darwinex or symbol_dukascopy,
         sym_2_info,
@@ -709,13 +709,13 @@ def newproject(args: argparse.Namespace) -> None:
 
     # Other markets / Spread / Dates ---------------------------------------
     editor.patch("Retest-Task2.xml", patch_other_markets, build_end)
-    editor.patch("Retest-Task8.xml", patch_other_markets)
+    editor.patch("Retest-Task7.xml", patch_other_markets)
 
     if symbol_darwinex is None:
         editor.patch("config.xml", patch_disable_task, "Retest-Task2.xml")
         editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
         editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
-        editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
+        editor.patch("Retest-Task8.xml", patch_input_databank, "S-OOS1")
 
     # Save / Load folders ---------------------------------------------------
     editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
