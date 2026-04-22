@@ -75,52 +75,7 @@
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
-    <RetestOnAdditionalMarkets use="true">
-      <Settings>
-        <Setups detailed="true">
-          <Setup dateFrom="2017.10.02" dateTo="2025.06.13" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0.8" />
-            <Commissions>
-              <Method type="SizeBased" use="true">
-                <Params>
-                  <Param key="Commission" className="SizeBased">5.000000</Param>
-                </Params>
-              </Method>
-            </Commissions>
-            <Swap use="false" />
-            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
-          </Setup>
-          <Setup dateFrom="2017.10.02" dateTo="2025.06.13" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0.8" />
-            <Commissions>
-              <Method type="SizeBased" use="true">
-                <Params>
-                  <Param key="Commission" className="SizeBased">5.000000</Param>
-                </Params>
-              </Method>
-            </Commissions>
-            <Swap use="false" />
-            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
-          </Setup>
-        </Setups>
-      </Settings>
-      <AcceptanceSettings>
-        <Check>all</Check>
-        <MinConditions>2</MinConditions>
-        <MinMarkets>1</MinMarkets>
-        <Conditions>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="NetProfit" />
-            </Left-Side>
-            <Comparator value="&lt;=" />
-            <Right-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="0" class="NetProfit" />
-            </Right-Side>
-          </Condition>
-        </Conditions>
-      </AcceptanceSettings>
-    </RetestOnAdditionalMarkets>
+    <RetestOnAdditionalMarkets use="false" />
     <WalkForwardOptimization use="false">
       <Settings>
         <WalkForward type="1" period="10" optimization="15">
@@ -456,22 +411,63 @@
         </Conditions>
       </AcceptanceSettings>
     </MonteCarloManipulation>
-    <OptProfileSysParamPermutation use="false">
+    <OptProfileSysParamPermutation use="true">
       <Settings>
-        <OptimPeriods>true</OptimPeriods>
-        <OptimExitTypes>true</OptimExitTypes>
-        <MaxTests>1000</MaxTests>
+        <MaxTests>15000</MaxTests>
+        <DistributionUp>20</DistributionUp>
+        <DistributionDown>20</DistributionDown>
+        <Steps>6</Steps>
+        <WhatToParametrize type="1" symmetricVariables="false">
+          <Recommended>true</Recommended>
+        </WhatToParametrize>
       </Settings>
       <AcceptanceSettings>
-        <ProfitOptPct>30</ProfitOptPct>
+        <ProfitOptPct>90</ProfitOptPct>
         <AvgProfit>0</AvgProfit>
         <UniformDistrChanges>5</UniformDistrChanges>
         <StdevAvgProfit>1</StdevAvgProfit>
         <EvalProfitOptCheck>true</EvalProfitOptCheck>
-        <EvalAvgProfitCheck>true</EvalAvgProfitCheck>
-        <EvalUniformDistrCheck>true</EvalUniformDistrCheck>
-        <EvalTopProfitCheck>true</EvalTopProfitCheck>
-        <Conditions />
+        <EvalAvgProfitCheck>false</EvalAvgProfitCheck>
+        <EvalUniformDistrCheck>false</EvalUniformDistrCheck>
+        <EvalTopProfitCheck>false</EvalTopProfitCheck>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Stagnation" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Stagnation" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
       </AcceptanceSettings>
     </OptProfileSysParamPermutation>
     <WhatIf use="false">
@@ -597,10 +593,9 @@
   <Notes></Notes>
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-Other Markets" />
-    <Databank label="Input databank" name="Input" value="S-OOS1" />
+    <Databank label="Output databank" name="Output" value="S-Sys Param" />
+    <Databank label="Input databank" name="Input" value="S-Spread" />
   </Databanks>
-  <SelectedStrategies />
   <Options customSettings="false">
     <BuildTradingOptions>
       <Params>

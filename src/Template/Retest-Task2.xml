@@ -91,28 +91,20 @@
       <Settings>
         <Setups detailed="true">
           <Setup dateFrom="2017.10.02" dateTo="2025.01.01" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0" />
             <Commissions>
-              <Method type="PercentageBased" use="true">
-                <Params>
-                  <Param key="CommissionPct" className="PercentageBased">0.005</Param>
-                </Params>
-              </Method>
+              <Method type="None" use="true"><Params/></Method>
             </Commissions>
             <Swap use="false" />
-            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
           </Setup>
           <Setup dateFrom="2017.10.02" dateTo="2025.01.01" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
-            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0" />
             <Commissions>
-              <Method type="PercentageBased" use="true">
-                <Params>
-                  <Param key="CommissionPct" className="PercentageBased">0.005</Param>
-                </Params>
-              </Method>
+              <Method type="None" use="true"><Params/></Method>
             </Commissions>
             <Swap use="false" />
-            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="true" slippage="true" commissions="true" swap="false" session="true" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
           </Setup>
         </Setups>
       </Settings>

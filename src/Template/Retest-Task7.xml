@@ -1,7 +1,7 @@
 <Settings>
   <Data>
     <Setups>
-      <Setup dateFrom="2008.01.01" dateTo="2025.12.11" testPrecision="2" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+      <Setup dateFrom="2008.01.01" dateTo="2025.12.11" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
         <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
         <Commissions>
           <Method type="PercentageBased" use="true">
@@ -35,29 +35,38 @@
           <Numeric-Value value="300" />
         </Right-Side>
       </Condition>
-      <Condition use="true">
+      <Condition use="false">
         <Left-Side valueType="column">
-          <Column-Value column="NetProfit" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+          <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnDDRatio" />
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="0" />
+          <Numeric-Value value="3" />
+        </Right-Side>
+      </Condition>
+      <Condition use="false">
+        <Left-Side valueType="column">
+          <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2Pct" resultType="main" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnDDRatio" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
     </Conditions>
     <DeleteFailedStrategies>true</DeleteFailedStrategies>
     <ForceRunCrossChecks>false</ForceRunCrossChecks>
-    <AutomaticDismissal warnings="true">
-      <Problem code="1" dismiss="true" />
-      <Problem code="4" dismiss="true" />
-      <Problem code="1024" dismiss="true" />
-      <Problem code="16" dismiss="true" />
-      <Problem code="32" dismiss="true" />
-      <Problem code="64" dismiss="true" />
-      <Problem code="256" dismiss="true" />
-      <Problem code="2" dismiss="true" />
-      <Problem code="512" dismiss="true" />
-      <Problem code="8" dismiss="true" />
+    <AutomaticDismissal warnings="false">
+      <Problem code="1" dismiss="false" />
+      <Problem code="4" dismiss="false" />
+      <Problem code="1024" dismiss="false" />
+      <Problem code="16" dismiss="false" />
+      <Problem code="32" dismiss="false" />
+      <Problem code="64" dismiss="false" />
+      <Problem code="256" dismiss="false" />
+      <Problem code="2" dismiss="false" />
+      <Problem code="512" dismiss="false" />
+      <Problem code="8" dismiss="false" />
     </AutomaticDismissal>
     <StopCondition type="databank-full" passedStrategies="1000" restartCount="5" days="0" hours="0" minutes="0" />
     <FitPortfolio active="false" databank="Existing portfolio">
@@ -66,7 +75,44 @@
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
-    <RetestOnAdditionalMarkets use="false" />
+    <RetestOnAdditionalMarkets use="true">
+      <Settings>
+        <Setups detailed="true">
+          <Setup dateFrom="2017.10.02" dateTo="2025.06.13" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0" />
+            <Commissions>
+              <Method type="None" use="true"><Params/></Method>
+            </Commissions>
+            <Swap use="false" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
+          </Setup>
+          <Setup dateFrom="2017.10.02" dateTo="2025.06.13" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
+            <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="0" />
+            <Commissions>
+              <Method type="None" use="true"><Params/></Method>
+            </Commissions>
+            <Swap use="false" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
+          </Setup>
+        </Setups>
+      </Settings>
+      <AcceptanceSettings>
+        <Check>all</Check>
+        <MinConditions>2</MinConditions>
+        <MinMarkets>1</MinMarkets>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="NetProfit" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="0" class="NetProfit" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </RetestOnAdditionalMarkets>
     <WalkForwardOptimization use="false">
       <Settings>
         <WalkForward type="1" period="10" optimization="15">
@@ -543,8 +589,8 @@
   <Notes></Notes>
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-OOS1" />
-    <Databank label="Input databank" name="Input" value="S-Build" />
+    <Databank label="Output databank" name="Output" value="S-Other Markets" />
+    <Databank label="Input databank" name="Input" value="S-OOS1" />
   </Databanks>
   <SelectedStrategies />
   <Options customSettings="false">

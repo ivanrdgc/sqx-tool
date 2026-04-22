@@ -505,6 +505,8 @@ def newproject(args: argparse.Namespace) -> None:
         symbol: str = symbol_dukascopy,
         info: SymbolInfo = sym_info,
         use_swap: bool = True,
+        use_commission: bool = True,
+        use_spread: bool = True,
     ) -> None:
         setup = root.find(".//Setups/Setup")
         if setup is None:
@@ -515,30 +517,31 @@ def newproject(args: argparse.Namespace) -> None:
             logger.debug("patch_setup.chart() – %s @ %s", symbol, timeframe)
             chart.set("symbol", symbol)
             chart.set("timeframe", timeframe)
-            if info.spread is not None:
+            if info.spread is not None and use_spread:
                 chart.set("spread", str(info.spread))
+            else:
+                chart.set("spread", str(0))
 
         # Commissions -------------------------------------------------------
-        if info.commission:
-            comm_parent = setup.find("Commissions")
-            if comm_parent is None:
-                comm_parent = ET.SubElement(setup, "Commissions")
-            comm_parent.clear()
-            try:
-                comm_parent.append(ET.fromstring(info.commission))
-            except ET.ParseError as exc:
-                logging.warning("bad commission XML for %s: %s", symbol, exc)
+        comm_parent = setup.find("Commissions")
+        if comm_parent is None:
+            comm_parent = ET.SubElement(setup, "Commissions")
+        comm_parent.clear()
+        comm_xml = info.commission if (info.commission and use_commission) else '<Method type="None" use="true"><Params/></Method>'
+        try:
+            comm_parent.append(ET.fromstring(comm_xml))
+        except ET.ParseError as exc:
+            logging.warning("bad commission XML for %s: %s", symbol, exc)
 
         # Swap --------------------------------------------------------------
-        if info.swap and use_swap:
-            old = setup.find("Swap")
-            if old is not None:
-                setup.remove(old)
-            try:
-                swap_elem = ET.fromstring(info.swap)
-                setup.append(swap_elem)
-            except ET.ParseError as exc:
-                logging.warning("bad swap XML for %s: %s", symbol, exc)
+        old = setup.find("Swap")
+        if old is not None:
+            setup.remove(old)
+        swap_xml = info.swap if (info.swap and use_swap) else '<Swap use="false" />'
+        try:
+            setup.append(ET.fromstring(swap_xml))
+        except ET.ParseError as exc:
+            logging.warning("bad swap XML for %s: %s", symbol, exc)
 
     def patch_dates(
         root: ET.Element,
@@ -616,12 +619,6 @@ def newproject(args: argparse.Namespace) -> None:
                 setups[1].set("dateFrom", sym_2_info.first_date.strftime("%Y.%m.%d"))
             setups[1].set("dateTo", end_date.strftime("%Y.%m.%d"))
 
-    def patch_rhp_spread(root: ET.Element, spread: float) -> None:
-        logger.debug("patch_rhp_spread(spread=%s)", spread)
-        spread_el = root.find(".//RetestWithHigherPrecision/Settings/Spread")
-        if spread_el is not None:
-            spread_el.text = str(spread)
-
     def patch_disable_task(root: ET.Element, xml_name: str) -> None:
         for task in root.findall(".//Tasks/Task"):
             if task.get("taskXMLFile") == xml_name:
@@ -695,12 +692,12 @@ def newproject(args: argparse.Namespace) -> None:
     for i in range(1, 3):
         xml = f"Build-Task{i}.xml"
         editor.patch(xml, patch_market_side)
-        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False)
+        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Retest tasks ----------------------------------------------------------
     for i in range(1, 13):
         xml = f"Retest-Task{i}.xml"
-        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False)
+        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Darwinex
     editor.patch(
@@ -719,14 +716,6 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
         editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
         editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
-
-    if sym_info.spread is not None:
-        editor.patch("Retest-Task3.xml", patch_rhp_spread, sym_info.spread * 2)
-        editor.patch("Retest-Task6.xml", patch_rhp_spread, sym_info.spread)
-        editor.patch("Retest-Task9.xml", patch_rhp_spread, sym_info.spread * 3)
-        editor.patch("Retest-Task12.xml", patch_rhp_spread, sym_info.spread)
-    else:
-        logging.warning("sym_info.spread is None; skipping patch_rhp_spread.")
 
     # Save / Load folders ---------------------------------------------------
     editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)

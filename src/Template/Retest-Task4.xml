@@ -288,97 +288,35 @@
         </Conditions>
       </AcceptanceSettings>
     </MonteCarloRetest>
-    <WalkForwardMatrix use="false">
+    <WalkForwardMatrix use="true">
       <Settings>
-        <WalkForward type="1" period="10" optimization="15">
-          <Param1 value="undefined" start="10" stop="40" step="10" />
-          <Param2 value="undefined" start="5" stop="20" step="5" />
+        <WalkForward type="0" period="10" optimization="15" distributionUp="20" distributionDown="20" maxSteps="6">
+          <Param1 value="undefined" start="20" stop="36" step="2" />
+          <Param2 value="undefined" start="5" stop="9" step="1" />
         </WalkForward>
-        <OptimizePeriods>true</OptimizePeriods>
-        <OptimizeExitTypes>true</OptimizeExitTypes>
-        <MaxTests>100</MaxTests>
+        <MaxTests>10000</MaxTests>
+        <WhatToParametrize type="1" symmetricVariables="false">
+          <Recommended>true</Recommended>
+        </WhatToParametrize>
       </Settings>
       <AcceptanceSettings>
-        <Conditions thresholdPct="80" robCombRows="2" robCombCols="2" robMinComb="0">
+        <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="7">
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
+              <Column-Value column="ProfitFactor" columnType="0" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ProfitFactor" />
             </Left-Side>
-            <Comparator value="&gt;" />
+            <Comparator value="&gt;=" />
             <Right-Side valueType="numeric">
-              <Numeric-Value value="0" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="NetProfit" columnType="0" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="NetProfit" />
-            </Left-Side>
-            <Comparator value="&gt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="60" />
+              <Numeric-Value value="80" />
             </Right-Side>
           </Condition>
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="WFPctOfProfitableRuns" columnType="33" name="WF Special Percentage of profitable runs" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFPctOfProfitableRuns" />
+              <Column-Value column="WinningPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="WinningPct" />
             </Left-Side>
-            <Comparator value="&gt;" />
+            <Comparator value="&gt;=" />
             <Right-Side valueType="numeric">
-              <Numeric-Value value="70" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value name="WF Special Max profit in one run as % of total" column="WFMaxProfitByRunInPct" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxProfitByRunInPct" />
-            </Left-Side>
-            <Comparator value="&lt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="50" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="WFMinTradesInRun" columnType="33" name="WF Special Min trades in one run" format="Integer" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" pctRatio="0" class="WFMinTradesInRun" />
-            </Left-Side>
-            <Comparator value="&gt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="20" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value name="WF Special Max % Drawdown in one run" column="WFMaxPctDDbyRun" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="33" class="WFMaxPctDDbyRun" />
-            </Left-Side>
-            <Comparator value="&lt;=" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="25" />
-            </Right-Side>
-          </Condition>
-          <Condition use="false">
-            <Left-Side valueType="column">
-              <Column-Value column="Drawdown" columnType="0" name="Drawdown" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="Drawdown" />
-            </Left-Side>
-            <Comparator value="&lt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="130" />
-            </Right-Side>
-          </Condition>
-          <Condition use="false">
-            <Left-Side valueType="column">
-              <Column-Value column="ReturnDDRatio" columnType="0" name="Ret/DD Ratio" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ReturnDDRatio" />
-            </Left-Side>
-            <Comparator value="&gt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="60" />
-            </Right-Side>
-          </Condition>
-          <Condition use="false">
-            <Left-Side valueType="column">
-              <Column-Value column="StagnationPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="StagnationPct" />
-            </Left-Side>
-            <Comparator value="&lt;" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="30" />
+              <Numeric-Value value="80" />
             </Right-Side>
           </Condition>
         </Conditions>
@@ -423,63 +361,22 @@
         </Conditions>
       </AcceptanceSettings>
     </MonteCarloManipulation>
-    <OptProfileSysParamPermutation use="true">
+    <OptProfileSysParamPermutation use="false">
       <Settings>
-        <MaxTests>15000</MaxTests>
-        <DistributionUp>20</DistributionUp>
-        <DistributionDown>20</DistributionDown>
-        <Steps>6</Steps>
-        <WhatToParametrize type="1" symmetricVariables="false">
-          <Recommended>true</Recommended>
-        </WhatToParametrize>
+        <OptimPeriods>true</OptimPeriods>
+        <OptimExitTypes>true</OptimExitTypes>
+        <MaxTests>1000</MaxTests>
       </Settings>
       <AcceptanceSettings>
-        <ProfitOptPct>90</ProfitOptPct>
+        <ProfitOptPct>30</ProfitOptPct>
         <AvgProfit>0</AvgProfit>
         <UniformDistrChanges>5</UniformDistrChanges>
         <StdevAvgProfit>1</StdevAvgProfit>
         <EvalProfitOptCheck>true</EvalProfitOptCheck>
-        <EvalAvgProfitCheck>false</EvalAvgProfitCheck>
-        <EvalUniformDistrCheck>false</EvalUniformDistrCheck>
-        <EvalTopProfitCheck>false</EvalTopProfitCheck>
-        <Conditions>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Drawdown" />
-            </Left-Side>
-            <Comparator value="&gt;=" />
-            <Right-Side valueType="column">
-              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Drawdown" />
-            </Left-Side>
-            <Comparator value="&lt;=" />
-            <Right-Side valueType="column">
-              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Stagnation" />
-            </Left-Side>
-            <Comparator value="&gt;=" />
-            <Right-Side valueType="column">
-              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Stagnation" />
-            </Left-Side>
-            <Comparator value="&lt;=" />
-            <Right-Side valueType="column">
-              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
-            </Right-Side>
-          </Condition>
-        </Conditions>
+        <EvalAvgProfitCheck>true</EvalAvgProfitCheck>
+        <EvalUniformDistrCheck>true</EvalUniformDistrCheck>
+        <EvalTopProfitCheck>true</EvalTopProfitCheck>
+        <Conditions />
       </AcceptanceSettings>
     </OptProfileSysParamPermutation>
     <WhatIf use="false">
@@ -605,8 +502,8 @@
   <Notes></Notes>
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="E-Sys Param" />
-    <Databank label="Input databank" name="Input" value="E-Spread" />
+    <Databank label="Output databank" name="Output" value="E-WFM" />
+    <Databank label="Input databank" name="Input" value="E-Sys Param" />
   </Databanks>
   <Options customSettings="false">
     <BuildTradingOptions>
