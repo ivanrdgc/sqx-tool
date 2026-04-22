@@ -606,7 +606,7 @@
   <ATMs enable="false" />
   <Databanks retestSelected="false">
     <Databank label="Output databank" name="Output" value="E-Sys Param" />
-    <Databank label="Input databank" name="Input" value="E-Spread" />
+    <Databank label="Input databank" name="Input" value="E-Other Markets" />
   </Databanks>
   <Options customSettings="false">
     <BuildTradingOptions>

@@ -594,7 +594,7 @@
   <ATMs enable="false" />
   <Databanks retestSelected="false">
     <Databank label="Output databank" name="Output" value="S-Sys Param" />
-    <Databank label="Input databank" name="Input" value="S-Spread" />
+    <Databank label="Input databank" name="Input" value="S-Other Markets" />
   </Databanks>
   <Options customSettings="false">
     <BuildTradingOptions>

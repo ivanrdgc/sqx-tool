@@ -2,7 +2,6 @@
   <ClearDatabanks>
     <Databank name="S-Build" />
     <Databank name="S-Other Markets" />
-    <Databank name="S-Spread" />
     <Databank name="S-OOS1" />
     <Databank name="S-Sys Param" />
     <Databank name="S-WFM" />
