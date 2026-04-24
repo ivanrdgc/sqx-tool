@@ -25,6 +25,6 @@
     <SetNoteCustom />
   </SaveToFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="S-Build" />
+    <Databank label="Input databank" name="Input" value="S-Edges" />
   </Databanks>
 </Settings>

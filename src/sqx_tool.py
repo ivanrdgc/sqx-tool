@@ -421,7 +421,7 @@ def newproject(args: argparse.Namespace) -> None:
     log("project dir: %s", project_dir)
     logger.debug("Created project directory: %s", project_dir)
 
-    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Edges", "04 - S-Build", "05 - S-Final", "06 - S-Darwinex")
+    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Edges", "04 - S-Edges Final", "05 - S-Build", "06 - S-Final", "07 - S-Final Demo", "08 - S-Darwinex")
     for sub in subdirs:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.log(TRACE_LEVEL, "Created subdir %s", sub)
@@ -430,7 +430,7 @@ def newproject(args: argparse.Namespace) -> None:
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
     project_dirs = [(project_dir / sub).resolve() for sub in subdirs]
-    e_build_dir, e_final_dir, s_edges_dir, s_build_dir, s_final_dir, s_darwinex_dir = project_dirs
+    e_build_dir, e_final_dir, s_edges_dir, s_edges_final_dir, s_build_dir, s_final_dir, s_final_demo_dir, s_darwinex_dir = project_dirs
 
     is_windows = platform.system() == "Windows"
 
@@ -721,9 +721,11 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
     editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_final_dir)
     editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, s_edges_dir)
-    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
-    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
-    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_darwinex_dir)
+    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_edges_final_dir)
+    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_build_dir)
+    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_dir)
+    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_demo_dir)
+    editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_darwinex_dir)
 
     # External script -------------------------------------------------------
     cmd = make_remove_eab_command(e_final_dir, s_edges_dir)

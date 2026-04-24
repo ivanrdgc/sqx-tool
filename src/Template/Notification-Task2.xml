@@ -1,0 +1,7 @@
+<Settings>
+  <Notification>
+    <Type>email</Type>
+    <Email>ivanrdgc@gmail.com</Email>
+    <Wait>true</Wait>
+  </Notification>
+</Settings>
