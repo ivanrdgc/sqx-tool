@@ -674,11 +674,11 @@ def newproject(args: argparse.Namespace) -> None:
         xml = f"Build-Task{i}.xml"
         editor.patch(xml, patch_dates, build_start, build_end)
 
-    for i in range(1, 6):
+    for i in range(1, 5):
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
 
-    for i in range(6, 11):
+    for i in range(5, 11):
         xml = f"Retest-Task{i}.xml"
         editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
 
