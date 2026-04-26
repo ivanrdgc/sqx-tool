@@ -234,7 +234,32 @@
     </FitPortfolio>
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
-  <CrossChecks use="false" />
+  <CrossChecks use="true" evaluateAll="true">
+    <WhatIf use="true">
+      <Settings>
+        <Methods>
+          <Method use="true" type="ExcludePctTradesWithBiggestPl">
+            <Params>
+              <Param key="TradesPct" type="Integer">1</Param>
+            </Params>
+          </Method>
+        </Methods>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2" resultType="WhatIf" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="150" class="ReturnDDRatio"/>
+            </Left-Side>
+            <Comparator value="&gt;="/>
+            <Right-Side valueType="column">
+              <Column-Value column="ReturnDDRatio" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="ReturnDDRatio"/>
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </WhatIf>
+  </CrossChecks>
   <Notes></Notes>
   <Blocks type="simple">
     <Calibration useMaxSteps="false" maxSteps="50" calibrateBeforeStart="true" />
