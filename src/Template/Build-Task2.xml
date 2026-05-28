@@ -20315,7 +20315,7 @@
         <Param key="ExitAtEndOfDay" className="ExitAtEndOfDay">false</Param>
         <Param key="EODExitTime" className="ExitAtEndOfDay">83040</Param>
         <Param key="ExitOnFriday" className="ExitOnFriday">true</Param>
-        <Param key="FridayExitTime" className="ExitOnFriday">78600</Param>
+        <Param key="FridayExitTime" className="ExitOnFriday">84900</Param>
         <Param key="LimitTimeRange" className="LimitTimeRange">true</Param>
         <Param key="SignalTimeRangeFrom" className="LimitTimeRange">5400</Param>
         <Param key="SignalTimeRangeTo" className="LimitTimeRange">84600</Param>

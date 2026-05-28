@@ -102,7 +102,7 @@
         <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="7">
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="ProfitFactor" columnType="0" format="Decimal2Pct" resultType="WalkForwardOptimization" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ProfitFactor" />
+              <Column-Value column="ProfitFactor" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ProfitFactor" />
             </Left-Side>
             <Comparator value="&gt;=" />
             <Right-Side valueType="numeric">
@@ -137,7 +137,7 @@
         <Param key="ExitAtEndOfDay" className="ExitAtEndOfDay">false</Param>
         <Param key="EODExitTime" className="ExitAtEndOfDay">83040</Param>
         <Param key="ExitOnFriday" className="ExitOnFriday">true</Param>
-        <Param key="FridayExitTime" className="ExitOnFriday">78600</Param>
+        <Param key="FridayExitTime" className="ExitOnFriday">84900</Param>
         <Param key="LimitTimeRange" className="LimitTimeRange">true</Param>
         <Param key="SignalTimeRangeFrom" className="LimitTimeRange">5400</Param>
         <Param key="SignalTimeRangeTo" className="LimitTimeRange">84600</Param>
