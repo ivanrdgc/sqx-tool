@@ -404,6 +404,19 @@ def newproject(args: argparse.Namespace) -> None:
     sym_info = get_symbol_info(symbol_dukascopy)
     sym_2_info = get_symbol_info(symbol_darwinex) if symbol_darwinex else sym_info
 
+    # Derive the _t_darwinex variant (used only for Retest-Task10)
+    base_symbol = symbol_dukascopy.split("_")[0]
+    symbol_t_darwinex = f"{base_symbol}_t_darwinex"
+    if symbol_exists(symbol_t_darwinex):
+        sym_t_info = get_symbol_info(symbol_t_darwinex)
+    else:
+        logging.warning(
+            "symbol '%s' not found in symbols DB – Retest-Task10 will fall back to '%s'",
+            symbol_t_darwinex, symbol_dukascopy,
+        )
+        symbol_t_darwinex = symbol_dukascopy
+        sym_t_info = sym_info
+
     if not template.is_dir():
         logging.error("template not found in %s", template)
         print(f"template not found in {template}")
@@ -697,7 +710,10 @@ def newproject(args: argparse.Namespace) -> None:
     # Retest tasks ----------------------------------------------------------
     for i in range(1, 11):
         xml = f"Retest-Task{i}.xml"
-        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
+        if i == 10:
+            editor.patch(xml, patch_setup, symbol_t_darwinex, sym_t_info, False, False, False)
+        else:
+            editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Darwinex
     editor.patch(
