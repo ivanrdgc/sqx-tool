@@ -78,17 +78,7 @@
     </FitPortfolio>
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
-  <CrossChecks use="true" evaluateAll="false">
-    <RetestWithHigherPrecision use="true">
-      <Settings>
-        <Precision>2</Precision>
-        <Spread>0</Spread>
-      </Settings>
-      <AcceptanceSettings>
-        <Conditions CrossCheck="RetestWithHigherPrecision" />
-      </AcceptanceSettings>
-    </RetestWithHigherPrecision>
-  </CrossChecks>
+  <CrossChecks use="false" evaluateAll="false" />
   <Notes></Notes>
   <ATMs enable="false" />
   <Databanks retestSelected="false">
