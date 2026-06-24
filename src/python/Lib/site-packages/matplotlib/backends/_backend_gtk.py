@@ -67,7 +67,7 @@ def _create_application():
 
 
 def mpl_to_gtk_cursor_name(mpl_cursor):
-    return _api.check_getitem({
+    return _api.getitem_checked({
         Cursors.MOVE: "move",
         Cursors.HAND: "pointer",
         Cursors.POINTER: "default",
@@ -195,6 +195,7 @@ class _FigureManagerGTK(FigureManagerBase):
         self._destroying = True
         self.window.destroy()
         self.canvas.destroy()
+        super().destroy()
 
     @classmethod
     def start_main_loop(cls):

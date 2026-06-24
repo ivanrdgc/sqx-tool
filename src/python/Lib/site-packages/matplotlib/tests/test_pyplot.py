@@ -1,4 +1,5 @@
 import difflib
+import inspect
 
 import numpy as np
 import sys
@@ -163,8 +164,9 @@ def test_close():
     try:
         plt.close(1.1)
     except TypeError as e:
-        assert str(e) == "close() argument must be a Figure, an int, " \
-                         "a string, or None, not <class 'float'>"
+        assert str(e) == (
+            "'fig' must be an instance of matplotlib.figure.Figure, int, str "
+            "or None, not a float")
 
 
 def test_subplot_reuse():
@@ -380,7 +382,7 @@ def test_doc_pyplot_summary():
                :nosignatures:
 
                plot
-               plot_date
+               errorbar
 
         """
         functions = []
@@ -469,6 +471,30 @@ def test_multiple_same_figure_calls():
     assert fig is fig3
 
 
+def test_register_existing_figure_with_pyplot():
+    from matplotlib.figure import Figure
+    # start with a standalone figure
+    fig = Figure()
+    assert fig.canvas.manager is None
+    with pytest.raises(AttributeError):
+        # Heads-up: This will change to returning None in the future
+        # See docstring for the Figure.number property
+        fig.number
+    # register the Figure with pyplot
+    plt.figure(fig)
+    assert fig.number == 1
+    # the figure can now be used in pyplot
+    plt.suptitle("my title")
+    assert fig.get_suptitle() == "my title"
+    # it also has a manager that is properly wired up in the pyplot state
+    assert plt._pylab_helpers.Gcf.get_fig_manager(fig.number) is fig.canvas.manager
+    # and we can regularly switch the pyplot state
+    fig2 = plt.figure()
+    assert fig2.number == 2
+    assert plt.figure(1) is fig
+    assert plt.gcf() is fig
+
+
 def test_close_all_warning():
     fig1 = plt.figure()
 
@@ -483,3 +509,65 @@ def test_matshow():
 
     # Smoke test that matshow does not ask for a new figsize on the existing figure
     plt.matshow(arr, fignum=fig.number)
+
+
+def assert_same_signature(func1, func2):
+    """
+    Assert that `func1` and `func2` have the same arguments,
+    i.e. same parameter count, names and kinds.
+
+    :param func1: First function to check
+    :param func2: Second function to check
+    """
+    params1 = inspect.signature(func1).parameters
+    params2 = inspect.signature(func2).parameters
+
+    assert len(params1) == len(params2)
+    assert all([
+        params1[p].name == params2[p].name and
+        params1[p].kind == params2[p].kind
+        for p in params1
+    ])
+
+
+def test_setloglevel_signature():
+    assert_same_signature(plt.set_loglevel, mpl.set_loglevel)
+
+
+def test_subplots_reuse_existing_figure_error():
+    """Test interaction of plt.subplots(num=...) with existing figures."""
+    # Create a figure with a specific number first.
+    fig = plt.figure(1)
+
+    # Case 1: Reusing without clear=True should raise ValueError
+    with pytest.raises(ValueError, match="already exists"):
+        plt.subplots(num=1)
+
+    # Case 2: Reusing WITH clear=True should work fine (no error)
+    fig_new, axs = plt.subplots(num=1, clear=True)
+    assert fig_new is fig
+
+    # Case 3: Test passing the actual Figure object (The "Narrow Check")
+    with pytest.raises(ValueError, match="cannot be a FigureBase instance"):
+        plt.subplots(num=fig)
+
+    plt.close(1)
+
+
+def test_subplot_mosaic_reuse_existing_figure_error():
+    """Test that plt.subplot_mosaic raises ValueError when reusing a figure."""
+    fig = plt.figure(2)
+
+    # 1. Test passing the existing figure number
+    with pytest.raises(ValueError, match="already exists"):
+        plt.subplot_mosaic([['A']], num=2)
+
+    # 2. Test passing the actual Figure object
+    with pytest.raises(ValueError, match="cannot be a FigureBase instance"):
+        plt.subplot_mosaic([['A']], num=fig)
+
+    # 3. Test that clear=True allows reuse without error
+    fig_new, axd = plt.subplot_mosaic([['A']], num=2, clear=True)
+    assert fig_new is fig
+
+    plt.close(2)

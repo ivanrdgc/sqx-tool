@@ -79,6 +79,13 @@ class InsetIndicator(artist.Artist):
 
         artist.setp([self._rectangle, *self._connectors], prop, val)
 
+    @artist.Artist.axes.setter
+    def axes(self, new_axes):
+        # Set axes on the rectangle (required for some external transforms to work) as
+        # well as the InsetIndicator artist.
+        self.rectangle.axes = new_axes
+        artist.Artist.axes.fset(self, new_axes)
+
     def set_alpha(self, alpha):
         # docstring inherited
         self._shared_setter('alpha', alpha)
@@ -119,26 +126,40 @@ class InsetIndicator(artist.Artist):
         """
         Set the linestyle of the rectangle and the connectors.
 
-        ==========================================  =================
-        linestyle                                   description
-        ==========================================  =================
-        ``'-'`` or ``'solid'``                      solid line
-        ``'--'`` or ``'dashed'``                    dashed line
-        ``'-.'`` or ``'dashdot'``                   dash-dotted line
-        ``':'`` or ``'dotted'``                     dotted line
-        ``'none'``, ``'None'``, ``' '``, or ``''``  draw nothing
-        ==========================================  =================
-
-        Alternatively a dash tuple of the following form can be provided::
-
-            (offset, onoffseq)
-
-        where ``onoffseq`` is an even length tuple of on and off ink in points.
-
         Parameters
         ----------
-        ls : {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-            The line style.
+        ls : {'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)
+            Possible values:
+
+            - A string:
+
+              =======================================================  ================
+              linestyle                                                description
+              =======================================================  ================
+              ``'-'`` or ``'solid'``                                   solid line
+              ``'--'`` or ``'dashed'``                                 dashed line
+              ``'-.'`` or ``'dashdot'``                                dash-dotted line
+              ``':'`` or ``'dotted'``                                  dotted line
+              ``''`` or ``'none'`` (discouraged: ``'None'``, ``' '``)  draw nothing
+              =======================================================  ================
+
+            - A tuple describing the start position and lengths of dashes and spaces:
+
+                  (offset, onoffseq)
+
+              where
+
+              - *offset* is a float specifying the offset (in points); i.e. how much
+                is the dash pattern shifted.
+              - *onoffseq* is a sequence of on and off ink in points. There can be
+                arbitrary many pairs of on and off values.
+
+              Example: The tuple ``(0, (10, 5, 1, 5))`` means that the pattern starts
+              at the beginning of the line. It draws a 10 point long dash,
+              then a 5 point long space, then a 1 point long dash, followed by a 5 point
+              long space, and then the pattern repeats.
+
+            For examples see :doc:`/gallery/lines_bars_and_markers/linestyles`.
         """
         self._shared_setter('linestyle', ls)
 
@@ -171,7 +192,7 @@ class InsetIndicator(artist.Artist):
                 # parent artist.
                 p = ConnectionPatch(
                     xyA=xy_inset_ax, coordsA=self._inset_ax.transAxes,
-                    xyB=xy_data, coordsB=self.axes.transData,
+                    xyB=xy_data, coordsB=self.rectangle.get_data_transform(),
                     arrowstyle="-",
                     edgecolor=self._edgecolor, alpha=self.get_alpha(),
                     linestyle=self._linestyle, linewidth=self._linewidth)
@@ -182,7 +203,7 @@ class InsetIndicator(artist.Artist):
                 existing.xy1 = xy_inset_ax
                 existing.xy2 = xy_data
                 existing.coords1 = self._inset_ax.transAxes
-                existing.coords2 = self.axes.transData
+                existing.coords2 = self.rectangle.get_data_transform()
 
         if existing is None:
             # decide which two of the lines to keep visible....

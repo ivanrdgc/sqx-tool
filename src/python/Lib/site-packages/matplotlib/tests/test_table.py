@@ -17,7 +17,7 @@ def test_non_square():
     plt.table(cellColours=cellcolors)
 
 
-@image_comparison(['table_zorder.png'], remove_text=True)
+@image_comparison(['table_zorder.png'], remove_text=True, style='mpl20')
 def test_zorder():
     data = [[66386, 174296],
             [58230, 381139]]
@@ -50,12 +50,12 @@ def test_zorder():
     plt.yticks([])
 
 
-@image_comparison(['table_labels.png'])
+@image_comparison(['table_labels.png'], style='mpl20')
 def test_label_colours():
     dim = 3
 
     c = np.linspace(0, 1, dim)
-    colours = plt.cm.RdYlGn(c)
+    colours = plt.colormaps["RdYlGn"](c)
     cellText = [['1'] * dim] * dim
 
     fig = plt.figure()
@@ -123,7 +123,7 @@ def test_customcell():
         assert c == code
 
 
-@image_comparison(['table_auto_column.png'])
+@image_comparison(['table_auto_column.png'], style='mpl20')
 def test_auto_column():
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1)
 
@@ -196,7 +196,7 @@ def test_table_cells():
     plt.setp(table)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_table_bbox(fig_test, fig_ref):
     data = [[2, 3],
             [4, 5]]
@@ -223,7 +223,7 @@ def test_table_bbox(fig_test, fig_ref):
                   )
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_table_unit(fig_test, fig_ref):
     # test that table doesn't participate in unit machinery, instead uses repr/str
 

@@ -2,6 +2,7 @@ import collections
 import io
 import itertools
 import platform
+import sys
 import time
 from unittest import mock
 import warnings
@@ -54,7 +55,7 @@ def test_legend_generator():
     ax.legend(handles, labels, loc='upper left')
 
 
-@image_comparison(['legend_auto1.png'], remove_text=True)
+@image_comparison(['legend_auto1.png'], remove_text=True, style='mpl20')
 def test_legend_auto1():
     """Test automatic legend placement"""
     fig, ax = plt.subplots()
@@ -64,7 +65,7 @@ def test_legend_auto1():
     ax.legend(loc='best')
 
 
-@image_comparison(['legend_auto2.png'], remove_text=True)
+@image_comparison(['legend_auto2.png'], remove_text=True, style='mpl20')
 def test_legend_auto2():
     """Test automatic legend placement"""
     fig, ax = plt.subplots()
@@ -74,7 +75,7 @@ def test_legend_auto2():
     ax.legend([b1[0], b2[0]], ['up', 'down'], loc='best')
 
 
-@image_comparison(['legend_auto3.png'])
+@image_comparison(['legend_auto3.png'], style='mpl20')
 def test_legend_auto3():
     """Test automatic legend placement"""
     fig, ax = plt.subplots()
@@ -140,7 +141,7 @@ def test_legend_auto5():
     assert_allclose(leg_bboxes[1].bounds, leg_bboxes[0].bounds)
 
 
-@image_comparison(['legend_various_labels.png'], remove_text=True)
+@image_comparison(['legend_various_labels.png'], remove_text=True, style='mpl20')
 def test_various_labels():
     # tests all sorts of label types
     fig = plt.figure()
@@ -151,8 +152,8 @@ def test_various_labels():
     ax.legend(numpoints=1, loc='best')
 
 
-@image_comparison(['legend_labels_first.png'], remove_text=True,
-                  tol=0 if platform.machine() == 'x86_64' else 0.013)
+@image_comparison(['legend_labels_first.png'], remove_text=True, style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.015)
 def test_labels_first():
     # test labels to left of markers
     fig, ax = plt.subplots()
@@ -162,8 +163,8 @@ def test_labels_first():
     ax.legend(loc='best', markerfirst=False)
 
 
-@image_comparison(['legend_multiple_keys.png'], remove_text=True,
-                  tol=0 if platform.machine() == 'x86_64' else 0.013)
+@image_comparison(['legend_multiple_keys.png'], remove_text=True, style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.033)
 def test_multiple_keys():
     # test legend entries with multiple keys
     fig, ax = plt.subplots()
@@ -176,16 +177,18 @@ def test_multiple_keys():
                            (p2, p1): HandlerTuple(ndivide=None, pad=0)})
 
 
-@image_comparison(['rgba_alpha.png'], remove_text=True,
+@image_comparison(['rgba_alpha.png'], remove_text=True, style='mpl20',
                   tol=0 if platform.machine() == 'x86_64' else 0.03)
 def test_alpha_rgba():
+    # This rcParam would override the explicit setting below, so disable it.
+    plt.rcParams['legend.framealpha'] = None
     fig, ax = plt.subplots()
     ax.plot(range(10), lw=5)
     leg = plt.legend(['Longlabel that will go away'], loc='center')
     leg.legendPatch.set_facecolor([1, 0, 0, 0.5])
 
 
-@image_comparison(['rcparam_alpha.png'], remove_text=True,
+@image_comparison(['rcparam_alpha.png'], remove_text=True, style='mpl20',
                   tol=0 if platform.machine() == 'x86_64' else 0.03)
 def test_alpha_rcparam():
     fig, ax = plt.subplots()
@@ -199,10 +202,9 @@ def test_alpha_rcparam():
         leg.legendPatch.set_facecolor([1, 0, 0, 0.5])
 
 
-@image_comparison(['fancy.png'], remove_text=True, tol=0.05)
+@image_comparison(['fancy.png'], remove_text=True, style='mpl20',
+                  tol=0.01 if sys.platform == 'darwin' else 0)
 def test_fancy():
-    # Tolerance caused by changing default shadow "shade" from 0.3 to 1 - 0.7 =
-    # 0.30000000000000004
     # using subplot triggers some offsetbox functionality untested elsewhere
     plt.subplot(121)
     plt.plot([5] * 10, 'o--', label='XX')
@@ -213,18 +215,20 @@ def test_fancy():
                ncols=2, shadow=True, title="My legend", numpoints=1)
 
 
-@image_comparison(['framealpha'], remove_text=True,
-                  tol=0 if platform.machine() == 'x86_64' else 0.024)
+@image_comparison(['framealpha'], remove_text=True, style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.021)
 def test_framealpha():
     x = np.linspace(1, 100, 100)
     y = x
     plt.plot(x, y, label='mylabel', lw=10)
-    plt.legend(framealpha=0.5)
+    plt.legend(framealpha=0.5, loc='upper right')
 
 
-@image_comparison(['scatter_rc3.png', 'scatter_rc1.png'], remove_text=True)
+@image_comparison(['scatter_rc3.png', 'scatter_rc1.png'], remove_text=True,
+                  style='mpl20')
 def test_rc():
     # using subplot triggers some offsetbox functionality untested elsewhere
+    mpl.rcParams['legend.scatterpoints'] = 3
     plt.figure()
     ax = plt.subplot(121)
     ax.scatter(np.arange(10), np.arange(10, 0, -1), label='three')
@@ -239,7 +243,7 @@ def test_rc():
               title="My legend")
 
 
-@image_comparison(['legend_expand.png'], remove_text=True)
+@image_comparison(['legend_expand.png'], remove_text=True, style='mpl20')
 def test_legend_expand():
     """Test expand mode"""
     legend_modes = [None, "expand"]
@@ -258,9 +262,6 @@ def test_legend_expand():
 @image_comparison(['hatching'], remove_text=True, style='default')
 def test_hatching():
     # Remove legend texts when this image is regenerated.
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['text.kerning_factor'] = 6
-
     fig, ax = plt.subplots()
 
     # Patches
@@ -292,7 +293,7 @@ def test_hatching():
 def test_legend_remove():
     fig, ax = plt.subplots()
     lines = ax.plot(range(10))
-    leg = fig.legend(lines, "test")
+    leg = fig.legend(lines, ["test"])
     leg.remove()
     assert fig.legends == []
     leg = ax.legend("test")
@@ -318,7 +319,7 @@ def test_reverse_legend_handles_and_labels():
     assert actual_markers == list(reversed(markers))
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_reverse_legend_display(fig_test, fig_ref):
     """Check that the rendered legend entries are reversed"""
     ax = fig_test.subplots()
@@ -402,20 +403,17 @@ class TestLegendFunction:
             ax.legend(labels=('a', 'b'), handles=(lnc, lns))
         Legend.assert_called_with(ax, (lnc, lns), ('a', 'b'))
 
-    def test_warn_mixed_args_and_kwargs(self):
+    def test_error_mixed_args_and_kwargs(self):
         fig, ax = plt.subplots()
         th = np.linspace(0, 2*np.pi, 1024)
         lns, = ax.plot(th, np.sin(th), label='sin')
         lnc, = ax.plot(th, np.cos(th), label='cos')
-        with pytest.warns(DeprecationWarning) as record:
+        msg = 'must both be passed positionally or both as keywords'
+        with pytest.raises(TypeError, match=msg):
             ax.legend((lnc, lns), labels=('a', 'b'))
-        assert len(record) == 1
-        assert str(record[0].message).startswith(
-            "You have mixed positional and keyword arguments, some input may "
-            "be discarded.")
 
     def test_parasite(self):
-        from mpl_toolkits.axes_grid1 import host_subplot  # type: ignore[import]
+        from mpl_toolkits.axes_grid1 import host_subplot
 
         host = host_subplot(111)
         par = host.twinx()
@@ -426,6 +424,15 @@ class TestLegendFunction:
         with mock.patch('matplotlib.legend.Legend') as Legend:
             plt.legend()
         Legend.assert_called_with(host, [p1, p2], ['Density', 'Temperature'])
+
+    def test_legend_warns_on_unequal_number_of_handles_and_labels(self):
+        fig, ax = plt.subplots()
+        line1, = ax.plot([1, 2])
+        line2, = ax.plot([3, 4])
+        with pytest.warns(UserWarning, match="Mismatched number of handles and labels"):
+            ax.legend([line1, line2], ['only_one'])  # 2 handles, 1 label
+        with pytest.warns(UserWarning, match="Mismatched number of handles and labels"):
+            ax.legend([line1], ['label_a', 'label_b'])  # 1 handle, 2 labels
 
 
 class TestLegendFigureFunction:
@@ -472,16 +479,13 @@ class TestLegendFigureFunction:
             fig, (lines, lines2), ('a', 'b'), loc='right',
             bbox_transform=fig.transFigure)
 
-    def test_warn_args_kwargs(self):
+    def test_error_args_kwargs(self):
         fig, axs = plt.subplots(1, 2)
         lines = axs[0].plot(range(10))
         lines2 = axs[1].plot(np.arange(10) * 2.)
-        with pytest.warns(DeprecationWarning) as record:
+        msg = 'must both be passed positionally or both as keywords'
+        with pytest.raises(TypeError, match=msg):
             fig.legend((lines, lines2), labels=('a', 'b'))
-        assert len(record) == 1
-        assert str(record[0].message).startswith(
-            "You have mixed positional and keyword arguments, some input may "
-            "be discarded.")
 
 
 def test_figure_legend_outside():
@@ -490,27 +494,27 @@ def test_figure_legend_outside():
     todos += ['left ' + pos for pos in ['lower', 'center', 'upper']]
     todos += ['right ' + pos for pos in ['lower', 'center', 'upper']]
 
-    upperext = [20.347556,  27.722556, 790.583, 545.499]
-    lowerext = [20.347556,  71.056556, 790.583, 588.833]
-    leftext = [151.681556, 27.722556, 790.583, 588.833]
-    rightext = [20.347556,  27.722556, 659.249, 588.833]
+    upperext = [20.722556, 26.389222, 790.333, 545.16762]
+    lowerext = [20.722556, 70.723222, 790.333, 589.50162]
+    leftext = [152.056556, 26.389222, 790.333, 589.50162]
+    rightext = [20.722556, 26.389222, 658.999, 589.50162]
     axbb = [upperext, upperext, upperext,
             lowerext, lowerext, lowerext,
             leftext, leftext, leftext,
             rightext, rightext, rightext]
 
-    legbb = [[10., 555., 133., 590.],     # upper left
-             [338.5, 555., 461.5, 590.],  # upper center
-             [667, 555., 790.,  590.],    # upper right
-             [10., 10., 133.,  45.],      # lower left
-             [338.5, 10., 461.5,  45.],   # lower center
-             [667., 10., 790.,  45.],     # lower right
-             [10., 10., 133., 45.],       # left lower
-             [10., 282.5, 133., 317.5],   # left center
-             [10., 555., 133., 590.],     # left upper
-             [667, 10., 790., 45.],       # right lower
-             [667., 282.5, 790., 317.5],  # right center
-             [667., 555., 790., 590.]]    # right upper
+    legbb = [[10., 554., 133., 590.],     # upper left
+             [338.5, 554., 461.5, 590.],  # upper center
+             [667, 554., 790.,  590.],    # upper right
+             [10., 10., 133.,  46.],      # lower left
+             [338.5, 10., 461.5,  46.],   # lower center
+             [667., 10., 790.,  46.],     # lower right
+             [10., 10., 133., 46.],       # left lower
+             [10., 282., 133., 318.],     # left center
+             [10., 554., 133., 590.],     # left upper
+             [667, 10., 790., 46.],       # right lower
+             [667., 282., 790., 318.],    # right center
+             [667., 554., 790., 590.]]    # right upper
 
     for nn, todo in enumerate(todos):
         print(todo)
@@ -519,14 +523,13 @@ def test_figure_legend_outside():
         leg = fig.legend(loc='outside ' + todo)
         fig.draw_without_rendering()
 
-        assert_allclose(axs.get_window_extent().extents,
-                        axbb[nn])
-        assert_allclose(leg.get_window_extent().extents,
-                        legbb[nn])
+        assert_allclose(axs.get_window_extent().extents, axbb[nn],
+                        rtol=1e-4)
+        assert_allclose(leg.get_window_extent().extents, legbb[nn],
+                        rtol=1e-4)
 
 
-@image_comparison(['legend_stackplot.png'],
-                  tol=0 if platform.machine() == 'x86_64' else 0.031)
+@image_comparison(['legend_stackplot.png'], style='mpl20')
 def test_legend_stackplot():
     """Test legend for PolyCollection using stackplot."""
     # related to #1341, #1943, and PR #3303
@@ -536,8 +539,8 @@ def test_legend_stackplot():
     y2 = 2.0 * x + 1
     y3 = 3.0 * x + 2
     ax.stackplot(x, y1, y2, y3, labels=['y1', 'y2', 'y3'])
-    ax.set_xlim((0, 10))
-    ax.set_ylim((0, 70))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 70)
     ax.legend(loc='best')
 
 
@@ -584,7 +587,7 @@ def test_legend_repeatcheckok():
     assert len(lab) == 2
 
 
-@image_comparison(['not_covering_scatter.png'])
+@image_comparison(['not_covering_scatter.png'], style='mpl20')
 def test_not_covering_scatter():
     colors = ['b', 'g', 'r']
 
@@ -596,7 +599,7 @@ def test_not_covering_scatter():
     plt.gca().set_ylim(-0.5, 2.2)
 
 
-@image_comparison(['not_covering_scatter_transform.png'])
+@image_comparison(['not_covering_scatter_transform.png'], style='mpl20')
 def test_not_covering_scatter_transform():
     # Offsets point to top left, the default auto position
     offset = mtransforms.Affine2D().translate(-20, 20)
@@ -662,7 +665,7 @@ def test_empty_bar_chart_with_legend():
 
 
 @image_comparison(['shadow_argument_types.png'], remove_text=True, style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.028)
+                  tol=0.028 if sys.platform == 'darwin' else 0)
 def test_shadow_argument_types():
     # Test that different arguments for shadow work as expected
     fig, ax = plt.subplots()
@@ -927,7 +930,7 @@ def test_legend_pathcollection_labelcolor_markeredgecolor_cmap():
     # test the labelcolor for labelcolor='markeredgecolor' on PathCollection
     # with a colormap
     fig, ax = plt.subplots()
-    edgecolors = mpl.cm.viridis(np.random.rand(10))
+    edgecolors = mpl.colormaps["viridis"](np.random.rand(10))
     ax.scatter(
         np.arange(10),
         np.arange(10),
@@ -982,7 +985,7 @@ def test_legend_pathcollection_labelcolor_markfacecolor_cmap():
     # test the labelcolor for labelcolor='markerfacecolor' on PathCollection
     # with colormaps
     fig, ax = plt.subplots()
-    colors = mpl.cm.viridis(np.random.rand(10))
+    colors = mpl.colormaps["viridis"](np.random.rand(10))
     ax.scatter(
         np.arange(10),
         np.arange(10),
@@ -1072,6 +1075,201 @@ def test_legend_labelcolor_rcparam_markerfacecolor_short():
     leg = ax.legend()
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
         assert mpl.colors.same_color(text.get_color(), color)
+
+
+def assert_last_legend_patch_color(histogram, leg, expected_color,
+                                   facecolor=False, edgecolor=False):
+    """
+    Check that histogram color, legend handle color, and legend label color all
+    match the expected input. Provide facecolor and edgecolor flags to clarify
+    which feature to match.
+    """
+    label_color = leg.texts[-1].get_color()
+    patch = leg.get_patches()[-1]
+    histogram = histogram[-1][0]
+    assert mpl.colors.same_color(label_color, expected_color)
+    if facecolor:
+        assert mpl.colors.same_color(label_color, patch.get_facecolor())
+        assert mpl.colors.same_color(label_color, histogram.get_facecolor())
+    if edgecolor:
+        assert mpl.colors.same_color(label_color, patch.get_edgecolor())
+        assert mpl.colors.same_color(label_color, histogram.get_edgecolor())
+
+
+def test_legend_labelcolor_linecolor_histograms():
+    x = np.arange(10)
+
+    # testing c kwarg for bar, step, and stepfilled histograms
+    fig, ax = plt.subplots()
+    h = ax.hist(x, histtype='bar', color='r', label="red bar hist with a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+    h = ax.hist(x, histtype='step', color='g', label="green step hist, green label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'g', edgecolor=True)
+
+    h = ax.hist(x, histtype='stepfilled', color='b',
+                label="blue stepfilled hist with a blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'b', facecolor=True)
+
+    # testing c, fc, and ec combinations for bar histograms
+    h = ax.hist(x, histtype='bar', color='r', ec='b',
+                label="red bar hist with blue edges and a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+    h = ax.hist(x, histtype='bar', fc='r', ec='b',
+                label="red bar hist with blue edges and a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+    h = ax.hist(x, histtype='bar', fc='none', ec='b',
+                label="unfilled blue bar hist with a blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'b', edgecolor=True)
+
+    # testing c, and ec combinations for step histograms
+    h = ax.hist(x, histtype='step', color='r', ec='b',
+                label="blue step hist with a blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'b', edgecolor=True)
+
+    h = ax.hist(x, histtype='step', ec='b',
+                label="blue step hist with a blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'b', edgecolor=True)
+
+    # testing c, fc, and ec combinations for stepfilled histograms
+    h = ax.hist(x, histtype='stepfilled', color='r', ec='b',
+                label="red stepfilled hist, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+    h = ax.hist(x, histtype='stepfilled', fc='r', ec='b',
+                label="red stepfilled hist, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+    h = ax.hist(x, histtype='stepfilled', fc='none', ec='b',
+                label="unfilled blue stepfilled hist, blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'b', edgecolor=True)
+
+    h = ax.hist(x, histtype='stepfilled', fc='r', ec='none',
+                label="edgeless red stepfilled hist with a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_patch_color(h, leg, 'r', facecolor=True)
+
+
+def assert_last_legend_linemarker_color(line_marker, leg, expected_color, color=False,
+                                        facecolor=False, edgecolor=False):
+    """
+    Check that line marker color, legend handle color, and legend label color all
+    match the expected input. Provide color, facecolor and edgecolor flags to clarify
+    which feature to match.
+    """
+    label_color = leg.texts[-1].get_color()
+    leg_marker = leg.get_lines()[-1]
+    assert mpl.colors.same_color(label_color, expected_color)
+    if color:
+        assert mpl.colors.same_color(label_color, leg_marker.get_color())
+        assert mpl.colors.same_color(label_color, line_marker.get_color())
+    if facecolor:
+        assert mpl.colors.same_color(label_color, leg_marker.get_markerfacecolor())
+        assert mpl.colors.same_color(label_color, line_marker.get_markerfacecolor())
+    if edgecolor:
+        assert mpl.colors.same_color(label_color, leg_marker.get_markeredgecolor())
+        assert mpl.colors.same_color(label_color, line_marker.get_markeredgecolor())
+
+
+def test_legend_labelcolor_linecolor_plot():
+    x = np.arange(5)
+
+    # testing line plot
+    fig, ax = plt.subplots()
+    l, = ax.plot(x, c='r', label="red line with a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'r', color=True)
+
+    # testing c, fc, and ec combinations for maker plots
+    l, = ax.plot(x, 'o', c='r', label="red circles with a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'r', color=True)
+
+    l, = ax.plot(x, 'o', c='r', mec='b', label="red circles, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'r', color=True)
+
+    l, = ax.plot(x, 'o', mfc='r', mec='b', label="red circles, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'r', facecolor=True)
+
+    # 'none' cases
+    l, = ax.plot(x, 'o', mfc='none', mec='b',
+                 label="blue unfilled circles, blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'b', edgecolor=True)
+
+    l, = ax.plot(x, 'o', mfc='r', mec='none', label="red edgeless circles, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'r', facecolor=True)
+
+    l, = ax.plot(x, 'o', c='none', mec='none',
+                 label="black label despite invisible circles for dummy entries")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_linemarker_color(l, leg, 'k')
+
+
+def assert_last_legend_scattermarker_color(scatter_marker, leg, expected_color,
+                                           facecolor=False, edgecolor=False):
+    """
+    Check that scatter marker color, legend handle color, and legend label color all
+    match the expected input. Provide facecolor and edgecolor flags to clarify
+    which feature to match.
+    """
+    label_color = leg.texts[-1].get_color()
+    leg_handle = leg.legend_handles[-1]
+    assert mpl.colors.same_color(label_color, expected_color)
+    if facecolor:
+        assert mpl.colors.same_color(label_color, leg_handle.get_facecolor())
+        assert mpl.colors.same_color(label_color, scatter_marker.get_facecolor())
+    if edgecolor:
+        assert mpl.colors.same_color(label_color, leg_handle.get_edgecolor())
+        assert mpl.colors.same_color(label_color, scatter_marker.get_edgecolor())
+
+
+def test_legend_labelcolor_linecolor_scatter():
+    x = np.arange(5)
+
+    # testing c, fc, and ec combinations for scatter plots
+    fig, ax = plt.subplots()
+    s = ax.scatter(x, x, c='r', label="red circles with a red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'r', facecolor=True)
+
+    s = ax.scatter(x, x, c='r', ec='b', label="red circles, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'r', facecolor=True)
+
+    s = ax.scatter(x, x, fc='r', ec='b', label="red circles, blue edges, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'r', facecolor=True)
+
+    # 'none' cases
+    s = ax.scatter(x, x, fc='none', ec='b', label="blue unfilled circles, blue label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'b', edgecolor=True)
+
+    s = ax.scatter(x, x, fc='r', ec='none', label="red edgeless circles, red label")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'r', facecolor=True)
+
+    s = ax.scatter(x, x, c='none', ec='none',
+                   label="black label despite invisible circles for dummy entries")
+    leg = ax.legend(labelcolor='linecolor')
+    assert_last_legend_scattermarker_color(s, leg, 'k')
 
 
 @pytest.mark.filterwarnings("ignore:No artists with labels found to put in legend")
@@ -1190,21 +1388,15 @@ def test_plot_multiple_input_single_label(label):
     assert legend_texts == [str(label)] * 2
 
 
-@pytest.mark.parametrize('label_array', [['low', 'high'],
-                                         ('low', 'high'),
-                                         np.array(['low', 'high'])])
-def test_plot_single_input_multiple_label(label_array):
+def test_plot_single_input_multiple_label():
     # test ax.plot() with 1D array like input
     # and iterable label
     x = [1, 2, 3]
     y = [2, 5, 6]
     fig, ax = plt.subplots()
-    with pytest.warns(mpl.MatplotlibDeprecationWarning,
-                      match='Passing label as a length 2 sequence'):
-        ax.plot(x, y, label=label_array)
-    leg = ax.legend()
-    assert len(leg.get_texts()) == 1
-    assert leg.get_texts()[0].get_text() == str(label_array)
+    with pytest.raises(ValueError,
+                       match='label must be scalar or have the same length'):
+        ax.plot(x, y, label=['low', 'high'])
 
 
 def test_plot_single_input_list_label():
@@ -1286,7 +1478,7 @@ def test_legend_markers_from_line2d():
     assert labels == new_labels
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_ncol_ncols(fig_test, fig_ref):
     # Test that both ncol and ncols work
     strings = ["a", "b", "c", "d", "e", "f"]
@@ -1484,3 +1676,86 @@ def test_boxplot_legend_labels():
     bp4 = axs[3].boxplot(data, label='box A')
     assert bp4['medians'][0].get_label() == 'box A'
     assert all(x.get_label().startswith("_") for x in bp4['medians'][1:])
+
+
+def test_legend_linewidth():
+    """Test legend.linewidth parameter and rcParam."""
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], label='data')
+
+    # Test direct parameter
+    leg = ax.legend(linewidth=2.5)
+    assert leg.legendPatch.get_linewidth() == 2.5
+
+    # Test rcParam
+    with mpl.rc_context({'legend.linewidth': 3.0}):
+        fig, ax = plt.subplots()
+        ax.plot([1, 2, 3], label='data')
+        leg = ax.legend()
+        assert leg.legendPatch.get_linewidth() == 3.0
+
+    # Test None default (should inherit from patch.linewidth)
+    with mpl.rc_context({'legend.linewidth': None, 'patch.linewidth': 1.5}):
+        fig, ax = plt.subplots()
+        ax.plot([1, 2, 3], label='data')
+        leg = ax.legend()
+        assert leg.legendPatch.get_linewidth() == 1.5
+
+    # Test that direct parameter overrides rcParam
+    with mpl.rc_context({'legend.linewidth': 1.0}):
+        fig, ax = plt.subplots()
+        ax.plot([1, 2, 3], label='data')
+        leg = ax.legend(linewidth=4.0)
+        assert leg.legendPatch.get_linewidth() == 4.0
+
+
+def test_patchcollection_legend():
+    # Test that PatchCollection labels show up in legend and preserve visual
+    # properties (issue #23998)
+    fig, ax = plt.subplots()
+
+    pc = mcollections.PatchCollection(
+        [mpatches.Circle((0, 0), 1), mpatches.Circle((2, 0), 1)],
+        label="patch collection",
+        facecolor='red',
+        edgecolor='blue',
+        linewidths=3,
+        linestyle='--',
+    )
+    ax.add_collection(pc)
+    ax.autoscale_view()
+
+    leg = ax.legend()
+
+    # Check that the legend contains our label
+    assert len(leg.get_texts()) == 1
+    assert leg.get_texts()[0].get_text() == "patch collection"
+
+    # Check that the legend handle exists and has correct visual properties
+    assert len(leg.legend_handles) == 1
+    legend_patch = leg.legend_handles[0]
+    assert mpl.colors.same_color(legend_patch.get_facecolor(),
+                                  pc.get_facecolor()[0])
+    assert mpl.colors.same_color(legend_patch.get_edgecolor(),
+                                  pc.get_edgecolor()[0])
+    assert legend_patch.get_linewidth() == pc.get_linewidths()[0]
+    assert legend_patch.get_linestyle() == pc.get_linestyles()[0]
+
+
+def test_patchcollection_legend_empty():
+    # Test that empty PatchCollection doesn't crash
+    fig, ax = plt.subplots()
+
+    # Create an empty PatchCollection
+    pc = mcollections.PatchCollection([], label="empty collection")
+    ax.add_collection(pc)
+
+    # This should not crash
+    leg = ax.legend()
+
+    # Check that the label still appears
+    assert len(leg.get_texts()) == 1
+    assert leg.get_texts()[0].get_text() == "empty collection"
+
+    # The legend handle should exist
+    assert len(leg.legend_handles) == 1

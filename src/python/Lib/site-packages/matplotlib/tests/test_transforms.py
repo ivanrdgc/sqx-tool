@@ -694,9 +694,9 @@ class TestBasicTransform:
         assert not self.stack1.contains_branch(self.tn1 + self.ta2)
 
         blend = mtransforms.BlendedGenericTransform(self.tn2, self.stack2)
-        x, y = blend.contains_branch_seperately(self.stack2_subset)
+        x, y = blend.contains_branch_separately(self.stack2_subset)
         stack_blend = self.tn3 + blend
-        sx, sy = stack_blend.contains_branch_seperately(self.stack2_subset)
+        sx, sy = stack_blend.contains_branch_separately(self.stack2_subset)
         assert x is sx is False
         assert y is sy is True
 
@@ -835,6 +835,16 @@ def assert_bbox_eq(bbox1, bbox2):
     assert_array_equal(bbox1.bounds, bbox2.bounds)
 
 
+def test_bbox_is_finite():
+    assert not Bbox([(1, 1), (1, 1)])._is_finite()
+    assert not Bbox([(0, 0), (np.inf, 1)])._is_finite()
+    assert not Bbox([(-np.inf, 0), (2, 2)])._is_finite()
+    assert not Bbox([(np.nan, 0), (2, 2)])._is_finite()
+    assert Bbox([(0, 0), (0, 2)])._is_finite()
+    assert Bbox([(0, 0), (2, 0)])._is_finite()
+    assert Bbox([(0, 0), (1, 2)])._is_finite()
+
+
 def test_bbox_frozen_copies_minpos():
     bbox = mtransforms.Bbox.from_extents(0.0, 0.0, 1.0, 1.0, minpos=1.0)
     frozen = bbox.frozen()
@@ -891,8 +901,7 @@ CompositeGenericTransform(
                 Affine2D().scale(1.0))),
         PolarTransform(
             PolarAxes(0.125,0.1;0.775x0.8),
-            use_rmin=True,
-            apply_theta_transforms=False)),
+            use_rmin=True)),
     CompositeGenericTransform(
         CompositeGenericTransform(
             PolarAffine(
@@ -968,7 +977,7 @@ def test_nonsingular():
     zero_expansion = np.array([-0.001, 0.001])
     cases = [(0, np.nan), (0, 0), (0, 7.9e-317)]
     for args in cases:
-        out = np.array(mtransforms.nonsingular(*args))
+        out = np.array(mtransforms._nonsingular(*args))
         assert_array_equal(out, zero_expansion)
 
 
@@ -983,12 +992,6 @@ def test_transformed_path():
     # Changing the transform should change the result.
     r2 = 1 / np.sqrt(2)
     trans.rotate(np.pi / 4)
-    assert_allclose(trans_path.get_fully_transformed_path().vertices,
-                    [(0, 0), (r2, r2), (0, 2 * r2), (-r2, r2)],
-                    atol=1e-15)
-
-    # Changing the path does not change the result (it's cached).
-    path.points = [(0, 0)] * 4
     assert_allclose(trans_path.get_fully_transformed_path().vertices,
                     [(0, 0), (r2, r2), (0, 2 * r2), (-r2, r2)],
                     atol=1e-15)
@@ -1053,7 +1056,7 @@ def test_transformwrapper():
         t.set(scale.LogTransform(10))
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_scale_swapping(fig_test, fig_ref):
     np.random.seed(19680801)
     samples = np.random.normal(size=10)
@@ -1069,8 +1072,8 @@ def test_scale_swapping(fig_test, fig_ref):
 
 def test_offset_copy_errors():
     with pytest.raises(ValueError,
-                       match="'fontsize' is not a valid value for units;"
-                             " supported values are 'dots', 'points', 'inches'"):
+                       match="'fontsize' is not a valid value for units. "
+                             "Supported values are 'dots', 'points', 'inches'"):
         mtransforms.offset_copy(None, units='fontsize')
 
     with pytest.raises(ValueError,
@@ -1090,21 +1093,21 @@ def test_transformedbbox_contains():
 
 
 def test_interval_contains():
-    assert mtransforms.interval_contains((0, 1), 0.5)
-    assert mtransforms.interval_contains((0, 1), 0)
-    assert mtransforms.interval_contains((0, 1), 1)
-    assert not mtransforms.interval_contains((0, 1), -1)
-    assert not mtransforms.interval_contains((0, 1), 2)
-    assert mtransforms.interval_contains((1, 0), 0.5)
+    assert mtransforms._interval_contains((0, 1), 0.5)
+    assert mtransforms._interval_contains((0, 1), 0)
+    assert mtransforms._interval_contains((0, 1), 1)
+    assert not mtransforms._interval_contains((0, 1), -1)
+    assert not mtransforms._interval_contains((0, 1), 2)
+    assert mtransforms._interval_contains((1, 0), 0.5)
 
 
 def test_interval_contains_open():
-    assert mtransforms.interval_contains_open((0, 1), 0.5)
-    assert not mtransforms.interval_contains_open((0, 1), 0)
-    assert not mtransforms.interval_contains_open((0, 1), 1)
-    assert not mtransforms.interval_contains_open((0, 1), -1)
-    assert not mtransforms.interval_contains_open((0, 1), 2)
-    assert mtransforms.interval_contains_open((1, 0), 0.5)
+    assert mtransforms._interval_contains_open((0, 1), 0.5)
+    assert not mtransforms._interval_contains_open((0, 1), 0)
+    assert not mtransforms._interval_contains_open((0, 1), 1)
+    assert not mtransforms._interval_contains_open((0, 1), -1)
+    assert not mtransforms._interval_contains_open((0, 1), 2)
+    assert mtransforms._interval_contains_open((1, 0), 0.5)
 
 
 def test_scaledrotation_initialization():

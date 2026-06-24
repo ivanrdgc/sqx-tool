@@ -3,11 +3,16 @@ import copy
 import matplotlib.pyplot as plt
 from matplotlib.scale import (
     AsinhScale, AsinhTransform,
+    FuncScale, LogitScale,
     LogTransform, InvertedLogTransform,
     SymmetricalLogTransform)
 import matplotlib.scale as mscale
-from matplotlib.ticker import AsinhLocator, LogFormatterSciNotation
+from matplotlib.ticker import (
+    AsinhLocator, AutoLocator, LogFormatterSciNotation,
+    NullFormatter, NullLocator, ScalarFormatter
+)
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
+from matplotlib.transforms import IdentityTransform
 
 import numpy as np
 from numpy.testing import assert_allclose
@@ -15,7 +20,50 @@ import io
 import pytest
 
 
-@check_figures_equal(extensions=['png'])
+def test_optional_axis_signature():
+    # There are three types of original signatures possible, and this only tests one
+    # example class of each:
+    # 1. `axis` without default: LinearScale, FuncScale, FuncScaleLog
+    # 2. `axis` with default and more positional parameters: LogitScale
+    # 3. `axis` with default and only keyword-only parameters: LogScale, AsinhScale,
+    #    SymmetricalLogScale
+    # Testing with None is sufficient as detection is purely based on the
+    # signature structure; no type information is involved.
+    axis = None
+
+    # Old signature with axis positionally.
+    FuncScale(axis, (lambda x: x, lambda x: x))
+    FuncScale(axis, functions=(lambda x: x, lambda x: x))
+    LogitScale(axis)
+    LogitScale(axis, 'clip')
+    LogitScale(axis, nonpositive='clip')
+    LogitScale(axis, use_overline=True)
+    AsinhScale(axis)
+    AsinhScale(axis, linear_width=2)
+    AsinhScale(axis, base=3)
+    AsinhScale(axis, subs=[2, 6])
+    # Old signature with axis as keyword.
+    FuncScale(axis=axis, functions=(lambda x: x, lambda x: x))
+    LogitScale(axis=axis)
+    LogitScale(axis=axis, nonpositive='clip')
+    LogitScale(axis=axis, use_overline=True)
+    AsinhScale(axis=axis)
+    AsinhScale(axis=axis, linear_width=2)
+    AsinhScale(axis=axis, base=3)
+    AsinhScale(axis=axis, subs=[2, 6])
+    # New signature without axis.
+    FuncScale((lambda x: x, lambda x: x))
+    FuncScale(functions=(lambda x: x, lambda x: x))
+    LogitScale()
+    LogitScale(nonpositive='clip')
+    LogitScale(use_overline=True)
+    AsinhScale()
+    AsinhScale(linear_width=2)
+    AsinhScale(base=3)
+    AsinhScale(subs=[2, 6])
+
+
+@check_figures_equal()
 def test_log_scales(fig_test, fig_ref):
     ax_test = fig_test.add_subplot(122, yscale='log', xscale='symlog')
     ax_test.axvline(24.1)
@@ -55,7 +103,7 @@ def test_symlog_mask_nan():
     assert type(out) is type(x)
 
 
-@image_comparison(['logit_scales.png'], remove_text=True)
+@image_comparison(['logit_scales.png'], remove_text=True, style='_classic_test')
 def test_logit_scales():
     fig, ax = plt.subplots()
 
@@ -98,7 +146,7 @@ def test_logscale_subs():
     fig.canvas.draw()
 
 
-@image_comparison(['logscale_mask.png'], remove_text=True)
+@image_comparison(['logscale_mask.png'], remove_text=True, style='_classic_test')
 def test_logscale_mask():
     # Check that zero values are masked correctly on log scales.
     # See github issue 8045
@@ -107,7 +155,8 @@ def test_logscale_mask():
     fig, ax = plt.subplots()
     ax.plot(np.exp(-xs**2))
     fig.canvas.draw()
-    ax.set(yscale="log")
+    ax.set(yscale="log",
+           yticks=10.**np.arange(-300, 0, 24))  # Backcompat tick selection.
 
 
 def test_extra_kwargs_raise():
@@ -162,6 +211,7 @@ def test_logscale_nonpos_values():
 
     ax4.set_yscale('log')
     ax4.set_xscale('log')
+    ax4.set_yticks([1e-2, 1, 1e+2])  # Backcompat tick selection.
 
 
 def test_invalid_log_lims():
@@ -293,3 +343,157 @@ class TestAsinhScale:
             AsinhScale(axis=None, linear_width=-1)
         s0 = AsinhScale(axis=None, )
         s1 = AsinhScale(axis=None, linear_width=3.0)
+
+
+def test_custom_scale_without_axis():
+    """
+    Test that one can register and use custom scales that don't take an *axis* param.
+    """
+    class CustomTransform(IdentityTransform):
+        pass
+
+    class CustomScale(mscale.ScaleBase):
+        name = "custom"
+
+        # Important: __init__ has no *axis* parameter
+        def __init__(self):
+            self._transform = CustomTransform()
+
+        def get_transform(self):
+            return self._transform
+
+        def set_default_locators_and_formatters(self, axis):
+            axis.set_major_locator(AutoLocator())
+            axis.set_major_formatter(ScalarFormatter())
+            axis.set_minor_locator(NullLocator())
+            axis.set_minor_formatter(NullFormatter())
+
+    try:
+        mscale.register_scale(CustomScale)
+        fig, ax = plt.subplots()
+        ax.set_xscale('custom')
+        assert isinstance(ax.xaxis.get_transform(), CustomTransform)
+    finally:
+        # cleanup - there's no public unregister_scale()
+        del mscale._scale_mapping["custom"]
+        del mscale._scale_has_axis_parameter["custom"]
+
+
+def test_custom_scale_with_axis():
+    """
+    Test that one can still register and use custom scales with an *axis*
+    parameter, but that registering issues a pending-deprecation warning.
+    """
+    class CustomTransform(IdentityTransform):
+        pass
+
+    class CustomScale(mscale.ScaleBase):
+        name = "custom"
+
+        # Important: __init__ still has the *axis* parameter
+        def __init__(self, axis):
+            self._transform = CustomTransform()
+
+        def get_transform(self):
+            return self._transform
+
+        def set_default_locators_and_formatters(self, axis):
+            axis.set_major_locator(AutoLocator())
+            axis.set_major_formatter(ScalarFormatter())
+            axis.set_minor_locator(NullLocator())
+            axis.set_minor_formatter(NullFormatter())
+
+    try:
+        with pytest.warns(
+                PendingDeprecationWarning,
+                match=r"'axis' parameter .* is pending-deprecated"):
+            mscale.register_scale(CustomScale)
+        fig, ax = plt.subplots()
+        ax.set_xscale('custom')
+        assert isinstance(ax.xaxis.get_transform(), CustomTransform)
+    finally:
+        # cleanup - there's no public unregister_scale()
+        del mscale._scale_mapping["custom"]
+        del mscale._scale_has_axis_parameter["custom"]
+
+
+def test_val_in_range():
+
+    test_cases = [
+        # LinearScale: Always True (even for Inf/NaN)
+        ('linear', 10.0, True),
+        ('linear', -10.0, True),
+        ('linear', 0.0, True),
+        ('linear', np.inf, False),
+        ('linear', np.nan, False),
+
+        # LogScale: Only positive values (> 0)
+        ('log', 1.0, True),
+        ('log', 1e-300, True),
+        ('log', 0.0, False),
+        ('log', -1.0, False),
+        ('log', np.inf, False),
+        ('log', np.nan, False),
+
+        # LogitScale: Strictly between 0 and 1
+        ('logit', 0.5, True),
+        ('logit', 0.0, False),
+        ('logit', 1.0, False),
+        ('logit', -0.1, False),
+        ('logit', 1.1, False),
+        ('logit', np.inf, False),
+        ('logit', np.nan, False),
+
+        # SymmetricalLogScale: Valid for all real numbers
+        # Uses ScaleBase fallback. NaN returns False since NaN != NaN
+        ('symlog', 10.0, True),
+        ('symlog', -10.0, True),
+        ('symlog', 0.0, True),
+        ('symlog', np.inf, False),
+        ('symlog', np.nan, False),
+    ]
+
+    for name, val, expected in test_cases:
+        scale_cls = mscale._scale_mapping[name]
+        s = scale_cls(axis=None)
+
+        result = s.val_in_range(val)
+        assert result is expected, (
+            f"Failed {name}.val_in_range({val})."
+            f"Expected {expected}, got {result}"
+        )
+
+
+def test_val_in_range_base_fallback():
+    # Directly test the ScaleBase fallback for custom scales.
+    # ScaleBase.limit_range_for_scale returns values unchanged by default
+    s = mscale.ScaleBase(axis=None)
+
+    # Normal values should be True
+    assert s.val_in_range(1.0) is True
+    assert s.val_in_range(-5.5) is True
+
+    # NaN and Inf returns False since they cannot be drawn in a plot
+    assert s.val_in_range(np.nan) is False
+    assert s.val_in_range(np.inf) is False
+    assert s.val_in_range(-np.inf) is False
+
+
+def test_val_in_range_array():
+    # Vectorized: scalar in -> scalar bool, array in -> bool array.
+    arr = np.array([0.5, -1.0, 0.0, np.nan, np.inf, 0.25])
+    cases = {
+        'linear': [True, True, True, False, False, True],
+        'log':    [True, False, False, False, False, True],
+        'symlog': [True, True, True, False, False, True],
+        'asinh':  [True, True, True, False, False, True],
+        'logit':  [True, False, False, False, False, True],
+    }
+    for name, expected in cases.items():
+        s = mscale._scale_mapping[name](axis=None)
+        np.testing.assert_array_equal(s.val_in_range(arr), expected)
+
+    # 2D shape is preserved.
+    out = mscale._scale_mapping['log'](axis=None).val_in_range(
+        np.array([[1.0, -1.0], [0.5, np.nan]]))
+    np.testing.assert_array_equal(out, [[True, False], [True, False]])

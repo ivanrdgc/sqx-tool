@@ -1,13 +1,18 @@
+import sys
+
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
 import matplotlib as mpl
+from matplotlib.projections.polar import RadialLocator
 from matplotlib import pyplot as plt
 from matplotlib.testing.decorators import image_comparison, check_figures_equal
+import matplotlib.ticker as mticker
 
 
-@image_comparison(['polar_axes.png'], style='default', tol=0.012)
+@image_comparison(['polar_axes.png'], style='default',
+                  tol=0.009 if sys.platform == 'darwin' else 0)
 def test_polar_annotations():
     # You can specify the xypoint and the xytext in different positions and
     # coordinate systems, and optionally turn on a connecting line and mark the
@@ -42,7 +47,7 @@ def test_polar_annotations():
 
 
 @image_comparison(['polar_coords.png'], style='default', remove_text=True,
-                  tol=0.014)
+                  tol=0.013 if sys.platform == 'darwin' else 0)
 def test_polar_coord_annotations():
     # You can also use polar notation on a cartesian axes.  Here the native
     # coordinate system ('data') is cartesian, so you need to specify the
@@ -70,7 +75,7 @@ def test_polar_coord_annotations():
     ax.set_ylim(-20, 20)
 
 
-@image_comparison(['polar_alignment.png'])
+@image_comparison(['polar_alignment.png'], style='mpl20')
 def test_polar_alignment():
     # Test changing the vertical/horizontal alignment of a polar graph.
     angles = np.arange(0, 360, 90)
@@ -98,7 +103,7 @@ def test_polar_twice():
     assert len(fig.axes) == 1, 'More than one polar Axes created.'
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_polar_wrap(fig_test, fig_ref):
     ax = fig_test.add_subplot(projection="polar")
     ax.plot(np.deg2rad([179, -179]), [0.2, 0.1])
@@ -108,14 +113,14 @@ def test_polar_wrap(fig_test, fig_ref):
     ax.plot(np.deg2rad([2, 358]), [0.2, 0.1])
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_polar_units_1(fig_test, fig_ref):
     import matplotlib.testing.jpl_units as units
     units.register()
     xs = [30.0, 45.0, 60.0, 90.0]
     ys = [1.0, 2.0, 3.0, 4.0]
 
-    plt.figure(fig_test.number)
+    plt.figure(fig_test)
     plt.polar([x * units.deg for x in xs], ys)
 
     ax = fig_ref.add_subplot(projection="polar")
@@ -123,7 +128,7 @@ def test_polar_units_1(fig_test, fig_ref):
     ax.set(xlabel="deg")
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_polar_units_2(fig_test, fig_ref):
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -132,7 +137,7 @@ def test_polar_units_2(fig_test, fig_ref):
     ys = [1.0, 2.0, 3.0, 4.0]
     ys_km = [y * units.km for y in ys]
 
-    plt.figure(fig_test.number)
+    plt.figure(fig_test)
     # test {theta,r}units.
     plt.polar(xs_deg, ys_km, thetaunits="rad", runits="km")
     assert isinstance(plt.gca().xaxis.get_major_formatter(),
@@ -150,7 +155,7 @@ def test_polar_rmin():
     theta = 2*np.pi*r
 
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.plot(theta, r)
     ax.set_rmax(2.0)
     ax.set_rmin(0.5)
@@ -162,7 +167,7 @@ def test_polar_negative_rmin():
     theta = 2*np.pi*r
 
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.plot(theta, r)
     ax.set_rmax(0.0)
     ax.set_rmin(-3.0)
@@ -174,7 +179,7 @@ def test_polar_rorigin():
     theta = 2*np.pi*r
 
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.plot(theta, r)
     ax.set_rmax(2.0)
     ax.set_rmin(0.5)
@@ -184,14 +189,14 @@ def test_polar_rorigin():
 @image_comparison(['polar_invertedylim.png'], style='default')
 def test_polar_invertedylim():
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.set_ylim(2, 0)
 
 
 @image_comparison(['polar_invertedylim_rorigin.png'], style='default')
 def test_polar_invertedylim_rorigin():
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.yaxis.set_inverted(True)
     # Set the rlims to inverted (2, 0) without calling set_rlim, to check that
     # viewlims are correctly unstaled before draw()ing.
@@ -206,7 +211,7 @@ def test_polar_theta_position():
     theta = 2*np.pi*r
 
     fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
     ax.plot(theta, r)
     ax.set_theta_zero_location("NW", 30)
     ax.set_theta_direction('clockwise')
@@ -260,7 +265,7 @@ def test_polar_theta_limits():
                 steps=[1, 2, 2.5, 5, 10])
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_polar_rlim(fig_test, fig_ref):
     ax = fig_test.subplots(subplot_kw={'polar': True})
     ax.set_rlim(top=10)
@@ -271,7 +276,7 @@ def test_polar_rlim(fig_test, fig_ref):
     ax.set_rmin(.5)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_polar_rlim_bottom(fig_test, fig_ref):
     ax = fig_test.subplots(subplot_kw={'polar': True})
     ax.set_rlim(bottom=[.5, 10])
@@ -323,15 +328,37 @@ def test_polar_gridlines():
     assert ax.yaxis.majorTicks[0].gridline.get_alpha() == .2
 
 
+@pytest.mark.parametrize('theta_zero_location, theta_offset', [
+    (("N", 20), None),
+    (("N", 30), None),
+    (None, 1.570796327),
+])
+def test_polar_outer_spine_not_collapsed(theta_zero_location, theta_offset):
+    # The polar outer spine spans a full turn via Path.arc.  For some theta
+    # offsets/directions, floating-point error left the span just short of a
+    # full 360 degrees and the spine collapsed to a near-empty arc.  Check it
+    # still occupies a sensible area.
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    if theta_zero_location is not None:
+        ax.set_theta_direction(-1)
+        ax.set_theta_zero_location(*theta_zero_location)
+    if theta_offset is not None:
+        ax.set_theta_offset(theta_offset)
+    fig.canvas.draw()
+    # A collapsed spine has a near-zero (~1e-13) bounding box; a healthy one is
+    # hundreds of points across.
+    assert ax.spines['polar'].get_tightbbox().size.min() > 1
+
+
 def test_get_tightbbox_polar():
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
     fig.canvas.draw()
     bb = ax.get_tightbbox(fig.canvas.get_renderer())
     assert_allclose(
-        bb.extents, [107.7778,  29.2778, 539.7847, 450.7222], rtol=1e-03)
+        bb.extents, [108.27778, 29.1111, 539.7222, 450.8889], rtol=1e-03)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_polar_interpolation_steps_constant_r(fig_test, fig_ref):
     # Check that an extra half-turn doesn't make any difference -- modulo
     # antialiasing, which we disable here.
@@ -345,7 +372,7 @@ def test_polar_interpolation_steps_constant_r(fig_test, fig_ref):
           .bar([0], [1], -2*np.pi, edgecolor="none", antialiased=False))
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_polar_interpolation_steps_variable_r(fig_test, fig_ref):
     l, = fig_test.add_subplot(projection="polar").plot([0, np.pi/2], [1, 2])
     l.get_path()._interpolation_steps = 100
@@ -393,7 +420,7 @@ def test_axvspan():
     assert span.get_path()._interpolation_steps > 1
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_remove_shared_polar(fig_ref, fig_test):
     # Removing shared polar axes used to crash.  Test removing them, keeping in
     # both cases just the lower left axes of a grid to avoid running into a
@@ -526,3 +553,73 @@ def test_polar_errorbar(order):
         ax.errorbar(theta, r, xerr=0.1, yerr=0.1, capsize=7, fmt="o", c="seagreen")
         ax.set_theta_zero_location("N")
         ax.set_theta_direction(-1)
+
+
+def test_radial_limits_behavior():
+    # r=0 is kept as limit if positive data and ticks are used
+    # negative ticks or data result in negative limits
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='polar')
+    assert ax.get_ylim() == (0, 1)
+    # upper limit is expanded to include the ticks, but lower limit stays at 0
+    ax.set_rticks([1, 2, 3, 4])
+    assert ax.get_ylim() == (0, 4)
+    # upper limit is autoscaled to data, but lower limit limit stays 0
+    ax.plot([1, 2], [1, 2])
+    assert ax.get_ylim() == (0, 2)
+    # negative ticks also expand the negative limit
+    ax.set_rticks([-1, 0, 1, 2])
+    assert ax.get_ylim() == (-1, 2)
+    # negative data also autoscales to negative limits
+    ax.plot([1, 2], [-1, -2])
+    assert ax.get_ylim() == (-2, 2)
+
+
+def test_radial_locator_wrapping():
+    # Check that the locator is always wrapped inside a RadialLocator
+    # and that RaidialAxis.isDefault_majloc is set correctly.
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    assert ax.yaxis.isDefault_majloc
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+
+    # set an explicit locator
+    locator = mticker.MaxNLocator(3)
+    ax.yaxis.set_major_locator(locator)
+    assert not ax.yaxis.isDefault_majloc
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+    assert ax.yaxis.get_major_locator().base is locator
+
+    ax.clear()  # reset to the default locator
+    assert ax.yaxis.isDefault_majloc
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+
+    ax.set_rticks([0, 1, 2, 3])  # implicitly sets a FixedLocator
+    assert not ax.yaxis.isDefault_majloc  # because of the fixed ticks
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+    assert isinstance(ax.yaxis.get_major_locator().base, mticker.FixedLocator)
+
+    ax.clear()
+
+    ax.set_rgrids([0, 1, 2, 3])  # implicitly sets a FixedLocator
+    assert not ax.yaxis.isDefault_majloc  # because of the fixed ticks
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+    assert isinstance(ax.yaxis.get_major_locator().base, mticker.FixedLocator)
+
+    ax.clear()
+
+    ax.set_yscale("log")  # implicitly sets a LogLocator
+    # Note that the LogLocator is still considered the default locator
+    # for the log scale
+    assert ax.yaxis.isDefault_majloc
+    assert isinstance(ax.yaxis.get_major_locator(), RadialLocator)
+    assert isinstance(ax.yaxis.get_major_locator().base, mticker.LogLocator)
+
+
+def test_set_rticks_ticklabels_no_warning():
+    # Regression test: RadialLocator wrapping a FixedLocator must not trigger
+    # the "set_ticklabels() should only be used with a fixed number of ticks"
+    # UserWarning when set_ticks()/set_rticks() was called first.
+
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    ax.set_rticks([0, 1, 2, 3])
+    ax.yaxis.set_ticklabels(['zero', 'one', 'two', 'three'])

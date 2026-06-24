@@ -12,12 +12,12 @@ import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.testing import subprocess_run_helper, is_ci_environment
 from matplotlib.testing.decorators import check_figures_equal
-from matplotlib.dates import rrulewrapper
+from matplotlib.dates import rrulewrapper  # type: ignore[attr-defined]
 from matplotlib.lines import VertexSelector
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 import matplotlib.figure as mfigure
-from mpl_toolkits.axes_grid1 import axes_divider, parasite_axes  # type: ignore[import]
+from mpl_toolkits.axes_grid1 import axes_divider, parasite_axes
 
 
 def test_simple():
@@ -104,7 +104,7 @@ def _generate_complete_test_figure(fig_ref):
 
 
 @mpl.style.context("default")
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_complete(fig_test, fig_ref):
     _generate_complete_test_figure(fig_ref)
     # plotting is done, now test its pickle-ability
@@ -136,7 +136,7 @@ def _pickle_load_subprocess():
 
 
 @mpl.style.context("default")
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_pickle_load_from_subprocess(fig_test, fig_ref, tmp_path):
     _generate_complete_test_figure(fig_ref)
 
@@ -150,15 +150,7 @@ def test_pickle_load_from_subprocess(fig_test, fig_ref, tmp_path):
     proc = subprocess_run_helper(
         _pickle_load_subprocess,
         timeout=60,
-        extra_env={
-            "PICKLE_FILE_PATH": str(fp),
-            "MPLBACKEND": "Agg",
-            # subprocess_run_helper will set SOURCE_DATE_EPOCH=0, so for a dirty tree,
-            # the version will have the date 19700101. As we aren't trying to test the
-            # version compatibility warning, force setuptools-scm to use the same
-            # version as us.
-            "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_MATPLOTLIB": mpl.__version__,
-        },
+        extra_env={"PICKLE_FILE_PATH": str(fp), "MPLBACKEND": "Agg"},
     )
 
     loaded_fig = pickle.loads(ast.literal_eval(proc.stdout))

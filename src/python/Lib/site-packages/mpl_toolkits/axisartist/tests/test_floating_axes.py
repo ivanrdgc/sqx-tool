@@ -1,5 +1,7 @@
 import numpy as np
 
+import pytest
+
 import matplotlib.pyplot as plt
 import matplotlib.projections as mprojections
 import matplotlib.transforms as mtransforms
@@ -17,14 +19,12 @@ def test_subplot():
     fig.add_subplot(ax)
 
 
-# Rather high tolerance to allow ongoing work with floating axes internals;
-# remove when image is regenerated.
-@image_comparison(['curvelinear3.png'], style='default', tol=5)
+@image_comparison(['curvelinear3.png'], style='mpl20')
 def test_curvelinear3():
     fig = plt.figure(figsize=(5, 5))
 
     tr = (mtransforms.Affine2D().scale(np.pi / 180, 1) +
-          mprojections.PolarAxes.PolarTransform(apply_theta_transforms=False))
+          mprojections.PolarAxes.PolarTransform())
     grid_helper = GridHelperCurveLinear(
         tr,
         extremes=(0, 360, 10, 3),
@@ -63,17 +63,12 @@ def test_curvelinear3():
     l.set_clip_path(ax1.patch)
 
 
-# Rather high tolerance to allow ongoing work with floating axes internals;
-# remove when image is regenerated.
-@image_comparison(['curvelinear4.png'], style='default', tol=0.9)
+@image_comparison(['curvelinear4.png'], style='mpl20', tol=0.04)
 def test_curvelinear4():
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['text.kerning_factor'] = 6
-
     fig = plt.figure(figsize=(5, 5))
 
     tr = (mtransforms.Affine2D().scale(np.pi / 180, 1) +
-          mprojections.PolarAxes.PolarTransform(apply_theta_transforms=False))
+          mprojections.PolarAxes.PolarTransform())
     grid_helper = GridHelperCurveLinear(
         tr,
         extremes=(120, 30, 10, 0),
@@ -113,3 +108,29 @@ def test_axis_direction():
     ax.axis['y'] = ax.new_floating_axis(nth_coord=1, value=0,
                                         axis_direction='left')
     assert ax.axis['y']._axis_direction == 'left'
+
+
+def test_transform_with_zero_derivatives():
+    # The transform is really a 45° rotation
+    #     tr(x, y) = x-y, x+y; inv_tr(u, v) = (u+v)/2, (u-v)/2
+    # with an additional x->exp(-x**-2) on each coordinate.
+    # Therefore all ticks should be at +/-45°, even the one at zero where the
+    # transform derivatives are zero.
+
+    # at x=0, exp(-x**-2)=0; div-by-zero can be ignored.
+    @np.errstate(divide="ignore")
+    def tr(x, y):
+        return np.exp(-x**-2) - np.exp(-y**-2), np.exp(-x**-2) + np.exp(-y**-2)
+
+    def inv_tr(u, v):
+        return (-np.log((u+v)/2))**(1/2), (-np.log((v-u)/2))**(1/2)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(
+        axes_class=FloatingAxes, grid_helper=GridHelperCurveLinear(
+            (tr, inv_tr), extremes=(0, 10, 0, 10)))
+    fig.canvas.draw()
+
+    for k in ax.axis:
+        for l, a in ax.axis[k].major_ticks.locs_angles:
+            assert a % 90 == pytest.approx(45, abs=1e-3)

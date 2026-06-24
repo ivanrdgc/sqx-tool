@@ -8,11 +8,12 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
-@image_comparison(['bbox_inches_tight'], remove_text=True,
+@image_comparison(['bbox_inches_tight'], remove_text=True, style='mpl20',
                   savefig_kwarg={'bbox_inches': 'tight'})
-def test_bbox_inches_tight():
+def test_bbox_inches_tight(text_placeholders):
     #: Test that a figure saved using bbox_inches='tight' is clipped correctly
     data = [[66386, 174296, 75131, 577908, 32015],
             [58230, 381139, 78045, 99308, 160454],
@@ -20,7 +21,8 @@ def test_bbox_inches_tight():
             [78415, 81858, 150656, 193263, 69638],
             [139361, 331509, 343164, 781380, 52269]]
 
-    col_labels = row_labels = [''] * 5
+    col_labels = ('Freeze', 'Wind', 'Flood', 'Quake', 'Hail')
+    row_labels = [f'{x} year' for x in (100, 50, 20, 10, 5)]
 
     rows = len(data)
     ind = np.arange(len(col_labels)) + 0.3  # the x locations for the groups
@@ -30,13 +32,13 @@ def test_bbox_inches_tight():
     # the bottom values for stacked bar chart
     fig, ax = plt.subplots(1, 1)
     for row in range(rows):
-        ax.bar(ind, data[row], width, bottom=yoff, align='edge', color='b')
+        ax.bar(ind, data[row], width, bottom=yoff, align='edge')
         yoff = yoff + data[row]
-        cell_text.append([''])
+        cell_text.append([f'{x / 1000:1.1f}' for x in yoff])
     plt.xticks([])
     plt.xlim(0, 5)
-    plt.legend([''] * 5, loc=(1.2, 0.2))
-    fig.legend([''] * 5, bbox_to_anchor=(0, 0.2), loc='lower left')
+    plt.legend(['1', '2', '3', '4', '5'], loc=(1.2, 0.2))
+    fig.legend(['a', 'b', 'c', 'd', 'e'], bbox_to_anchor=(0, 0.2), loc='lower left')
     # Add a table at the bottom of the axes
     cell_text.reverse()
     plt.table(cellText=cell_text, rowLabels=row_labels, colLabels=col_labels,
@@ -44,8 +46,8 @@ def test_bbox_inches_tight():
 
 
 @image_comparison(['bbox_inches_tight_suptile_legend'],
-                  savefig_kwarg={'bbox_inches': 'tight'},
-                  tol=0 if platform.machine() == 'x86_64' else 0.02)
+                  savefig_kwarg={'bbox_inches': 'tight'}, style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.024)
 def test_bbox_inches_tight_suptile_legend():
     plt.plot(np.arange(10), label='a straight line')
     plt.legend(bbox_to_anchor=(0.9, 1), loc='upper left')
@@ -64,7 +66,7 @@ def test_bbox_inches_tight_suptile_legend():
 
 
 @image_comparison(['bbox_inches_tight_suptile_non_default.png'],
-                  savefig_kwarg={'bbox_inches': 'tight'},
+                  savefig_kwarg={'bbox_inches': 'tight'}, style='mpl20',
                   tol=0.1)  # large tolerance because only testing clipping.
 def test_bbox_inches_tight_suptitle_non_default():
     fig, ax = plt.subplots()
@@ -88,7 +90,8 @@ def test_bbox_inches_tight_layout_notconstrained(tmp_path):
 
 
 @image_comparison(['bbox_inches_tight_clipping'],
-                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'})
+                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'},
+                  style='_classic_test')
 def test_bbox_inches_tight_clipping():
     # tests bbox clipping on scatter points, and path clipping on a patch
     # to generate an appropriately tight bbox
@@ -109,7 +112,8 @@ def test_bbox_inches_tight_clipping():
 
 
 @image_comparison(['bbox_inches_tight_raster'], tol=0.15,  # For Ghostscript 10.06+.
-                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'})
+                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'},
+                  style='mpl20')
 def test_bbox_inches_tight_raster():
     """Test rasterization with tight_layout"""
     fig, ax = plt.subplots()
@@ -165,11 +169,25 @@ def test_noop_tight_bbox():
     assert im.shape == (7, 10, 4)
 
 
-@image_comparison(['bbox_inches_fixed_aspect'], extensions=['png'],
-                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'})
+@image_comparison(['bbox_inches_fixed_aspect.png'], remove_text=True,
+                  savefig_kwarg={'bbox_inches': 'tight'}, style='mpl20')
 def test_bbox_inches_fixed_aspect():
     with plt.rc_context({'figure.constrained_layout.use': True}):
         fig, ax = plt.subplots()
         ax.plot([0, 1])
         ax.set_xlim(0, 1)
         ax.set_aspect('equal')
+
+
+@image_comparison(['bbox_inches_inset_rasterized.pdf'], remove_text=True,
+                  savefig_kwarg={'bbox_inches': 'tight'}, style='mpl20')
+def test_bbox_inches_inset_rasterized():
+    fig, ax = plt.subplots()
+
+    arr = np.arange(100).reshape(10, 10)
+    im = ax.imshow(arr)
+    inset = inset_axes(
+        ax, width='10%', height='30%', loc='upper left',
+        bbox_to_anchor=(0.045, 0., 1, 1), bbox_transform=ax.transAxes)
+
+    fig.colorbar(im, cax=inset, orientation='horizontal')

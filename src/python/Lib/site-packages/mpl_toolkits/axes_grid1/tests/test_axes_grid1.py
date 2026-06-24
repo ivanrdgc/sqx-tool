@@ -1,6 +1,7 @@
 from itertools import product
 import io
 import platform
+import sys
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from matplotlib import cbook
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.colors import LogNorm
 from matplotlib.patches import Circle, Ellipse
-from matplotlib.transforms import Bbox, TransformedBbox
+from matplotlib.transforms import Affine2D, Bbox, TransformedBbox
 from matplotlib.testing.decorators import (
     check_figures_equal, image_comparison, remove_ticks_and_titles)
 
@@ -26,6 +27,7 @@ from mpl_toolkits.axes_grid1.axes_divider import (
 from mpl_toolkits.axes_grid1.axes_rgb import RGBAxes
 from mpl_toolkits.axes_grid1.inset_locator import (
     zoomed_inset_axes, mark_inset, inset_axes, BboxConnectorPatch)
+from mpl_toolkits.axes_grid1.parasite_axes import HostAxes
 import mpl_toolkits.axes_grid1.mpl_axes
 import pytest
 
@@ -60,16 +62,14 @@ def test_divider_append_axes():
     assert bboxes["top"].x1 == bboxes["main"].x1 == bboxes["bottom"].x1
 
 
-# Update style when regenerating the test image
-@image_comparison(['twin_axes_empty_and_removed'], extensions=["png"], tol=1,
-                  style=('classic', '_classic_test_patch'))
+@image_comparison(['twin_axes_empty_and_removed.png'], style='mpl20')
 def test_twin_axes_empty_and_removed():
     # Purely cosmetic font changes (avoid overlap)
-    mpl.rcParams.update(
-        {"font.size": 8, "xtick.labelsize": 8, "ytick.labelsize": 8})
+    mpl.rcParams.update({"font.size": 8, "xtick.labelsize": 8, "ytick.labelsize": 8})
     generators = ["twinx", "twiny", "twin"]
     modifiers = ["", "host invisible", "twin removed", "twin invisible",
                  "twin removed\nhost invisible"]
+    plt.figure(figsize=(8, 6))
     # Unmodified host subplot at the beginning for reference
     h = host_subplot(len(modifiers)+1, len(generators), 2)
     h.text(0.5, 0.5, "host_subplot",
@@ -92,8 +92,8 @@ def test_twin_axes_empty_and_removed():
 
 def test_twin_axes_both_with_units():
     host = host_subplot(111)
-    with pytest.warns(mpl.MatplotlibDeprecationWarning):
-        host.plot_date([0, 1, 2], [0, 1, 2], xdate=False, ydate=True)
+    host.yaxis.axis_date()
+    host.plot([0, 1, 2], [0, 1, 2])
     twin = host.twinx()
     twin.plot(["a", "b", "c"])
     assert host.get_yticklabels()[0].get_text() == "00:00:00"
@@ -104,7 +104,6 @@ def test_axesgrid_colorbar_log_smoketest():
     fig = plt.figure()
     grid = AxesGrid(fig, 111,  # modified to be only subplot
                     nrows_ncols=(1, 1),
-                    ngrids=1,
                     label_mode="L",
                     cbar_location="top",
                     cbar_mode="single",
@@ -343,10 +342,8 @@ def test_fill_facecolor():
     mark_inset(ax[3], axins, loc1=2, loc2=4, fc="g", ec="0.5", fill=False)
 
 
-# Update style when regenerating the test image
-@image_comparison(['zoomed_axes.png', 'inverted_zoomed_axes.png'],
-                  style=('classic', '_classic_test_patch'),
-                  tol=0 if platform.machine() == 'x86_64' else 0.02)
+@image_comparison(['zoomed_axes.png', 'inverted_zoomed_axes.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.03)
 def test_zooming_with_inverted_axes():
     fig, ax = plt.subplots()
     ax.plot([1, 2, 3], [1, 2, 3])
@@ -361,10 +358,8 @@ def test_zooming_with_inverted_axes():
     inset_ax.axis([1.4, 1.1, 1.4, 1.1])
 
 
-# Update style when regenerating the test image
-@image_comparison(['anchored_direction_arrows.png'],
-                  tol=0 if platform.machine() == 'x86_64' else 0.01,
-                  style=('classic', '_classic_test_patch'))
+@image_comparison(['anchored_direction_arrows.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.006)
 def test_anchored_direction_arrows():
     fig, ax = plt.subplots()
     ax.imshow(np.zeros((10, 10)), interpolation='nearest')
@@ -373,9 +368,8 @@ def test_anchored_direction_arrows():
     ax.add_artist(simple_arrow)
 
 
-# Update style when regenerating the test image
-@image_comparison(['anchored_direction_arrows_many_args.png'],
-                  style=('classic', '_classic_test_patch'))
+@image_comparison(['anchored_direction_arrows_many_args.png'], style='mpl20',
+                  tol=0.002 if sys.platform == 'win32' else 0)
 def test_anchored_direction_arrows_many_args():
     fig, ax = plt.subplots()
     ax.imshow(np.ones((10, 10)))
@@ -468,6 +462,26 @@ def test_gettightbbox():
                                          [-17.7, -13.9, 7.2, 5.4])
 
 
+def test_gettightbbox_parasite():
+    fig = plt.figure()
+
+    y0 = 0.3
+    horiz = [Size.Scaled(1.0)]
+    vert = [Size.Scaled(1.0)]
+    ax0_div = Divider(fig, [0.1, y0, 0.8, 0.2], horiz, vert)
+    ax1_div = Divider(fig, [0.1, 0.5, 0.8, 0.4], horiz, vert)
+
+    ax0 = fig.add_subplot(
+        xticks=[], yticks=[], axes_locator=ax0_div.new_locator(nx=0, ny=0))
+    ax1 = fig.add_subplot(
+        axes_class=HostAxes, axes_locator=ax1_div.new_locator(nx=0, ny=0))
+    aux_ax = ax1.get_aux_axes(Affine2D())
+
+    fig.canvas.draw()
+    rdr = fig.canvas.get_renderer()
+    assert rdr.get_canvas_width_height()[1] * y0 / fig.dpi == fig.get_tightbbox(rdr).y0
+
+
 @pytest.mark.parametrize("click_on", ["big", "small"])
 @pytest.mark.parametrize("big_on_axes,small_on_axes", [
     ("gca", "gca"),
@@ -539,15 +553,6 @@ def test_anchored_artists():
 
     box = AnchoredAuxTransformBox(ax.transData, loc='upper left')
     el = Ellipse((0, 0), width=0.1, height=0.4, angle=30, color='cyan')
-    box.drawing_area.add_artist(el)
-    ax.add_artist(box)
-
-    # This block used to test the AnchoredEllipse class, but that was removed. The block
-    # remains, though it duplicates the above ellipse, so that the test image doesn't
-    # need to be regenerated.
-    box = AnchoredAuxTransformBox(ax.transData, loc='lower left', frameon=True,
-                                  pad=0.5, borderpad=0.4)
-    el = Ellipse((0, 0), width=0.1, height=0.25, angle=-60)
     box.drawing_area.add_artist(el)
     ax.add_artist(box)
 
@@ -638,15 +643,15 @@ def test_grid_axes_position(direction):
     assert loc[3].args[1] == loc[2].args[1]
 
 
-@pytest.mark.parametrize('rect, ngrids, error, message', (
+@pytest.mark.parametrize('rect, n_axes, error, message', (
     ((1, 1), None, TypeError, "Incorrect rect format"),
-    (111, -1, ValueError, "ngrids must be positive"),
-    (111, 7, ValueError, "ngrids must be positive"),
+    (111, -1, ValueError, "n_axes must be positive"),
+    (111, 7, ValueError, "n_axes must be positive"),
 ))
-def test_grid_errors(rect, ngrids, error, message):
+def test_grid_errors(rect, n_axes, error, message):
     fig = plt.figure()
     with pytest.raises(error, match=message):
-        Grid(fig, rect, (2, 3), ngrids=ngrids)
+        Grid(fig, rect, (2, 3), n_axes=n_axes)
 
 
 @pytest.mark.parametrize('anchor, error, message', (
@@ -661,7 +666,7 @@ def test_divider_errors(anchor, error, message):
                 anchor=anchor)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_mark_inset_unstales_viewlim(fig_test, fig_ref):
     inset, full = fig_test.subplots(1, 2)
     full.plot([0, 5], [0, 5])
@@ -679,7 +684,7 @@ def test_mark_inset_unstales_viewlim(fig_test, fig_ref):
 
 def test_auto_adjustable():
     fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
+    ax = fig.add_axes((0, 0, 1, 1))
     pad = 0.1
     make_axes_area_auto_adjustable(ax, pad=pad)
     fig.canvas.draw()
@@ -780,3 +785,11 @@ def test_anchored_locator_base_call():
 def test_grid_with_axes_class_not_overriding_axis():
     Grid(plt.figure(), 111, (2, 2), axes_class=mpl.axes.Axes)
     RGBAxes(plt.figure(), 111, axes_class=mpl.axes.Axes)
+
+
+def test_grid_n_axes():
+    fig = plt.figure()
+    grid = Grid(fig, 111, (3, 3), n_axes=5)
+    assert len(fig.axes) == grid.n_axes == 5
+    with pytest.warns(mpl.MatplotlibDeprecationWarning, match="ngrids attribute"):
+        assert grid.ngrids == 5

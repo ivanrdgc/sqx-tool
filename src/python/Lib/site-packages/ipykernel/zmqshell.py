@@ -21,6 +21,7 @@ import threading
 import typing
 import warnings
 from pathlib import Path
+from subprocess import CalledProcessError
 
 from IPython.core import page
 from IPython.core.autocall import ZMQExitAutocall
@@ -368,7 +369,7 @@ class KernelMagics(Magics):
 
     if os.name == "nt":
         # This is the usual name in windows
-        cls = line_magic("cls")(clear)
+        cls = line_magic("cls")(clear)  # type: ignore[arg-type,var-annotated]
 
     # Terminal pagers won't work over pexpect, but we do have our own pager
 
@@ -389,7 +390,7 @@ class KernelMagics(Magics):
                 cont = fid.read()
         page.page(cont)
 
-    more = line_magic("more")(less)
+    more = line_magic("more")(less)  # type: ignore[arg-type,var-annotated]
 
     # Man calls a pager, so we also need to redefine it
     if os.name == "posix":
@@ -660,6 +661,7 @@ class ZMQInteractiveShell(InteractiveShell):
     def run_cell(self, *args, **kwargs):
         """Run a cell."""
         self._last_traceback = None
+        self._last_traceback_during_displayhook = False
         return super().run_cell(*args, **kwargs)
 
     def _showtraceback(self, etype, evalue, stb):
@@ -674,6 +676,10 @@ class ZMQInteractiveShell(InteractiveShell):
         }
 
         dh = self.displayhook
+        if getattr(dh, "msg", None) is not None:
+            # Errors raised while formatting display output should mark the
+            # current execute_request as failed.
+            self._last_traceback_during_displayhook = True
         # Send exception info over pub socket for other clients than the caller
         # to pick up
         topic = None
@@ -783,9 +789,14 @@ class ZMQInteractiveShell(InteractiveShell):
             with AvoidUNCPath() as path:
                 if path is not None:
                     cmd = f"pushd {path} &&{cmd}"
-                self.user_ns["_exit_code"] = system(cmd)
+                exit_code = system(cmd)
+                self.user_ns["_exit_code"] = exit_code
         else:
-            self.user_ns["_exit_code"] = system(self.var_expand(cmd, depth=1))
+            exit_code = system(self.var_expand(cmd, depth=1))
+            self.user_ns["_exit_code"] = exit_code
+
+        if getattr(self, "system_raise_on_error", False) and exit_code != 0:
+            raise CalledProcessError(exit_code, cmd)
 
     # Ensure new system_piped implementation is used
     system = system_piped

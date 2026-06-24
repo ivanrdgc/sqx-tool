@@ -134,9 +134,8 @@ Explicitly setting `dev-build` to `False` will ensure that the `production`
 build is used in all circumstances.
 
 - `minimize`: This option controls whether your JS bundle is minified
-during the Webpack build, which helps to improve JupyterLab's overall
-performance. However, the minifier plugin used by Webpack is very memory
-intensive, so turning it off may help the build finish successfully in
+during the Rspack build, which helps to improve JupyterLab's overall
+performance. Turning this off may help the build finish successfully in
 low-memory environments.
 """
 
@@ -804,7 +803,7 @@ class LabApp(NotebookConfigShimMixin, LabServerApp):
             entry_point = EXT_MANAGERS.get(provider)
             if entry_point is None:
                 self.log.error(f"Extension Manager: No manager defined for provider '{provider}'.")
-                raise NotImplementedError()
+                raise NotImplementedError
             else:
                 self.log.info(f"Extension Manager is '{provider}'.")
             manager_factory = entry_point.load()
@@ -817,7 +816,7 @@ class LabApp(NotebookConfigShimMixin, LabServerApp):
                 self.log.error(
                     "Simultaneous LabServerApp.blocked_extensions_uris and LabServerApp.allowed_extensions_uris is not supported. Please define only one of those."
                 )
-                import sys
+                import sys  # noqa: PLC0415
 
                 sys.exit(-1)
 

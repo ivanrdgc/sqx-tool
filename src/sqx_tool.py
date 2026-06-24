@@ -655,17 +655,17 @@ def newproject(args: argparse.Namespace) -> None:
         print(f"symbol '{symbol_dukascopy}' has no date range in symbols DB – aborting")
         return
 
-    first_day = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
+    first_day = max(datetime(2010, 1, 1, tzinfo=timezone.utc), sym_info.first_date)
     last_day = sym_info.last_date
 
-    first_day_dx = max(datetime(2008, 1, 1, tzinfo=timezone.utc), sym_2_info.first_date)
+    first_day_dx = max(datetime(2010, 1, 1, tzinfo=timezone.utc), sym_2_info.first_date)
     last_day_dx = sym_2_info.last_date
 
     build_start = max(datetime(2018, 1, 1, tzinfo=timezone.utc), first_day)
-    build_end = min(datetime(2025, 6, 1, tzinfo=timezone.utc), last_day)
+    build_end = min(datetime(2025, 7, 1, tzinfo=timezone.utc), last_day)
 
-    retest_start = max(datetime(2008, 1, 1, tzinfo=timezone.utc), first_day)
-    retest_start_dx = max(datetime(2008, 1, 1, tzinfo=timezone.utc), first_day_dx)
+    retest_start = max(datetime(2010, 1, 1, tzinfo=timezone.utc), first_day)
+    retest_start_dx = max(datetime(2010, 1, 1, tzinfo=timezone.utc), first_day_dx)
     retest_end_edge = build_end
     retest_end_strategy = last_day
     retest_end_strategy_dx = last_day_dx

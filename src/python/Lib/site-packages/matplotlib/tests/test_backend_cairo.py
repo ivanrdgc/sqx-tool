@@ -2,13 +2,14 @@ import numpy as np
 
 import pytest
 
+import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import check_figures_equal
 from matplotlib import (
     collections as mcollections, patches as mpatches, path as mpath)
 
 
 @pytest.mark.backend('cairo')
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_patch_alpha_coloring(fig_test, fig_ref):
     """
     Test checks that the patch and collection are rendered with the specified
@@ -46,3 +47,7 @@ def test_patch_alpha_coloring(fig_test, fig_ref):
                                       facecolor=(1, 0, 0, 0.5),
                                       edgecolor=(0, 0, 1, 0.75))
     ax.add_collection(col)
+
+    # Have pyplot manage the figures to ensure the cairo backend is used
+    plt.figure(fig_ref)
+    plt.figure(fig_test)

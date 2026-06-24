@@ -44,6 +44,14 @@ def anim(request):
     return klass(fig=fig, func=animate, init_func=init, **kwargs)
 
 
+def test_invalid_writer():
+    # Note, this triggers for Animation.save as well, but this is a lighter test.
+    with pytest.raises(ValueError,
+                       match=r"'pllow' is not a valid value for writer\. "
+                             r"Did you mean: 'pillow'\?"):
+        animation.writers['pllow']
+
+
 class NullMovieWriter(animation.AbstractMovieWriter):
     """
     A minimal MovieWriter.  It doesn't actually write anything.
@@ -159,8 +167,7 @@ WRITER_OUTPUT = [
 def gen_writers():
     for writer, output in WRITER_OUTPUT:
         if not animation.writers.is_available(writer):
-            mark = pytest.mark.skip(
-                f"writer '{writer}' not available on this system")
+            mark = pytest.mark.skip(f"writer '{writer}' not available on this system")
             yield pytest.param(writer, None, output, marks=[mark])
             yield pytest.param(writer, None, Path(output), marks=[mark])
             continue
@@ -176,7 +183,7 @@ def gen_writers():
 # matplotlib.testing.image_comparison
 @pytest.mark.parametrize('writer, frame_format, output', gen_writers())
 @pytest.mark.parametrize('anim', [dict(klass=dict)], indirect=['anim'])
-def test_save_animation_smoketest(tmpdir, writer, frame_format, output, anim):
+def test_save_animation_smoketest(tmp_path, writer, frame_format, output, anim):
     if frame_format is not None:
         plt.rcParams["animation.frame_format"] = frame_format
     anim = animation.FuncAnimation(**anim)
@@ -188,17 +195,14 @@ def test_save_animation_smoketest(tmpdir, writer, frame_format, output, anim):
         dpi = 100.
         codec = 'h264'
 
-    # Use temporary directory for the file-based writers, which produce a file
-    # per frame with known names.
-    with tmpdir.as_cwd():
-        anim.save(output, fps=30, writer=writer, bitrate=500, dpi=dpi,
-                  codec=codec)
+    anim.save(tmp_path / output, fps=30, writer=writer, bitrate=500, dpi=dpi,
+              codec=codec)
 
     del anim
 
 
 @pytest.mark.parametrize('writer, frame_format, output', gen_writers())
-def test_grabframe(tmpdir, writer, frame_format, output):
+def test_grabframe(tmp_path, writer, frame_format, output):
     WriterClass = animation.writers[writer]
 
     if frame_format is not None:
@@ -215,18 +219,14 @@ def test_grabframe(tmpdir, writer, frame_format, output):
         codec = 'h264'
 
     test_writer = WriterClass()
-    # Use temporary directory for the file-based writers, which produce a file
-    # per frame with known names.
-    with tmpdir.as_cwd():
-        with test_writer.saving(fig, output, dpi):
-            # smoke test it works
-            test_writer.grab_frame()
-            for k in {'dpi', 'bbox_inches', 'format'}:
-                with pytest.raises(
-                        TypeError,
-                        match=f"grab_frame got an unexpected keyword argument {k!r}"
-                ):
-                    test_writer.grab_frame(**{k: object()})
+    with test_writer.saving(fig, tmp_path / output, dpi):
+        # smoke test it works
+        test_writer.grab_frame()
+        for k in {'dpi', 'bbox_inches', 'format'}:
+            with pytest.raises(
+                    TypeError,
+                    match=f"grab_frame got an unexpected keyword argument {k!r}"):
+                test_writer.grab_frame(**{k: object()})
 
 
 @pytest.mark.parametrize('writer', [
@@ -279,6 +279,8 @@ def test_no_length_frames(anim):
     anim.save('unused.null', writer=NullMovieWriter())
 
 
+@pytest.mark.skipif(sys.platform == 'emscripten',
+                    reason='emscripten does not support subprocesses')
 def test_movie_writer_registry():
     assert len(animation.writers._registered) > 0
     mpl.rcParams['animation.ffmpeg_path'] = "not_available_ever_xxxx"
@@ -296,32 +298,20 @@ def test_movie_writer_registry():
         reason="animation writer not installed")),
      "to_jshtml"])
 @pytest.mark.parametrize('anim', [dict(frames=1)], indirect=['anim'])
-def test_embed_limit(method_name, caplog, tmpdir, anim):
+def test_embed_limit(method_name, caplog, anim):
     caplog.set_level("WARNING")
-    with tmpdir.as_cwd():
-        with mpl.rc_context({"animation.embed_limit": 1e-6}):  # ~1 byte.
-            getattr(anim, method_name)()
+    with mpl.rc_context({"animation.embed_limit": 1e-6}):  # ~1 byte.
+        getattr(anim, method_name)()
     assert len(caplog.records) == 1
     record, = caplog.records
     assert (record.name == "matplotlib.animation"
             and record.levelname == "WARNING")
 
 
-@pytest.mark.parametrize(
-    "method_name",
-    [pytest.param("to_html5_video", marks=pytest.mark.skipif(
-        not animation.writers.is_available(mpl.rcParams["animation.writer"]),
-        reason="animation writer not installed")),
-     "to_jshtml"])
-@pytest.mark.parametrize('anim', [dict(frames=1)], indirect=['anim'])
-def test_cleanup_temporaries(method_name, tmpdir, anim):
-    with tmpdir.as_cwd():
-        getattr(anim, method_name)()
-        assert list(Path(str(tmpdir)).iterdir()) == []
-
-
+@pytest.mark.skipif(sys.platform == 'emscripten',
+                    reason='emscripten does not support subprocesses')
 @pytest.mark.skipif(shutil.which("/bin/sh") is None, reason="requires a POSIX OS")
-def test_failing_ffmpeg(tmpdir, monkeypatch, anim):
+def test_failing_ffmpeg(tmp_path, monkeypatch, anim):
     """
     Test that we correctly raise a CalledProcessError when ffmpeg fails.
 
@@ -329,13 +319,12 @@ def test_failing_ffmpeg(tmpdir, monkeypatch, anim):
     succeeds when called with no arguments (so that it gets registered by
     `isAvailable`), but fails otherwise, and add it to the $PATH.
     """
-    with tmpdir.as_cwd():
-        monkeypatch.setenv("PATH", ".:" + os.environ["PATH"])
-        exe_path = Path(str(tmpdir), "ffmpeg")
-        exe_path.write_bytes(b"#!/bin/sh\n[[ $@ -eq 0 ]]\n")
-        os.chmod(exe_path, 0o755)
-        with pytest.raises(subprocess.CalledProcessError):
-            anim.save("test.mpeg")
+    monkeypatch.setenv("PATH", str(tmp_path), prepend=":")
+    exe_path = tmp_path / "ffmpeg"
+    exe_path.write_bytes(b"#!/bin/sh\n[[ $@ -eq 0 ]]\n")
+    os.chmod(exe_path, 0o755)
+    with pytest.raises(subprocess.CalledProcessError):
+        anim.save("test.mpeg")
 
 
 @pytest.mark.parametrize("cache_frame_data", [False, True])
@@ -419,7 +408,7 @@ def test_draw_frame(return_value):
         )
 
 
-def test_exhausted_animation(tmpdir):
+def test_exhausted_animation(tmp_path):
     fig, ax = plt.subplots()
 
     def update(frame):
@@ -430,14 +419,13 @@ def test_exhausted_animation(tmpdir):
         cache_frame_data=False
     )
 
-    with tmpdir.as_cwd():
-        anim.save("test.gif", writer='pillow')
+    anim.save(tmp_path / "test.gif", writer='pillow')
 
     with pytest.warns(UserWarning, match="exhausted"):
         anim._start()
 
 
-def test_no_frame_warning(tmpdir):
+def test_no_frame_warning():
     fig, ax = plt.subplots()
 
     def update(frame):
@@ -452,8 +440,8 @@ def test_no_frame_warning(tmpdir):
         anim._start()
 
 
-@check_figures_equal(extensions=["png"])
-def test_animation_frame(tmpdir, fig_test, fig_ref):
+@check_figures_equal()
+def test_animation_frame(tmp_path, fig_test, fig_ref):
     # Test the expected image after iterating through a few frames
     # we save the animation to get the iteration because we are not
     # in an interactive framework.
@@ -474,8 +462,7 @@ def test_animation_frame(tmpdir, fig_test, fig_ref):
     anim = animation.FuncAnimation(
         fig_test, animate, init_func=init, frames=5,
         blit=True, repeat=False)
-    with tmpdir.as_cwd():
-        anim.save("test.gif")
+    anim.save(tmp_path / "test.gif")
 
     # Reference figure without animation
     ax = fig_ref.add_subplot()
@@ -546,7 +533,9 @@ def test_disable_cache_warning(anim):
 
 def test_movie_writer_invalid_path(anim):
     if sys.platform == "win32":
-        match_str = r"\[WinError 3] .*'\\\\foo\\\\bar\\\\aardvark'"
+        match_str = r"\[WinError 3] .*\\\\foo\\\\bar\\\\aardvark'"
+    elif sys.platform == "emscripten":
+        match_str = r"\[Errno 44] .*'/foo"
     else:
         match_str = r"\[Errno 2] .*'/foo"
     with pytest.raises(FileNotFoundError, match=match_str):

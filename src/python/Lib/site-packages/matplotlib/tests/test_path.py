@@ -155,8 +155,8 @@ def test_nonlinear_containment():
 def test_arrow_contains_point():
     # fix bug (#8384)
     fig, ax = plt.subplots()
-    ax.set_xlim((0, 2))
-    ax.set_ylim((0, 2))
+    ax.set_xlim(0, 2)
+    ax.set_ylim(0, 2)
 
     # create an arrow with Curve style
     arrow = patches.FancyArrowPatch((0.5, 0.25), (1.5, 0.75),
@@ -189,7 +189,7 @@ def test_arrow_contains_point():
                 ax.scatter(x, y, s=5, c="r")
 
 
-@image_comparison(['path_clipping.svg'], remove_text=True)
+@image_comparison(['path_clipping.svg'], remove_text=True, style='_classic_test')
 def test_path_clipping():
     fig = plt.figure(figsize=(6.0, 6.2))
 
@@ -242,7 +242,7 @@ def test_make_compound_path_stops():
     assert np.sum(compound_path.codes == Path.STOP) == 0
 
 
-@image_comparison(['xkcd.png'], remove_text=True)
+@image_comparison(['xkcd.png'], remove_text=True, style='_classic_test')
 def test_xkcd():
     np.random.seed(0)
 
@@ -254,7 +254,7 @@ def test_xkcd():
         ax.plot(x, y)
 
 
-@image_comparison(['xkcd_marker.png'], remove_text=True)
+@image_comparison(['xkcd_marker.png'], remove_text=True, style='_classic_test')
 def test_xkcd_marker():
     np.random.seed(0)
 
@@ -270,7 +270,7 @@ def test_xkcd_marker():
         ax.plot(x, y3, '^', ms=10)
 
 
-@image_comparison(['marker_paths.pdf'], remove_text=True)
+@image_comparison(['marker_paths.pdf'], remove_text=True, style='_classic_test')
 def test_marker_paths_pdf():
     N = 7
 
@@ -509,6 +509,42 @@ def test_full_arc(offset):
     maxs = np.max(path.vertices, axis=0)
     np.testing.assert_allclose(mins, -1)
     np.testing.assert_allclose(maxs, 1)
+
+
+@pytest.mark.parametrize('theta2', [
+    360, 720, 360 * 5,                       # exact whole turns
+    np.nextafter(360, 1e6),                  # +1 ulp: realistic float noise
+    np.nextafter(360, 0),                    # -1 ulp
+    np.nextafter(720, 1e6),
+])
+def test_arc_full_circle_snap(theta2):
+    # A span within floating-point tolerance of a whole number of turns must
+    # draw a complete circle, not collapse to a near-empty arc.
+    np.testing.assert_allclose(Path.arc(0, theta2).vertices,
+                               Path.arc(0, 360).vertices)
+
+
+@pytest.mark.parametrize('theta1, theta2', [(0, -360), (0, -720), (360, 0),
+                                            (10, -350)])
+def test_arc_negative_full_circle(theta1, theta2):
+    # An exact negative multiple of 360 must draw a complete circle.
+    # The result is the same complete circle as the equivalent positive turn
+    # starting from *theta1* (so the assertion holds for non-cardinal starts).
+    np.testing.assert_allclose(Path.arc(theta1, theta2).vertices,
+                               Path.arc(theta1, theta1 + 360).vertices)
+
+
+def test_arc_unwrap_partial_turn():
+    # A span comfortably more than a whole number of turns (not near-integer)
+    # is unwrapped to the equivalent shortest arc within 360 degrees.
+    np.testing.assert_allclose(Path.arc(0, 410).vertices,
+                               Path.arc(0, 50).vertices)
+    np.testing.assert_allclose(Path.arc(0, 540).vertices,
+                               Path.arc(0, 180).vertices)
+    # A span a clear fraction of a degree past a full turn is the caller's
+    # explicit request and must NOT be snapped to a circle (tolerance guard).
+    np.testing.assert_allclose(Path.arc(0, 360.001).vertices,
+                               Path.arc(0, 0.001).vertices)
 
 
 def test_disjoint_zero_length_segment():

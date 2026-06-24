@@ -259,11 +259,22 @@ class TestDatetimePlotting:
         ax.xaxis.set_major_formatter(mpl.dates.DateFormatter("%Y-%m-%d"))
         ax.set_title('Box plot with datetime data')
 
-    @pytest.mark.xfail(reason="Test for clabel not written yet")
     @mpl.style.context("default")
     def test_clabel(self):
+        dates = [datetime.datetime(2023, 10, 1) + datetime.timedelta(days=i)
+                for i in range(10)]
+        x = np.arange(-10.0, 5.0, 0.5)
+        X, Y = np.meshgrid(x, dates)
+        Z = np.arange(X.size).reshape(X.shape)
+
         fig, ax = plt.subplots()
-        ax.clabel(...)
+        CS = ax.contour(X, Y, Z)
+        labels = ax.clabel(CS, manual=[(x[0], dates[0])])
+        assert len(labels) == 1
+        assert labels[0].get_text() == '0'
+        x_pos, y_pos = labels[0].get_position()
+        assert x_pos == pytest.approx(-10.0, abs=1e-3)
+        assert y_pos == pytest.approx(mpl.dates.date2num(dates[0]), abs=1e-3)
 
     @mpl.style.context("default")
     def test_contour(self):
@@ -642,26 +653,6 @@ class TestDatetimePlotting:
         ax2.plot(range(1, N), x)
         ax3.plot(x, x)
 
-    @mpl.style.context("default")
-    def test_plot_date(self):
-        mpl.rcParams["date.converter"] = "concise"
-        range_threshold = 10
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
-
-        x_dates = np.array(
-            [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
-        )
-        y_dates = np.array(
-            [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
-        )
-        x_ranges = np.array(range(1, range_threshold))
-        y_ranges = np.array(range(1, range_threshold))
-
-        with pytest.warns(mpl.MatplotlibDeprecationWarning):
-            ax1.plot_date(x_dates, y_dates)
-            ax2.plot_date(x_dates, y_ranges)
-            ax3.plot_date(x_ranges, y_dates)
-
     @pytest.mark.xfail(reason="Test for quiver not written yet")
     @mpl.style.context("default")
     def test_quiver(self):
@@ -830,11 +821,32 @@ class TestDatetimePlotting:
         fig, ax = plt.subplots()
         ax.triplot(...)
 
-    @pytest.mark.xfail(reason="Test for violin not written yet")
+    @pytest.mark.parametrize("orientation", ["vertical", "horizontal"])
     @mpl.style.context("default")
-    def test_violin(self):
+    def test_violin(self, orientation):
         fig, ax = plt.subplots()
-        ax.violin(...)
+        datetimes = [
+            datetime.datetime(2023, 2, 10),
+            datetime.datetime(2023, 5, 18),
+            datetime.datetime(2023, 6, 6)
+        ]
+        ax.violin(
+            [
+                {
+                    'coords': datetimes,
+                    'vals': [0.1, 0.5, 0.2],
+                    'mean': datetimes[1],
+                    'median': datetimes[1],
+                    'min': datetimes[0],
+                    'max': datetimes[-1],
+                    'quantiles': datetimes
+                }
+            ],
+            orientation=orientation,
+            # TODO: It should be possible for positions to be datetimes too
+            # https://github.com/matplotlib/matplotlib/issues/30417
+            # positions=[datetime.datetime(2020, 1, 1)]
+        )
 
     @pytest.mark.xfail(reason="Test for violinplot not written yet")
     @mpl.style.context("default")

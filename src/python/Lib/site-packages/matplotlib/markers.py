@@ -129,7 +129,7 @@ Examples showing the use of markers:
 """
 import copy
 
-from collections.abc import Sized
+from collections.abc import Hashable, Sized
 
 import numpy as np
 
@@ -282,8 +282,7 @@ class MarkerStyle:
             The part of the marker surface that is colored with
             markerfacecolor.
         """
-        if fillstyle is None:
-            fillstyle = mpl.rcParams['markers.fillstyle']
+        fillstyle = mpl._val_or_rc(fillstyle, 'markers.fillstyle')
         _api.check_in_list(self.fillstyles, fillstyle=fillstyle)
         self._fillstyle = fillstyle
 
@@ -309,7 +308,7 @@ class MarkerStyle:
         """
         if isinstance(marker, str) and cbook.is_math_text(marker):
             self._marker_function = self._set_mathtext_path
-        elif isinstance(marker, (int, str)) and marker in self.markers:
+        elif isinstance(marker, Hashable) and marker in self.markers:
             self._marker_function = getattr(self, '_set_' + self.markers[marker])
         elif (isinstance(marker, np.ndarray) and marker.ndim == 2 and
                 marker.shape[1] == 2):

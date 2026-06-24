@@ -768,7 +768,7 @@ class _FigureCanvasWxBase(FigureCanvasBase, wx.Panel):
 
     def set_cursor(self, cursor):
         # docstring inherited
-        cursor = wx.Cursor(_api.check_getitem({
+        cursor = wx.Cursor(_api.getitem_checked({
             cursors.MOVE: wx.CURSOR_HAND,
             cursors.HAND: wx.CURSOR_HAND,
             cursors.POINTER: wx.CURSOR_ARROW,
@@ -1012,6 +1012,7 @@ class FigureManagerWx(FigureManagerBase):
             # As this can be called from non-GUI thread from plt.close use
             # wx.CallAfter to ensure thread safety.
             wx.CallAfter(frame.Close)
+        super().destroy()
 
     def full_screen_toggle(self):
         # docstring inherited

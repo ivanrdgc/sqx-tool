@@ -12,9 +12,14 @@ class ScaleBase:
     def limit_range_for_scale(
         self, vmin: float, vmax: float, minpos: float
     ) -> tuple[float, float]: ...
+    def val_in_range(self, val: float) -> bool: ...
 
 class LinearScale(ScaleBase):
     name: str
+    def __init__(
+            self,
+            axis:  Axis | None,
+        ) -> None: ...
 
 class FuncTransform(Transform):
     input_dims: int
@@ -57,7 +62,7 @@ class LogScale(ScaleBase):
     subs: Iterable[int] | None
     def __init__(
         self,
-        axis: Axis | None,
+        axis: Axis | None = ...,
         *,
         base: float = ...,
         subs: Iterable[int] | None = ...,
@@ -94,8 +99,9 @@ class InvertedSymmetricalLogTransform(Transform):
     output_dims: int
     base: float
     linthresh: float
-    invlinthresh: float
     linscale: float
+    @property
+    def invlinthresh(self) -> float: ...
     def __init__(self, base: float, linthresh: float, linscale: float) -> None: ...
     def inverted(self) -> SymmetricalLogTransform: ...
 
@@ -104,7 +110,7 @@ class SymmetricalLogScale(ScaleBase):
     subs: Iterable[int] | None
     def __init__(
         self,
-        axis: Axis | None,
+        axis: Axis | None = ...,
         *,
         base: float = ...,
         linthresh: float = ...,
@@ -138,7 +144,7 @@ class AsinhScale(ScaleBase):
     auto_tick_multipliers: dict[int, tuple[int, ...]]
     def __init__(
         self,
-        axis: Axis | None,
+        axis: Axis | None = ...,
         *,
         linear_width: float = ...,
         base: float = ...,
@@ -165,7 +171,7 @@ class LogitScale(ScaleBase):
     name: str
     def __init__(
         self,
-        axis: Axis | None,
+        axis: Axis | None = ...,
         nonpositive: Literal["mask", "clip"] = ...,
         *,
         one_half: str = ...,
@@ -176,3 +182,4 @@ class LogitScale(ScaleBase):
 def get_scale_names() -> list[str]: ...
 def scale_factory(scale: str, axis: Axis, **kwargs) -> ScaleBase: ...
 def register_scale(scale_class: type[ScaleBase]) -> None: ...
+def _make_axis_parameter_optional(init_func: Callable[..., None]) -> Callable[..., None]: ...

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from typing import Any, TypeVar, overload
-from typing_extensions import Self  # < Py 3.11
+from typing import Self
 
 from numpy.typing import NDArray
 
@@ -17,6 +17,8 @@ from .deprecation import (  # noqa: F401, re-exported API
 )
 
 _T = TypeVar("_T")
+
+class _Unset: ...
 
 class classproperty(Any):
     def __init__(
@@ -36,11 +38,10 @@ class classproperty(Any):
 def check_isinstance(
     types: type | tuple[type | None, ...], /, **kwargs: Any
 ) -> None: ...
-def check_in_list(
-    values: Sequence[Any], /, *, _print_supported_values: bool = ..., **kwargs: Any
-) -> None: ...
+def list_suggestion_error_msg(name: str, potential: Any, values: Sequence[Any]) -> str: ...
+def check_in_list(values: Sequence[Any], /, **kwargs: Any) -> None: ...
 def check_shape(shape: tuple[int | None, ...], /, **kwargs: NDArray) -> None: ...
-def check_getitem(mapping: Mapping[Any, Any], /, **kwargs: Any) -> Any: ...
+def getitem_checked(mapping: Mapping[Any, _T], /, _error_cls: type[Exception] = ..., **kwargs: Any) -> _T: ...
 def caching_module_getattr(cls: type) -> Callable[[str], Any]: ...
 @overload
 def define_aliases(

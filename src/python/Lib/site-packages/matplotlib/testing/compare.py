@@ -19,7 +19,7 @@ import numpy as np
 from PIL import Image
 
 import matplotlib as mpl
-from matplotlib import cbook
+from matplotlib import cbook, _image
 from matplotlib.testing.exceptions import ImageComparisonFailure
 
 _log = logging.getLogger(__name__)
@@ -95,6 +95,16 @@ class _Converter:
             buf.extend(c)
             if buf.endswith(terminator):
                 return bytes(buf)
+
+
+class _MagickConverter:
+    def __call__(self, orig, dest):
+        try:
+            subprocess.run(
+                [mpl._get_executable_info("magick").executable, orig, dest],
+                check=True)
+        except subprocess.CalledProcessError as e:
+            raise _ConverterError() from e
 
 
 class _GSConverter(_Converter):
@@ -214,7 +224,7 @@ class _SVGConverter(_Converter):
 
 class _SVGWithMatplotlibFontsConverter(_SVGConverter):
     """
-    A SVG converter which explicitly adds the fonts shipped by Matplotlib to
+    An SVG converter which explicitly adds the fonts shipped by Matplotlib to
     Inkspace's font search path, to better support `svg.fonttype = "none"`
     (which is in particular used by certain mathtext tests).
     """
@@ -228,6 +238,12 @@ class _SVGWithMatplotlibFontsConverter(_SVGConverter):
 
 
 def _update_converter():
+    try:
+        mpl._get_executable_info("magick")
+    except mpl.ExecutableNotFoundError:
+        pass
+    else:
+        converter['gif'] = _MagickConverter()
     try:
         mpl._get_executable_info("gs")
     except mpl.ExecutableNotFoundError:
@@ -298,7 +314,7 @@ def convert(filename, cache):
         _log.debug("For %s: converting to png.", filename)
         convert = converter[path.suffix[1:]]
         if path.suffix == ".svg":
-            contents = path.read_text()
+            contents = path.read_text(encoding="utf-8")
             # NOTE: This check should be kept in sync with font styling in
             # `lib/matplotlib/backends/backend_svg.py`. If it changes, then be sure to
             # re-generate any SVG test files using this mode, or else such tests will
@@ -395,8 +411,8 @@ def compare_images(expected, actual, tol, in_decorator=False):
     Compare two "image" files checking differences within a tolerance.
 
     The two given filenames may point to files which are convertible to
-    PNG via the `.converter` dictionary. The underlying RMS is calculated
-    with the `.calculate_rms` function.
+    PNG via the `!converter` dictionary. The underlying RMS is calculated
+    in a similar way to the `.calculate_rms` function.
 
     Parameters
     ----------
@@ -467,17 +483,12 @@ def compare_images(expected, actual, tol, in_decorator=False):
         if np.array_equal(expected_image, actual_image):
             return None
 
-    # convert to signed integers, so that the images can be subtracted without
-    # overflow
-    expected_image = expected_image.astype(np.int16)
-    actual_image = actual_image.astype(np.int16)
-
-    rms = calculate_rms(expected_image, actual_image)
+    rms, abs_diff = _image.calculate_rms_and_diff(expected_image, actual_image)
 
     if rms <= tol:
         return None
 
-    save_diff_image(expected, actual, diff_image)
+    Image.fromarray(abs_diff).save(diff_image, format="png")
 
     results = dict(rms=rms, expected=str(expected),
                    actual=str(actual), diff=str(diff_image), tol=tol)

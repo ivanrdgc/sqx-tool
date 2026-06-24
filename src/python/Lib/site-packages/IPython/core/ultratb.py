@@ -817,8 +817,10 @@ class VerboseTB(TBTools):
         after = context // 2
         before = context - after
         if self.has_colors:
-            base_style = theme_table[self._theme_name].as_pygments_style()
-            style = stack_data.style_with_executing_node(base_style, self.tb_highlight)
+            theme = theme_table[self._theme_name]
+            base_style = theme.as_pygments_style()
+            tb_highlight = theme.extra_style.get(Token.TbHighlight, self.tb_highlight)
+            style = stack_data.style_with_executing_node(base_style, tb_highlight)
             formatter = Terminal256Formatter(style=style)
         else:
             formatter = None
@@ -994,7 +996,11 @@ class VerboseTB(TBTools):
                 self.pdb.botframe = etb.tb_frame
                 # last_value should be deprecated, but last-exc sometimme not set
                 # please check why later and remove the getattr.
-                exc = getattr(sys, "last_exc", sys.last_value)
+                exc = (
+                    sys.last_value
+                    if sys.version_info < (3, 12)
+                    else getattr(sys, "last_exc", sys.last_value)
+                )  # type: ignore[attr-defined]
                 if exc:
                     self.pdb.interaction(None, exc)
                 else:

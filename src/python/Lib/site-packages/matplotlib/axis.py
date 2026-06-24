@@ -20,6 +20,7 @@ import matplotlib.text as mtext
 import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 import matplotlib.units as munits
+from matplotlib.ticker import NullLocator
 
 _log = logging.getLogger(__name__)
 
@@ -55,6 +56,15 @@ class Tick(martist.Artist):
     label2 : `~matplotlib.text.Text`
         The right/top tick label.
 
+    Notes
+    -----
+    Ticks are managed though the autoscaling / view limit mechanism and therefore
+    need very careful handling when explicitly accessed, see :ref:`axes-tick-objects`.
+
+    The tick lines are implemented as `~matplotlib.lines.Line2D` instances using the
+    `~.matplotlib.markers` TICKLEFT, TICKRIGHT, TICKDOWN, TICKUP. Therefore,
+    properties are controlled via the marker, e.g. for the color
+    `.Line2D.set_markeredgecolor` and not `.Line2D.set_color`.
     """
     def __init__(
         self, axes, loc, *,
@@ -74,6 +84,7 @@ class Tick(martist.Artist):
         label2On=False,
         major=True,
         labelrotation=0,
+        labelrotation_mode=None,
         grid_color=None,
         grid_linestyle=None,
         grid_linewidth=None,
@@ -81,17 +92,20 @@ class Tick(martist.Artist):
         **kwargs,  # Other Line2D kwargs applied to gridlines.
     ):
         """
-        bbox is the Bound2D bounding box in display coords of the Axes
-        loc is the tick location in data coords
-        size is the tick size in points
+        Parameters
+        ----------
+        loc
+            The tick location in data coords.
+        size
+            The tick size in points.
         """
         super().__init__()
 
         if gridOn is None:
             which = mpl.rcParams['axes.grid.which']
-            if major and (which in ('both', 'major')):
+            if major and which in ('both', 'major'):
                 gridOn = mpl.rcParams['axes.grid']
-            elif (not major) and (which in ('both', 'minor')):
+            elif not major and which in ('both', 'minor'):
                 gridOn = mpl.rcParams['axes.grid']
             else:
                 gridOn = False
@@ -104,31 +118,15 @@ class Tick(martist.Artist):
 
         name = self.__name__
         major_minor = "major" if major else "minor"
-
-        if size is None:
-            size = mpl.rcParams[f"{name}.{major_minor}.size"]
-        self._size = size
-
-        if width is None:
-            width = mpl.rcParams[f"{name}.{major_minor}.width"]
-        self._width = width
-
-        if color is None:
-            color = mpl.rcParams[f"{name}.color"]
-
-        if pad is None:
-            pad = mpl.rcParams[f"{name}.{major_minor}.pad"]
-        self._base_pad = pad
-
-        if labelcolor is None:
-            labelcolor = mpl.rcParams[f"{name}.labelcolor"]
-
+        self._size = mpl._val_or_rc(size, f"{name}.{major_minor}.size")
+        self._width = mpl._val_or_rc(width, f"{name}.{major_minor}.width")
+        self._base_pad = mpl._val_or_rc(pad, f"{name}.{major_minor}.pad")
+        color = mpl._val_or_rc(color, f"{name}.color")
+        labelcolor = mpl._val_or_rc(labelcolor, f"{name}.labelcolor")
         if cbook._str_equal(labelcolor, 'inherit'):
             # inherit from tick color
             labelcolor = mpl.rcParams[f"{name}.color"]
-
-        if labelsize is None:
-            labelsize = mpl.rcParams[f"{name}.labelsize"]
+        labelsize = mpl._val_or_rc(labelsize, f"{name}.labelsize")
 
         self._set_labelrotation(labelrotation)
 
@@ -139,27 +137,47 @@ class Tick(martist.Artist):
                 zorder = mlines.Line2D.zorder
         self._zorder = zorder
 
-        grid_color = mpl._val_or_rc(grid_color, "grid.color")
-        grid_linestyle = mpl._val_or_rc(grid_linestyle, "grid.linestyle")
-        grid_linewidth = mpl._val_or_rc(grid_linewidth, "grid.linewidth")
-        if grid_alpha is None and not mcolors._has_alpha_channel(grid_color):
-            # alpha precedence: kwarg > color alpha > rcParams['grid.alpha']
-            # Note: only resolve to rcParams if the color does not have alpha
-            # otherwise `grid(color=(1, 1, 1, 0.5))` would work like
-            #   grid(color=(1, 1, 1, 0.5), alpha=rcParams['grid.alpha'])
-            # so the that the rcParams default would override color alpha.
-            grid_alpha = mpl.rcParams["grid.alpha"]
-        grid_kw = {k[5:]: v for k, v in kwargs.items()}
+        grid_color = mpl._val_or_rc(
+            grid_color,
+            f"grid.{major_minor}.color",
+            "grid.color",
+        )
+        grid_linestyle = mpl._val_or_rc(
+            grid_linestyle,
+            f"grid.{major_minor}.linestyle",
+            "grid.linestyle",
+        )
+        grid_linewidth = mpl._val_or_rc(
+            grid_linewidth,
+            f"grid.{major_minor}.linewidth",
+            "grid.linewidth",
+        )
+        if grid_alpha is None:
+            if mcolors._has_alpha_channel(grid_color):
+                # Extract alpha from the color
+                # alpha precedence: kwarg > color alpha > rcParams['grid.alpha']
+                rgba = mcolors.to_rgba(grid_color)
+                grid_color = rgba[:3]  # RGB only
+                grid_alpha = rgba[3]    # Alpha from color
+            else:
+                # No alpha in color, use rcParams
+                grid_alpha = mpl._val_or_rc(
+                    # grid_alpha is None so we can use the first key
+                    mpl.rcParams[f"grid.{major_minor}.alpha"],
+                    "grid.alpha",
+                )
+
+        grid_kw = {k[5:]: v for k, v in kwargs.items() if k != "rotation_mode"}
 
         self.tick1line = mlines.Line2D(
             [], [],
             color=color, linestyle="none", zorder=zorder, visible=tick1On,
-            markeredgecolor=color, markersize=size, markeredgewidth=width,
+            markeredgecolor=color, markersize=self._size, markeredgewidth=self._width,
         )
         self.tick2line = mlines.Line2D(
             [], [],
             color=color, linestyle="none", zorder=zorder, visible=tick2On,
-            markeredgecolor=color, markersize=size, markeredgewidth=width,
+            markeredgecolor=color, markersize=self._size, markeredgewidth=self._width,
         )
         self.gridline = mlines.Line2D(
             [], [],
@@ -172,11 +190,13 @@ class Tick(martist.Artist):
         self.label1 = mtext.Text(
             np.nan, np.nan,
             fontsize=labelsize, color=labelcolor, visible=label1On,
-            fontfamily=labelfontfamily, rotation=self._labelrotation[1])
+            fontfamily=labelfontfamily, rotation=self._labelrotation[1],
+            rotation_mode=labelrotation_mode)
         self.label2 = mtext.Text(
             np.nan, np.nan,
             fontsize=labelsize, color=labelcolor, visible=label2On,
-            fontfamily=labelfontfamily, rotation=self._labelrotation[1])
+            fontfamily=labelfontfamily, rotation=self._labelrotation[1],
+            rotation_mode=labelrotation_mode)
 
         self._apply_tickdir(tickdir)
 
@@ -208,10 +228,8 @@ class Tick(martist.Artist):
         # the tick{1,2}line markers.  From the user perspective this should always be
         # called through _apply_params, which further updates ticklabel positions using
         # the new pads.
-        if tickdir is None:
-            tickdir = mpl.rcParams[f'{self.__name__}.direction']
-        else:
-            _api.check_in_list(['in', 'out', 'inout'], tickdir=tickdir)
+        tickdir = mpl._val_or_rc(tickdir, f'{self.__name__}.direction')
+        _api.check_in_list(['in', 'out', 'inout'], tickdir=tickdir)
         self._tickdir = tickdir
 
     def get_tickdir(self):
@@ -338,12 +356,22 @@ class Tick(martist.Artist):
             self.label2.set(rotation=self._labelrotation[1])
 
         label_kw = {k[5:]: v for k, v in kwargs.items()
-                    if k in ['labelsize', 'labelcolor', 'labelfontfamily']}
+                    if k in ['labelsize', 'labelcolor', 'labelfontfamily',
+                             'labelrotation_mode']}
         self.label1.set(**label_kw)
         self.label2.set(**label_kw)
 
         grid_kw = {k[5:]: v for k, v in kwargs.items()
                    if k in _gridline_param_names}
+        # If grid_color has an alpha channel and grid_alpha is not explicitly
+        # set, extract the alpha from the color.
+        if 'color' in grid_kw and 'alpha' not in grid_kw:
+            grid_color = grid_kw['color']
+            if mcolors._has_alpha_channel(grid_color):
+                # Convert to rgba to extract alpha
+                rgba = mcolors.to_rgba(grid_color)
+                grid_kw['color'] = rgba[:3]  # RGB only
+                grid_kw['alpha'] = rgba[3]    # Alpha channel
         self.gridline.set(**grid_kw)
 
     def update_position(self, loc):
@@ -539,7 +567,7 @@ class _LazyTickList:
             # attribute (e.g. in certain projection classes which override
             # e.g. get_xaxis_text1_transform).  In order to avoid infinite
             # recursion, first set the majorTicks on the instance temporarily
-            # to an empty lis. Then create the tick; note that _get_tick()
+            # to an empty list. Then create the tick; note that _get_tick()
             # may call reset_ticks(). Therefore, the final tick list is
             # created and assigned afterwards.
             if self._major:
@@ -699,7 +727,7 @@ class Axis(martist.Artist):
         self.minor._formatter_is_default = value
 
     def _get_shared_axes(self):
-        """Return Grouper of shared Axes for current axis."""
+        """Return a list of shared Axes for current axis."""
         return self.axes._shared_axes[
             self._get_axis_name()].get_siblings(self.axes)
 
@@ -809,6 +837,15 @@ class Axis(martist.Artist):
         """
         return self._scale.limit_range_for_scale(vmin, vmax, self.get_minpos())
 
+    def _nan_out_of_scale_range(self, data):
+        """
+        Return *data* with values that are out of range for this axis's scale
+        replaced by NaN. E.g. ``<=0`` on a log axis.
+        """
+        data = np.asanyarray(data, dtype=float)
+        valid = self._scale.val_in_range(data)
+        return data if np.all(valid) else np.where(valid, data, np.nan)
+
     def _get_autoscale_on(self):
         """Return whether this Axis is autoscaled."""
         return self._autoscale_on
@@ -822,6 +859,15 @@ class Axis(martist.Artist):
         Parameters
         ----------
         b : bool
+
+        See Also
+        --------
+        matplotlib.axes.Axes.autoscale
+        matplotlib.axes.Axes.set_autoscale_on
+        matplotlib.axes.Axes.get_autoscalex_on
+        matplotlib.axes.Axes.set_autoscalex_on
+        matplotlib.axes.Axes.get_autoscaley_on
+        matplotlib.axes.Axes.set_autoscaley_on
         """
         if b is not None:
             self._autoscale_on = b
@@ -1067,7 +1113,7 @@ class Axis(martist.Artist):
             'tick1On', 'tick2On', 'label1On', 'label2On',
             'length', 'direction', 'left', 'bottom', 'right', 'top',
             'labelleft', 'labelbottom', 'labelright', 'labeltop',
-            'labelrotation',
+            'labelrotation', 'labelrotation_mode',
             *_gridline_param_names]
 
         keymap = {
@@ -1075,6 +1121,7 @@ class Axis(martist.Artist):
             'length': 'size',
             'direction': 'tickdir',
             'rotation': 'labelrotation',
+            'rotation_mode': 'labelrotation_mode',
             'left': 'tick1On',
             'bottom': 'tick1On',
             'right': 'tick2On',
@@ -1273,26 +1320,53 @@ class Axis(martist.Artist):
             return
         a.set_figure(self.get_figure(root=False))
 
+    @staticmethod
+    def _tick_group_visible(kw):
+        """
+        Check if any of the tick group components are visible.
+        Takes in self._major_tick_kw or self._minor_tick_kw.
+        """
+        return (kw.get('tick1On') is not False or
+                kw.get('tick2On') is not False or
+                kw.get('label1On') is not False or
+                kw.get('label2On') is not False or
+                kw.get('gridOn') is not False)
+
     def _update_ticks(self):
         """
         Update ticks (position and labels) using the current data interval of
         the axes.  Return the list of ticks that will be drawn.
         """
-        major_locs = self.get_majorticklocs()
-        major_labels = self.major.formatter.format_ticks(major_locs)
-        major_ticks = self.get_major_ticks(len(major_locs))
-        for tick, loc, label in zip(major_ticks, major_locs, major_labels):
-            tick.update_position(loc)
-            tick.label1.set_text(label)
-            tick.label2.set_text(label)
-        minor_locs = self.get_minorticklocs()
-        minor_labels = self.minor.formatter.format_ticks(minor_locs)
-        minor_ticks = self.get_minor_ticks(len(minor_locs))
-        for tick, loc, label in zip(minor_ticks, minor_locs, minor_labels):
-            tick.update_position(loc)
-            tick.label1.set_text(label)
-            tick.label2.set_text(label)
+        # Check if major ticks should be computed.
+        # Skip if using NullLocator or if all visible components are off.
+        if (self._tick_group_visible(self._major_tick_kw)
+                and not isinstance(self.get_major_locator(), NullLocator)):
+            major_locs = self.get_majorticklocs()
+            major_labels = self.major.formatter.format_ticks(major_locs)
+            major_ticks = self.get_major_ticks(len(major_locs))
+            for tick, loc, label in zip(major_ticks, major_locs, major_labels):
+                tick.update_position(loc)
+                tick.label1.set_text(label)
+                tick.label2.set_text(label)
+        else:
+            major_ticks = []
+
+        # Check if minor ticks should be computed.
+        if (self._tick_group_visible(self._minor_tick_kw)
+                and not isinstance(self.get_minor_locator(), NullLocator)):
+            minor_locs = self.get_minorticklocs()
+            minor_labels = self.minor.formatter.format_ticks(minor_locs)
+            minor_ticks = self.get_minor_ticks(len(minor_locs))
+            for tick, loc, label in zip(minor_ticks, minor_locs, minor_labels):
+                tick.update_position(loc)
+                tick.label1.set_text(label)
+                tick.label2.set_text(label)
+        else:
+            minor_ticks = []
+
         ticks = [*major_ticks, *minor_ticks]
+        if not ticks:
+            return []
 
         view_low, view_high = self.get_view_interval()
         if view_low > view_high:
@@ -1325,14 +1399,14 @@ class Axis(martist.Artist):
 
         return ticks_to_draw
 
-    def _get_ticklabel_bboxes(self, ticks, renderer=None):
+    def _get_ticklabel_bboxes(self, ticks, renderer):
         """Return lists of bboxes for ticks' label1's and label2's."""
-        if renderer is None:
-            renderer = self.get_figure(root=True)._get_renderer()
         return ([tick.label1.get_window_extent(renderer)
-                 for tick in ticks if tick.label1.get_visible()],
+                 for tick in ticks
+                 if tick.label1.get_visible() and tick.label1.get_in_layout()],
                 [tick.label2.get_window_extent(renderer)
-                 for tick in ticks if tick.label2.get_visible()])
+                 for tick in ticks
+                 if tick.label2.get_visible() and tick.label2.get_in_layout()])
 
     def get_tightbbox(self, renderer=None, *, for_layout_only=False):
         """
@@ -1378,8 +1452,7 @@ class Axis(martist.Artist):
                     bb.y0 = (bb.y0 + bb.y1) / 2 - 0.5
                     bb.y1 = bb.y0 + 1.0
             bboxes.append(bb)
-        bboxes = [b for b in bboxes
-                  if 0 < b.width < np.inf and 0 < b.height < np.inf]
+        bboxes = [b for b in bboxes if b._is_finite()]
         if bboxes:
             return mtransforms.Bbox.union(bboxes)
         else:
@@ -1419,7 +1492,18 @@ class Axis(martist.Artist):
         self.stale = False
 
     def get_gridlines(self):
-        r"""Return this Axis' grid lines as a list of `.Line2D`\s."""
+        """
+        Return this Axis' grid lines as a list of `.Line2D`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including grid lines, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query grid styling; see :ref:`axes-ticks-styling`.
+        """
         ticks = self.get_major_ticks()
         return cbook.silent_list('Line2D gridline',
                                  [tick.gridline for tick in ticks])
@@ -1432,7 +1516,7 @@ class Axis(martist.Artist):
 
     def get_label(self):
         """
-        Return the axis label as a Text instance.
+        [*Discouraged*] Return the axis label as a Text instance.
 
         .. admonition:: Discouraged
 
@@ -1450,7 +1534,18 @@ class Axis(martist.Artist):
         return self._pickradius
 
     def get_majorticklabels(self):
-        """Return this Axis' major tick labels, as a list of `~.text.Text`."""
+        """
+        Return this Axis' major tick labels, as a list of `~.text.Text`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick labels, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
+        """
         self._update_ticks()
         ticks = self.get_major_ticks()
         labels1 = [tick.label1 for tick in ticks if tick.label1.get_visible()]
@@ -1458,7 +1553,18 @@ class Axis(martist.Artist):
         return labels1 + labels2
 
     def get_minorticklabels(self):
-        """Return this Axis' minor tick labels, as a list of `~.text.Text`."""
+        """
+        Return this Axis' minor tick labels, as a list of `~.text.Text`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick labels, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
+        """
         self._update_ticks()
         ticks = self.get_minor_ticks()
         labels1 = [tick.label1 for tick in ticks if tick.label1.get_visible()]
@@ -1468,6 +1574,15 @@ class Axis(martist.Artist):
     def get_ticklabels(self, minor=False, which=None):
         """
         Get this Axis' tick labels.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick labels, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
 
         Parameters
         ----------
@@ -1497,7 +1612,18 @@ class Axis(martist.Artist):
         return self.get_majorticklabels()
 
     def get_majorticklines(self):
-        r"""Return this Axis' major tick lines as a list of `.Line2D`\s."""
+        """
+        Return this Axis' major tick lines as a list of `.Line2D`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick lines, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
+        """
         lines = []
         ticks = self.get_major_ticks()
         for tick in ticks:
@@ -1506,7 +1632,18 @@ class Axis(martist.Artist):
         return cbook.silent_list('Line2D ticklines', lines)
 
     def get_minorticklines(self):
-        r"""Return this Axis' minor tick lines as a list of `.Line2D`\s."""
+        """
+        Return this Axis' minor tick lines as a list of `.Line2D`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick lines, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
+        """
         lines = []
         ticks = self.get_minor_ticks()
         for tick in ticks:
@@ -1515,7 +1652,18 @@ class Axis(martist.Artist):
         return cbook.silent_list('Line2D ticklines', lines)
 
     def get_ticklines(self, minor=False):
-        r"""Return this Axis' tick lines as a list of `.Line2D`\s."""
+        """
+        Return this Axis' tick lines as a list of `.Line2D`.
+
+        .. warning::
+
+            Ticks and their constituent parts, including tick lines, are not
+            persistent. Various operations can create, delete, and modify the tick
+            instances; see :ref:`axes-tick-objects`.
+
+            You should generally use `.Axis.set_tick_params` / `.Axis.get_tick_params`
+            to define and query tick styling; see :ref:`axes-ticks-styling`.
+        """
         if minor:
             return self.get_minorticklines()
         return self.get_majorticklines()
@@ -1956,7 +2104,9 @@ class Axis(martist.Artist):
 
         if (isinstance(formatter, mticker.FixedFormatter)
                 and len(formatter.seq) > 0
-                and not isinstance(level.locator, mticker.FixedLocator)):
+                and not isinstance(level.locator, mticker.FixedLocator)
+                and not (hasattr(level.locator, 'base') and
+                         isinstance(level.locator.base, mticker.FixedLocator))):
             _api.warn_external('FixedFormatter should only be used together '
                                'with FixedLocator')
 
@@ -2093,28 +2243,33 @@ class Axis(martist.Artist):
             labels = [t.get_text() if hasattr(t, 'get_text') else t
                       for t in labels]
         except TypeError:
-            raise TypeError(f"{labels:=} must be a sequence") from None
+            raise TypeError(f"{labels=!r} must be a sequence") from None
         locator = (self.get_minor_locator() if minor
                    else self.get_major_locator())
         if not labels:
-            # eg labels=[]:
             formatter = mticker.NullFormatter()
-        elif isinstance(locator, mticker.FixedLocator):
+        elif (isinstance(locator, mticker.FixedLocator) or
+              (hasattr(locator, 'base') and
+               isinstance(locator.base, mticker.FixedLocator))):
+            # Also handles locators that wrap a FixedLocator (e.g. RadialLocator).
+            fixed_locator = (locator if isinstance(locator, mticker.FixedLocator)
+                             else locator.base)
             # Passing [] as a list of labels is often used as a way to
             # remove all tick labels, so only error for > 0 labels
-            if len(locator.locs) != len(labels) and len(labels) != 0:
+            if len(fixed_locator.locs) != len(labels) and len(labels) != 0:
                 raise ValueError(
                     "The number of FixedLocator locations"
-                    f" ({len(locator.locs)}), usually from a call to"
+                    f" ({len(fixed_locator.locs)}), usually from a call to"
                     " set_ticks, does not match"
                     f" the number of labels ({len(labels)}).")
-            tickd = {loc: lab for loc, lab in zip(locator.locs, labels)}
+            tickd = {loc: lab for loc, lab in zip(fixed_locator.locs, labels)}
             func = functools.partial(self._format_with_dict, tickd)
             formatter = mticker.FuncFormatter(func)
         else:
             _api.warn_external(
                  "set_ticklabels() should only be used with a fixed number of "
-                 "ticks, i.e. after set_ticks() or using a FixedLocator.")
+                 "ticks, i.e. after set_ticks() or using a FixedLocator. "
+                 "Otherwise, ticks may be mislabeled.")
             formatter = mticker.FixedFormatter(labels)
 
         with warnings.catch_warnings():
@@ -2158,9 +2313,16 @@ class Axis(martist.Artist):
         ticks = self.convert_units(ticks)
         locator = mticker.FixedLocator(ticks)  # validate ticks early.
         if len(ticks):
+            old_vmin, old_vmax = self.get_view_interval()
             for axis in self._get_shared_axis():
                 # set_view_interval maintains any preexisting inversion.
                 axis.set_view_interval(min(ticks), max(ticks))
+            new_vmin, new_vmax = self.get_view_interval()
+            if old_vmin != new_vmin or old_vmax != new_vmax:
+                self.axes.callbacks.process(
+                    f"{self._get_axis_name()}lim_changed",
+                    self.axes,
+                )
         self.axes.stale = True
         if minor:
             self.set_minor_locator(locator)
@@ -2284,7 +2446,8 @@ class Axis(martist.Artist):
         Helper for `XAxis.get_ticks_position` and `YAxis.get_ticks_position`.
 
         Check the visibility of tick1line, label1, tick2line, and label2 on
-        the first major and the first minor ticks, and return
+        the first major and the first minor ticks, provided these ticks are used
+        i.e. the corresponding locator is not a NullLocator, and return
 
         - 1 if only tick1line and label1 are visible (which corresponds to
           "bottom" for the x-axis and "left" for the y-axis);
@@ -2293,25 +2456,29 @@ class Axis(martist.Artist):
         - "default" if only tick1line, tick2line and label1 are visible;
         - "unknown" otherwise.
         """
-        major = self.majorTicks[0]
-        minor = self.minorTicks[0]
+        representative_ticks = []
+        if not isinstance(self.get_major_locator(), NullLocator):
+            representative_ticks.append(self.majorTicks[0])
+        if not isinstance(self.get_minor_locator(), NullLocator):
+            representative_ticks.append(self.minorTicks[0])
+
         if all(tick.tick1line.get_visible()
                and not tick.tick2line.get_visible()
                and tick.label1.get_visible()
                and not tick.label2.get_visible()
-               for tick in [major, minor]):
+               for tick in representative_ticks):
             return 1
         elif all(tick.tick2line.get_visible()
                  and not tick.tick1line.get_visible()
                  and tick.label2.get_visible()
                  and not tick.label1.get_visible()
-                 for tick in [major, minor]):
+                 for tick in representative_ticks):
             return 2
         elif all(tick.tick1line.get_visible()
                  and tick.tick2line.get_visible()
                  and tick.label1.get_visible()
                  and not tick.label2.get_visible()
-                 for tick in [major, minor]):
+                 for tick in representative_ticks):
             return "default"
         else:
             return "unknown"
@@ -2429,7 +2596,7 @@ class XAxis(Axis):
         ----------
         position : {'top', 'bottom'}
         """
-        self.label.set_verticalalignment(_api.check_getitem({
+        self.label.set_verticalalignment(_api.getitem_checked({
             'top': 'baseline', 'bottom': 'top',
         }, position=position))
         self.label_position = position
@@ -2656,7 +2823,7 @@ class YAxis(Axis):
         position : {'left', 'right'}
         """
         self.label.set_rotation_mode('anchor')
-        self.label.set_verticalalignment(_api.check_getitem({
+        self.label.set_verticalalignment(_api.getitem_checked({
             'left': 'bottom', 'right': 'top',
         }, position=position))
         self.label_position = position
@@ -2711,7 +2878,7 @@ class YAxis(Axis):
         position : {'left', 'right'}
         """
         x, y = self.offsetText.get_position()
-        x = _api.check_getitem({'left': 0, 'right': 1}, position=position)
+        x = _api.getitem_checked({'left': 0, 'right': 1}, position=position)
 
         self.offsetText.set_ha(position)
         self.offsetText.set_position((x, y))

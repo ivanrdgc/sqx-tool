@@ -13,9 +13,30 @@ from matplotlib import _api
 
 
 if typing.TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 T = TypeVar('T')
+
+
+def test_unsupported_method():
+    class Base:
+        def method_1(self):
+            pass
+
+        def method_2(self):
+            pass
+
+    class Child(Base):
+        method_1 = _api.unsupported_method()
+        method_2 = _api.unsupported_method(append_message="Sorry!")
+
+    child = Child()
+    with pytest.raises(_api.UnsupportedError,
+                       match=r"^Child does not support 'method_1'\.$"):
+        child.method_1()
+    with pytest.raises(_api.UnsupportedError,
+                       match=r"^Child does not support 'method_2'\. Sorry!$"):
+        child.method_2()
 
 
 @pytest.mark.parametrize('target,shape_repr,test_shape',

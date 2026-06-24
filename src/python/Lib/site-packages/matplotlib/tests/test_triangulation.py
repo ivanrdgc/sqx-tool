@@ -232,7 +232,7 @@ def test_delaunay_robust():
     triang = mtri.Triangulation(tri_points[1:, 0], tri_points[1:, 1])
 
 
-@image_comparison(['tripcolor1.png'])
+@image_comparison(['tripcolor1.png'], style='mpl20')
 def test_tripcolor():
     x = np.asarray([0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1, 0.75])
     y = np.asarray([0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1, 0.75])
@@ -612,7 +612,7 @@ def test_triinterpcubic_cg_solver():
     # 1) A commonly used test involves a 2d Poisson matrix.
     def poisson_sparse_matrix(n, m):
         """
-        Return the sparse, (n*m, n*m) matrix in coo format resulting from the
+        Return the sparse, (n*m, n*m) matrix in COO format resulting from the
         discretisation of the 2-dimensional Poisson equation according to a
         finite difference numerical scheme on a uniform (n, m) grid.
         """
@@ -865,7 +865,8 @@ def test_triinterp_transformations():
             matest.assert_array_almost_equal(interpz, interp_z0[interp_key])
 
 
-@image_comparison(['tri_smooth_contouring.png'], remove_text=True, tol=0.072)
+@image_comparison(['tri_smooth_contouring.png'], remove_text=True,
+                  style='_classic_test', tol=0.072)
 def test_tri_smooth_contouring():
     # Image comparison based on example tricontour_smooth_user.
     n_angles = 20
@@ -904,7 +905,8 @@ def test_tri_smooth_contouring():
     plt.tricontour(tri_refi, z_test_refi, levels=levels, colors="black")
 
 
-@image_comparison(['tri_smooth_gradient.png'], remove_text=True, tol=0.092)
+@image_comparison(['tri_smooth_gradient.png'], remove_text=True, style='_classic_test',
+                  tol=0.092)
 def test_tri_smooth_gradient():
     # Image comparison based on example trigradient_demo.
 
@@ -1321,7 +1323,7 @@ def test_tricontourset_reuse():
     assert tcs3._contour_generator == tcs1._contour_generator
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_triplot_with_ls(fig_test, fig_ref):
     x = [0, 2, 1]
     y = [0, 0, 1]

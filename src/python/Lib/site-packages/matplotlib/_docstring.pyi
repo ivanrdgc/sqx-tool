@@ -14,7 +14,6 @@ class Substitution:
     @overload
     def __init__(self, **kwargs: str): ...
     def __call__(self, func: _T) -> _T: ...
-    def update(self, *args, **kwargs): ...  # type: ignore[no-untyped-def]
 
 
 class _ArtistKwdocLoader(dict[str, str]):

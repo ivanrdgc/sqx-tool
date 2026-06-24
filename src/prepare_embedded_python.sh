@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${VERSION:-3.14.4}"
+VERSION="${VERSION:-3.14.6}"
 PACKAGES=(pandas notebook matplotlib mplfinance pyarrow tqdm)
 
 VERSION_BASE="${VERSION%.*}"

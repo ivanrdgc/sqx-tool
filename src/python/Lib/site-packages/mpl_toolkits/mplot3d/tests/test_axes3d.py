@@ -3,6 +3,7 @@ import itertools
 import platform
 import sys
 
+from packaging.version import parse as parse_version
 import pytest
 
 from mpl_toolkits.mplot3d import Axes3D, axes3d, proj3d, art3d
@@ -13,11 +14,11 @@ from matplotlib.backend_bases import (MouseButton, MouseEvent,
 from matplotlib import cm
 from matplotlib import colors as mcolors, patches as mpatch
 from matplotlib.testing.decorators import image_comparison, check_figures_equal
-from matplotlib.testing.widgets import mock_event
 from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
+from matplotlib import _api
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +37,7 @@ def plot_cuboid(ax, scale):
             ax.plot3D(*zip(start*np.array(scale), end*np.array(scale)))
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_invisible_axes(fig_test, fig_ref):
     ax = fig_test.subplots(subplot_kw=dict(projection='3d'))
     ax.set_visible(False)
@@ -116,7 +117,7 @@ def test_axes3d_repr():
 
 
 @mpl3d_image_comparison(['axes3d_primary_views.png'], style='mpl20',
-                        tol=0.05 if sys.platform == "darwin" else 0)
+                        tol=0.045 if sys.platform == 'darwin' else 0)
 def test_axes3d_primary_views():
     # (elev, azim, roll)
     views = [(90, -90, 0),  # XY
@@ -181,7 +182,8 @@ def test_bar3d_shaded():
     fig.canvas.draw()
 
 
-@mpl3d_image_comparison(['bar3d_notshaded.png'], style='mpl20')
+@mpl3d_image_comparison(['bar3d_notshaded.png'], style='mpl20',
+                        tol=0.01 if parse_version(np.version.version).major < 2 else 0)
 def test_bar3d_notshaded():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -228,9 +230,9 @@ def test_contour3d():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     X, Y, Z = axes3d.get_test_data(0.05)
-    ax.contour(X, Y, Z, zdir='z', offset=-100, cmap=cm.coolwarm)
-    ax.contour(X, Y, Z, zdir='x', offset=-40, cmap=cm.coolwarm)
-    ax.contour(X, Y, Z, zdir='y', offset=40, cmap=cm.coolwarm)
+    ax.contour(X, Y, Z, zdir='z', offset=-100, cmap="coolwarm")
+    ax.contour(X, Y, Z, zdir='x', offset=-40, cmap="coolwarm")
+    ax.contour(X, Y, Z, zdir='y', offset=40, cmap="coolwarm")
     ax.axis(xmin=-40, xmax=40, ymin=-40, ymax=40, zmin=-100, zmax=100)
 
 
@@ -240,7 +242,7 @@ def test_contour3d_extend3d():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     X, Y, Z = axes3d.get_test_data(0.05)
-    ax.contour(X, Y, Z, zdir='z', offset=-100, cmap=cm.coolwarm, extend3d=True)
+    ax.contour(X, Y, Z, zdir='z', offset=-100, cmap="coolwarm", extend3d=True)
     ax.set_xlim(-30, 30)
     ax.set_ylim(-20, 40)
     ax.set_zlim(-80, 80)
@@ -252,9 +254,9 @@ def test_contourf3d():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     X, Y, Z = axes3d.get_test_data(0.05)
-    ax.contourf(X, Y, Z, zdir='z', offset=-100, cmap=cm.coolwarm)
-    ax.contourf(X, Y, Z, zdir='x', offset=-40, cmap=cm.coolwarm)
-    ax.contourf(X, Y, Z, zdir='y', offset=40, cmap=cm.coolwarm)
+    ax.contourf(X, Y, Z, zdir='z', offset=-100, cmap="coolwarm")
+    ax.contourf(X, Y, Z, zdir='x', offset=-40, cmap="coolwarm")
+    ax.contourf(X, Y, Z, zdir='y', offset=40, cmap="coolwarm")
     ax.set_xlim(-40, 40)
     ax.set_ylim(-40, 40)
     ax.set_zlim(-100, 100)
@@ -270,7 +272,7 @@ def test_contourf3d_fill():
     # This produces holes in the z=0 surface that causes rendering errors if
     # the Poly3DCollection is not aware of path code information (issue #4784)
     Z[::5, ::5] = 0.1
-    ax.contourf(X, Y, Z, offset=0, levels=[-0.1, 0], cmap=cm.coolwarm)
+    ax.contourf(X, Y, Z, offset=0, levels=[-0.1, 0], cmap="coolwarm")
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
     ax.set_zlim(-1, 1)
@@ -279,24 +281,17 @@ def test_contourf3d_fill():
 @pytest.mark.parametrize('extend, levels', [['both', [2, 4, 6]],
                                             ['min', [2, 4, 6, 8]],
                                             ['max', [0, 2, 4, 6]]])
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_contourf3d_extend(fig_test, fig_ref, extend, levels):
     X, Y = np.meshgrid(np.arange(-2, 2, 0.25), np.arange(-2, 2, 0.25))
     # Z is in the range [0, 8]
     Z = X**2 + Y**2
 
-    # Manually set the over/under colors to be the end of the colormap
-    cmap = mpl.colormaps['viridis'].copy()
-    cmap.set_under(cmap(0))
-    cmap.set_over(cmap(255))
-    # Set vmin/max to be the min/max values plotted on the reference image
-    kwargs = {'vmin': 1, 'vmax': 7, 'cmap': cmap}
-
     ax_ref = fig_ref.add_subplot(projection='3d')
-    ax_ref.contourf(X, Y, Z, levels=[0, 2, 4, 6, 8], **kwargs)
+    ax_ref.contourf(X, Y, Z, levels=[0, 2, 4, 6, 8], vmin=1, vmax=7)
 
     ax_test = fig_test.add_subplot(projection='3d')
-    ax_test.contourf(X, Y, Z, levels, extend=extend, **kwargs)
+    ax_test.contourf(X, Y, Z, levels, extend=extend, vmin=1, vmax=7)
 
     for ax in [ax_ref, ax_test]:
         ax.set_xlim(-2, 2)
@@ -343,7 +338,7 @@ def test_lines3d():
     ax.plot(x, y, z)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_plot_scalar(fig_test, fig_ref):
     ax1 = fig_test.add_subplot(projection='3d')
     ax1.plot([1], [1], "o")
@@ -393,7 +388,7 @@ def test_mixedsubplots():
     ax.set_zlim3d(-1, 1)
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_tight_layout_text(fig_test, fig_ref):
     # text is currently ignored in tight layout. So the order of text() and
     # tight_layout() calls should not influence the result.
@@ -408,7 +403,6 @@ def test_tight_layout_text(fig_test, fig_ref):
 
 @mpl3d_image_comparison(['scatter3d.png'], style='mpl20')
 def test_scatter3d():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     ax.scatter(np.arange(10), np.arange(10), np.arange(10),
@@ -422,7 +416,6 @@ def test_scatter3d():
 
 @mpl3d_image_comparison(['scatter3d_color.png'], style='mpl20')
 def test_scatter3d_color():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
@@ -447,7 +440,20 @@ def test_scatter3d_linewidth():
                marker='o', linewidth=np.arange(10))
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
+def test_scatter3d_cmap_alpha(fig_ref, fig_test):
+    # Check that alpha is applied correctly with colormapped scatter.
+    # Regression test for https://github.com/matplotlib/matplotlib/issues/25468
+    x, y, z = np.arange(5), np.zeros(5), np.arange(5)
+    c = np.array([0, 1, np.nan, 3, 4])
+
+    ax_test = fig_test.add_subplot(projection='3d')
+    ax_test.scatter(x, y, z, c=c)
+    ax_ref = fig_ref.add_subplot(projection='3d')
+    ax_ref.scatter(x, y, z, c=c, alpha=1)
+
+
+@check_figures_equal()
 def test_scatter3d_linewidth_modification(fig_ref, fig_test):
     # Changing Path3DCollection linewidths with array-like post-creation
     # should work correctly.
@@ -461,12 +467,12 @@ def test_scatter3d_linewidth_modification(fig_ref, fig_test):
                    linewidths=np.arange(10))
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_scatter3d_modification(fig_ref, fig_test):
     # Changing Path3DCollection properties post-creation should work correctly.
     ax_test = fig_test.add_subplot(projection='3d')
     c = ax_test.scatter(np.arange(10), np.arange(10), np.arange(10),
-                        marker='o')
+                        marker='o', depthshade=True)
     c.set_facecolor('C1')
     c.set_edgecolor('C2')
     c.set_alpha([0.3, 0.7] * 5)
@@ -482,13 +488,13 @@ def test_scatter3d_modification(fig_ref, fig_test):
                    depthshade=False, s=75, linewidths=3)
 
 
-@pytest.mark.parametrize('depthshade', [True, False])
-@check_figures_equal(extensions=['png'])
-def test_scatter3d_sorting(fig_ref, fig_test, depthshade):
+@check_figures_equal()
+def test_scatter3d_sorting(fig_ref, fig_test):
     """Test that marker properties are correctly sorted."""
 
     y, x = np.mgrid[:10, :10]
     z = np.arange(x.size).reshape(x.shape)
+    depthshade = False
 
     sizes = np.full(z.shape, 25)
     sizes[0::2, 0::2] = 100
@@ -539,7 +545,7 @@ def test_scatter3d_sorting(fig_ref, fig_test, depthshade):
 
 
 @pytest.mark.parametrize('azim', [-50, 130])  # yellow first, blue first
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_marker_draw_order_data_reversed(fig_test, fig_ref, azim):
     """
     Test that the draw order does not depend on the data point order.
@@ -559,7 +565,7 @@ def test_marker_draw_order_data_reversed(fig_test, fig_ref, azim):
     ax.view_init(elev=0, azim=azim, roll=0)
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_marker_draw_order_view_rotated(fig_test, fig_ref):
     """
     Test that the draw order changes with the direction.
@@ -647,7 +653,7 @@ def test_surface3d():
     X, Y = np.meshgrid(X, Y)
     R = np.hypot(X, Y)
     Z = np.sin(R)
-    surf = ax.plot_surface(X, Y, Z, rcount=40, ccount=40, cmap=cm.coolwarm,
+    surf = ax.plot_surface(X, Y, Z, rcount=40, ccount=40, cmap="coolwarm",
                            lw=0, antialiased=False)
     plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     ax.set_zlim(-1.01, 1.01)
@@ -656,7 +662,6 @@ def test_surface3d():
 
 @image_comparison(['surface3d_label_offset_tick_position.png'], style='mpl20')
 def test_surface3d_label_offset_tick_position():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     ax = plt.figure().add_subplot(projection="3d")
 
     x, y = np.mgrid[0:6 * np.pi:0.25, 0:4 * np.pi:0.25]
@@ -710,7 +715,7 @@ def test_surface3d_masked():
     ax.view_init(30, -80, 0)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_plot_scatter_masks(fig_test, fig_ref):
     x = np.linspace(0, 10, 100)
     y = np.linspace(0, 10, 100)
@@ -728,7 +733,7 @@ def test_plot_scatter_masks(fig_test, fig_ref):
     ax_ref.plot(x, y, z)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_plot_surface_None_arg(fig_test, fig_ref):
     x, y = np.meshgrid(np.arange(5), np.arange(5))
     z = x + y
@@ -775,7 +780,7 @@ def test_text3d():
     ax.set_zlabel('Z axis')
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_text3d_modification(fig_ref, fig_test):
     # Modifying the Text position after the fact should work the same as
     # setting it directly.
@@ -815,7 +820,7 @@ def test_trisurf3d():
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    ax.plot_trisurf(x, y, z, cmap=cm.jet, linewidth=0.2)
+    ax.plot_trisurf(x, y, z, cmap="jet", linewidth=0.2)
 
 
 @mpl3d_image_comparison(['trisurf3d_shaded.png'], tol=0.03, style='mpl20')
@@ -842,6 +847,15 @@ def test_wireframe3d():
     ax = fig.add_subplot(projection='3d')
     X, Y, Z = axes3d.get_test_data(0.05)
     ax.plot_wireframe(X, Y, Z, rcount=13, ccount=13)
+
+
+@mpl3d_image_comparison(['wireframe3dasymmetric.png'], style='mpl20')
+def test_wireframe3dasymmetric():
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    X, Y, Z = axes3d.get_test_data(0.05)
+    X, Y, Z = X[:-1], Y[:-1], Z[:-1]  # Drop a row so the grid is non-square
+    ax.plot_wireframe(X, Y, Z, rcount=3, ccount=13)
 
 
 @mpl3d_image_comparison(['wireframe3dzerocstride.png'], style='mpl20')
@@ -881,7 +895,6 @@ def test_mixedsamplesraises():
 # remove tolerance when regenerating the test image
 @mpl3d_image_comparison(['quiver3d.png'], style='mpl20', tol=0.003)
 def test_quiver3d():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     pivots = ['tip', 'middle', 'tail']
@@ -901,7 +914,7 @@ def test_quiver3d():
     ax.set_zlim(-1, 5)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_quiver3d_empty(fig_test, fig_ref):
     fig_ref.add_subplot(projection='3d')
     x = y = z = u = v = w = []
@@ -935,7 +948,7 @@ def test_quiver3d_colorcoded():
     x = y = dx = dz = np.zeros(10)
     z = dy = np.arange(10.)
 
-    color = plt.cm.Reds(dy/dy.max())
+    color = plt.colormaps["Reds"](dy/dy.max())
     ax.quiver(x, y, z, dx, dy, dz, colors=color)
     ax.set_ylim(0, 10)
 
@@ -953,13 +966,13 @@ def test_patch_modification():
     assert mcolors.same_color(circle.get_facecolor(), (1, 0, 0, 1))
 
 
-@check_figures_equal(extensions=['png'])
+@check_figures_equal()
 def test_patch_collection_modification(fig_test, fig_ref):
     # Test that modifying Patch3DCollection properties after creation works.
     patch1 = Circle((0, 0), 0.05)
     patch2 = Circle((0.1, 0.1), 0.03)
     facecolors = np.array([[0., 0.5, 0., 1.], [0.5, 0., 0., 0.5]])
-    c = art3d.Patch3DCollection([patch1, patch2], linewidths=3)
+    c = art3d.Patch3DCollection([patch1, patch2], linewidths=3, depthshade=True)
 
     ax_test = fig_test.add_subplot(projection='3d')
     ax_test.add_collection3d(c)
@@ -987,7 +1000,7 @@ def test_poly3dcollection_verts_validation():
         art3d.Poly3DCollection(poly)  # should be Poly3DCollection([poly])
 
     poly = np.array(poly, dtype=float)
-    with pytest.raises(ValueError, match=r'list of \(N, 3\) array-like'):
+    with pytest.raises(ValueError, match=r'shape \(M, N, 3\)'):
         art3d.Poly3DCollection(poly)  # should be Poly3DCollection([poly])
 
 
@@ -1122,8 +1135,7 @@ def test_poly3dCollection_autoscaling():
     assert np.allclose(ax.get_zlim3d(), (-0.0833333333333333, 4.083333333333333))
 
 
-@mpl3d_image_comparison(['axes3d_labelpad.png'],
-                        remove_text=False, style='mpl20')
+@mpl3d_image_comparison(['axes3d_labelpad.png'], remove_text=False, style='mpl20')
 def test_axes3d_labelpad():
     fig = plt.figure()
     ax = fig.add_axes(Axes3D(fig))
@@ -1213,7 +1225,7 @@ def _test_proj_draw_axes(M, s=1, *args, **kwargs):
 
     fig, ax = plt.subplots(*args, **kwargs)
     linec = LineCollection(lines)
-    ax.add_collection(linec)
+    ax.add_collection(linec, autolim="_datalim_only")
     for x, y, t in zip(txs, tys, ['o', 'x', 'y', 'z']):
         ax.text(x, y, t)
 
@@ -1323,7 +1335,7 @@ def test_unautoscale(axis, auto):
     np.testing.assert_array_equal(get_lim(), (-0.5, 0.5))
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_culling(fig_test, fig_ref):
     xmins = (-100, -50)
     for fig, xmin in zip((fig_test, fig_ref), xmins):
@@ -1378,7 +1390,7 @@ def test_axes3d_isometric():
     ax.grid(True)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_axlim_clip(fig_test, fig_ref):
     # With axlim clipping
     ax = fig_test.add_subplot(projection="3d")
@@ -1498,8 +1510,8 @@ class TestVoxels:
             assert voxels[coord], "faces returned for absent voxel"
             assert isinstance(poly, art3d.Poly3DCollection)
 
-    @mpl3d_image_comparison(['voxels-xyz.png'],
-                            tol=0.01, remove_text=False, style='mpl20')
+    @mpl3d_image_comparison(['voxels-xyz.png'], remove_text=False, style='mpl20',
+                            tol=0.002 if sys.platform == 'win32' else 0)
     def test_xyz(self):
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
@@ -1576,7 +1588,7 @@ def test_line3d_set_get_data_3d():
     np.testing.assert_array_equal((x, y, np.zeros_like(z)), line.get_data_3d())
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_inverted(fig_test, fig_ref):
     # Plot then invert.
     ax = fig_test.add_subplot(projection="3d")
@@ -1625,7 +1637,7 @@ def test_ax3d_tickcolour():
         assert tick.tick1line._color == 'red'
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_ticklabel_format(fig_test, fig_ref):
     axs = fig_test.subplots(4, 5, subplot_kw={"projection": "3d"})
     for ax in axs.flat:
@@ -1665,7 +1677,7 @@ def test_ticklabel_format(fig_test, fig_ref):
                 not mpl.rcParams["axes.formatter.use_mathtext"])
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_quiver3D_smoke(fig_test, fig_ref):
     pivot = "middle"
     # Make the grid
@@ -1712,7 +1724,7 @@ def test_errorbar3d_errorevery():
 
 
 @mpl3d_image_comparison(['errorbar3d.png'], style='mpl20',
-                        tol=0 if platform.machine() == 'x86_64' else 0.02)
+                        tol=0.015 if sys.platform == 'darwin' else 0)
 def test_errorbar3d():
     """Tests limits, color styling, and legend for 3D errorbars."""
     fig = plt.figure()
@@ -1728,9 +1740,9 @@ def test_errorbar3d():
     ax.legend()
 
 
-@image_comparison(['stem3d.png'], style='mpl20', tol=0.009)
+@image_comparison(['stem3d.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.008)
 def test_stem3d():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig, axs = plt.subplots(2, 3, figsize=(8, 6),
                             constrained_layout=True,
                             subplot_kw={'projection': '3d'})
@@ -1862,7 +1874,7 @@ def test_set_zlim():
         ax.set_zlim(top=0, zmax=1)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_shared_view(fig_test, fig_ref):
     elev, azim, roll = 5, 20, 30
     ax1 = fig_test.add_subplot(131, projection="3d")
@@ -2007,16 +2019,16 @@ def test_rotate(style):
             ax.figure.canvas.draw()
 
             # drag mouse to change orientation
-            ax._button_press(
-                mock_event(ax, button=MouseButton.LEFT, xdata=0, ydata=0))
-            ax._on_move(
-                mock_event(ax, button=MouseButton.LEFT,
-                           xdata=s*dx*ax._pseudo_w, ydata=s*dy*ax._pseudo_h))
+            MouseEvent._from_ax_coords(
+                "button_press_event", ax, (0, 0), MouseButton.LEFT)._process()
+            MouseEvent._from_ax_coords(
+                "motion_notify_event", ax, (s*dx*ax._pseudo_w, s*dy*ax._pseudo_h),
+                MouseButton.LEFT)._process()
             ax.figure.canvas.draw()
 
             c = np.sqrt(3)/2
             expectations = {
-                ('azel', 0, 1, 0): (0,  -45, 0),
+                ('azel', 0, 1, 0): (0, -45, 0),
                 ('azel', 0, 0, 1): (-45, 0, 0),
                 ('azel', 0, 0.5, c): (-38.971143, -22.5, 0),
                 ('azel', 0, 2, 0): (0, -90, 0),
@@ -2071,10 +2083,10 @@ def test_pan():
     z_center0, z_range0 = convert_lim(*ax.get_zlim3d())
 
     # move mouse diagonally to pan along all axis.
-    ax._button_press(
-        mock_event(ax, button=MouseButton.MIDDLE, xdata=0, ydata=0))
-    ax._on_move(
-        mock_event(ax, button=MouseButton.MIDDLE, xdata=1, ydata=1))
+    MouseEvent._from_ax_coords(
+        "button_press_event", ax, (0, 0), MouseButton.MIDDLE)._process()
+    MouseEvent._from_ax_coords(
+        "motion_notify_event", ax, (1, 1), MouseButton.MIDDLE)._process()
 
     x_center, x_range = convert_lim(*ax.get_xlim3d())
     y_center, y_range = convert_lim(*ax.get_ylim3d())
@@ -2129,20 +2141,20 @@ def test_toolbar_zoom_pan(tool, button, key, expected):
     # Set up the mouse movements
     start_event = MouseEvent(
         "button_press_event", fig.canvas, *s0, button, key=key)
+    drag_event = MouseEvent(
+        "motion_notify_event", fig.canvas, *s1, button, key=key, buttons={button})
     stop_event = MouseEvent(
         "button_release_event", fig.canvas, *s1, button, key=key)
 
     tb = NavigationToolbar2(fig.canvas)
     if tool == "zoom":
         tb.zoom()
-        tb.press_zoom(start_event)
-        tb.drag_zoom(stop_event)
-        tb.release_zoom(stop_event)
     else:
         tb.pan()
-        tb.press_pan(start_event)
-        tb.drag_pan(stop_event)
-        tb.release_pan(stop_event)
+
+    start_event._process()
+    drag_event._process()
+    stop_event._process()
 
     # Should be close, but won't be exact due to screen integer resolution
     xlim, ylim, zlim = expected
@@ -2168,7 +2180,7 @@ def test_toolbar_zoom_pan(tool, button, key, expected):
 
 
 @mpl.style.context('default')
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_scalarmap_update(fig_test, fig_ref):
 
     x, y, z = np.array(list(itertools.product(*[np.arange(0, 5, 1),
@@ -2197,9 +2209,7 @@ def test_subfigure_simple():
     ax = sf[1].add_subplot(1, 1, 1, projection='3d', label='other')
 
 
-# Update style when regenerating the test image
-@image_comparison(baseline_images=['computed_zorder'], remove_text=True,
-                  extensions=['png'], style=('mpl20'))
+@image_comparison(['computed_zorder.png'], remove_text=True, style='mpl20')
 def test_computed_zorder():
     plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig = plt.figure()
@@ -2222,9 +2232,9 @@ def test_computed_zorder():
         # plot some points
         ax.scatter((3, 3), (1, 3), (1, 3), c='red', zorder=10)
 
-        ax.set_xlim((0, 5.0))
-        ax.set_ylim((0, 5.0))
-        ax.set_zlim((0, 2.5))
+        ax.set_xlim(0, 5.0)
+        ax.set_ylim(0, 5.0)
+        ax.set_zlim(0, 2.5)
 
     ax3 = fig.add_subplot(223, projection='3d')
     ax4 = fig.add_subplot(224, projection='3d')
@@ -2368,7 +2378,7 @@ def test_margins_errors(err, args, kwargs, match):
         ax.margins(*args, **kwargs)
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_text_3d(fig_test, fig_ref):
     ax = fig_ref.add_subplot(projection="3d")
     txt = Text(0.5, 0.5, r'Foo bar $\int$')
@@ -2389,7 +2399,7 @@ def test_draw_single_lines_from_Nx1():
     ax.plot([[0], [1]], [[0], [1]], [[0], [1]])
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_pathpatch_3d(fig_test, fig_ref):
     ax = fig_ref.add_subplot(projection="3d")
     path = Path.unit_rectangle()
@@ -2548,11 +2558,10 @@ def test_on_move_vertical_axis(vertical_axis: str) -> None:
     ax.get_figure().canvas.draw()
 
     proj_before = ax.get_proj()
-    event_click = mock_event(ax, button=MouseButton.LEFT, xdata=0, ydata=1)
-    ax._button_press(event_click)
-
-    event_move = mock_event(ax, button=MouseButton.LEFT, xdata=0.5, ydata=0.8)
-    ax._on_move(event_move)
+    MouseEvent._from_ax_coords(
+        "button_press_event", ax, (0, 1), MouseButton.LEFT)._process()
+    MouseEvent._from_ax_coords(
+        "motion_notify_event", ax, (.5, .8), MouseButton.LEFT)._process()
 
     assert ax._axis_names.index(vertical_axis) == ax._vertical_axis
 
@@ -2603,7 +2612,7 @@ def test_panecolor_rcparams():
         fig.add_subplot(projection='3d')
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_mutating_input_arrays_y_and_z(fig_test, fig_ref):
     """
     Test to see if the `z` axis does not get mutated
@@ -2686,3 +2695,512 @@ def test_ndarray_color_kwargs_value_error():
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(1, 0, 0, color=np.array([0, 0, 0, 1]))
     fig.canvas.draw()
+
+
+def test_line3dcollection_autolim_ragged():
+    """Test Line3DCollection with autolim=True and lines of different lengths."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    # Create lines with different numbers of points (ragged arrays)
+    edges = [
+        [(0, 0, 0), (1, 1, 1), (2, 2, 2)],  # 3 points
+        [(0, 1, 0), (1, 2, 1)],             # 2 points
+        [(1, 0, 1), (2, 1, 2), (3, 2, 3), (4, 3, 4)]  # 4 points
+    ]
+
+    # This should not raise an exception.
+    collections = ax.add_collection3d(art3d.Line3DCollection(edges), autolim=True)
+
+    # Check that limits were computed correctly with margins
+    # The limits should include all points with default margins
+    assert np.allclose(ax.get_xlim3d(), (-0.08333333333333333, 4.083333333333333))
+    assert np.allclose(ax.get_ylim3d(), (-0.0625, 3.0625))
+    assert np.allclose(ax.get_zlim3d(), (-0.08333333333333333, 4.083333333333333))
+
+
+def test_axes3d_set_aspect_deperecated_params():
+    """
+    Test that using the deprecated 'anchor' and 'share' kwargs in
+    set_aspect raises the correct warning.
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    # Test that providing the `anchor` parameter raises a deprecation warning.
+    with pytest.warns(_api.MatplotlibDeprecationWarning, match="'anchor' parameter"):
+        ax.set_aspect('equal', anchor='C')
+
+    # Test that using the 'share' parameter is now deprecated.
+    with pytest.warns(_api.MatplotlibDeprecationWarning, match="'share' parameter"):
+        ax.set_aspect('equal', share=True)
+
+    # Test that the `adjustable` parameter is correctly processed to satisfy
+    # code coverage.
+    ax.set_aspect('equal', adjustable='box')
+    assert ax.get_adjustable() == 'box'
+
+    ax.set_aspect('equal', adjustable='datalim')
+    assert ax.get_adjustable() == 'datalim'
+
+    with pytest.raises(ValueError, match="adjustable"):
+        ax.set_aspect('equal', adjustable='invalid_value')
+
+
+def test_axis_get_tightbbox_includes_offset_text():
+    # Test that axis.get_tightbbox includes the offset_text
+    # Regression test for issue #30744
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Create data with high precision values that trigger offset text
+    Z = np.array([[0.1, 0.100000001], [0.100000000001, 0.100000000]])
+    ny, nx = Z.shape
+    x = np.arange(nx)
+    y = np.arange(ny)
+    X, Y = np.meshgrid(x, y)
+
+    ax.plot_surface(X, Y, Z)
+
+    # Force a draw to ensure offset text is created and positioned
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+
+    # Get the z-axis (which should have the offset text)
+    zaxis = ax.zaxis
+
+    # Check that offset text is visible and has content
+    # The offset text may not be visible on all backends/configurations,
+    # so we only test the inclusion when it's actually present
+    if (zaxis.offsetText.get_visible() and
+        zaxis.offsetText.get_text()):
+        offset_bbox = zaxis.offsetText.get_window_extent(renderer)
+
+        # Get the tight bbox - this should include the offset text
+        bbox = zaxis.get_tightbbox(renderer)
+        assert bbox is not None
+        assert offset_bbox is not None
+
+        # The tight bbox should fully contain the offset text bbox
+        # Check that offset_bbox is within bbox bounds (with small tolerance for
+        # floating point errors)
+        assert bbox.x0 <= offset_bbox.x0 + 1e-6, \
+            f"bbox.x0 ({bbox.x0}) should be <= offset_bbox.x0 ({offset_bbox.x0})"
+        assert bbox.y0 <= offset_bbox.y0 + 1e-6, \
+            f"bbox.y0 ({bbox.y0}) should be <= offset_bbox.y0 ({offset_bbox.y0})"
+        assert bbox.x1 >= offset_bbox.x1 - 1e-6, \
+            f"bbox.x1 ({bbox.x1}) should be >= offset_bbox.x1 ({offset_bbox.x1})"
+        assert bbox.y1 >= offset_bbox.y1 - 1e-6, \
+            f"bbox.y1 ({bbox.y1}) should be >= offset_bbox.y1 ({offset_bbox.y1})"
+
+
+def test_ctrl_rotation_snaps_to_5deg():
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    initial = (12.3, 33.7, 2.2)
+    ax.view_init(*initial)
+    fig.canvas.draw()
+
+    s = 0.25
+    step = plt.rcParams["axes3d.snap_rotation"]
+
+    # First rotation without Ctrl
+    with mpl.rc_context({'axes3d.mouserotationstyle': 'azel'}):
+        MouseEvent._from_ax_coords(
+            "button_press_event", ax, (0, 0), MouseButton.LEFT
+        )._process()
+
+        MouseEvent._from_ax_coords(
+            "motion_notify_event",
+            ax,
+            (s * ax._pseudo_w, s * ax._pseudo_h),
+            MouseButton.LEFT,
+        )._process()
+
+    fig.canvas.draw()
+
+    rotated_elev = ax.elev
+    rotated_azim = ax.azim
+    rotated_roll = ax.roll
+
+    # Reset before ctrl rotation
+    ax.view_init(*initial)
+    fig.canvas.draw()
+
+    # Now rotate with Ctrl
+    with mpl.rc_context({'axes3d.mouserotationstyle': 'azel'}):
+        MouseEvent._from_ax_coords(
+            "button_press_event", ax, (0, 0), MouseButton.LEFT
+        )._process()
+
+        MouseEvent._from_ax_coords(
+            "motion_notify_event",
+            ax,
+            (s * ax._pseudo_w, s * ax._pseudo_h),
+            MouseButton.LEFT,
+            key="control"
+        )._process()
+
+    fig.canvas.draw()
+
+    expected_elev = step * round(rotated_elev / step)
+    expected_azim = step * round(rotated_azim / step)
+    expected_roll = step * round(rotated_roll / step)
+
+    assert ax.elev == pytest.approx(expected_elev)
+    assert ax.azim == pytest.approx(expected_azim)
+    assert ax.roll == pytest.approx(expected_roll)
+
+    plt.close(fig)
+
+
+# =============================================================================
+# Tests for 3D scale transforms (log, symlog, logit, etc.)
+# =============================================================================
+
+def _make_log_data():
+    """Data spanning 1 to ~1000 for log scale."""
+    t = np.linspace(0, 2 * np.pi, 50)
+    x = 10 ** (t / 2)
+    y = 10 ** (1 + np.sin(t))
+    z = 10 ** (2 * (1 + np.cos(t) / 2))
+    return x, y, z
+
+
+def _make_surface_log_data():
+    """Grid data for surface with positive Z."""
+    x = np.linspace(1, 10, 20)
+    y = np.linspace(1, 10, 20)
+    X, Y = np.meshgrid(x, y)
+    Z = X * Y
+    return X, Y, Z
+
+
+def _make_triangulation_data():
+    """Data for trisurf with positive values."""
+    np.random.seed(42)
+    x = np.random.uniform(1, 100, 100)
+    y = np.random.uniform(1, 100, 100)
+    z = x * y / 10
+    return x, y, z
+
+
+@mpl3d_image_comparison(['scale3d_artists_log.png'], style='mpl20',
+                        remove_text=False, tol=0.016)
+def test_scale3d_artists_log():
+    """Test all 3D artist types with log scale."""
+    fig = plt.figure(figsize=(16, 12))
+    log_kw = dict(xscale='log', yscale='log', zscale='log')
+    line_data = _make_log_data()
+    surf_X, surf_Y, surf_Z = _make_surface_log_data()
+
+    # Row 1: plot, wireframe, scatter, bar3d
+    ax = fig.add_subplot(3, 4, 1, projection='3d')
+    ax.plot(*line_data)
+    ax.set(**log_kw, title='plot')
+
+    ax = fig.add_subplot(3, 4, 2, projection='3d')
+    ax.plot_wireframe(surf_X, surf_Y, surf_Z, rstride=5, cstride=5)
+    ax.set(**log_kw, title='wireframe')
+
+    ax = fig.add_subplot(3, 4, 3, projection='3d')
+    ax.scatter(*line_data, c=line_data[2], cmap='viridis')
+    ax.set(**log_kw, title='scatter')
+
+    ax = fig.add_subplot(3, 4, 4, projection='3d')
+    bx, by = np.meshgrid([1, 10, 100], [1, 10, 100])
+    bx, by = bx.flatten(), by.flatten()
+    ax.bar3d(bx, by, np.ones_like(bx, dtype=float),
+             bx * 0.3, by * 0.3, bx * by / 10, alpha=0.8)
+    ax.set(**log_kw, title='bar3d')
+
+    # Row 2: surface, trisurf, contour, contourf
+    ax = fig.add_subplot(3, 4, 5, projection='3d')
+    ax.plot_surface(surf_X, surf_Y, surf_Z, cmap='viridis', alpha=0.8)
+    ax.set(**log_kw, title='surface')
+
+    ax = fig.add_subplot(3, 4, 6, projection='3d')
+    tri_data = _make_triangulation_data()
+    ax.plot_trisurf(*tri_data, cmap='viridis', alpha=0.8)
+    ax.set(**log_kw, title='trisurf')
+
+    ax = fig.add_subplot(3, 4, 7, projection='3d')
+    ax.contour(surf_X, surf_Y, surf_Z, levels=10)
+    ax.set(**log_kw, title='contour')
+
+    ax = fig.add_subplot(3, 4, 8, projection='3d')
+    ax.contourf(surf_X, surf_Y, surf_Z, levels=10, alpha=0.8)
+    ax.set(**log_kw, title='contourf')
+
+    # Row 3: stem, quiver, text
+    ax = fig.add_subplot(3, 4, 9, projection='3d')
+    ax.stem([1, 10, 100], [1, 10, 100], [10, 100, 1000], bottom=1)
+    ax.set(**log_kw, title='stem')
+
+    ax = fig.add_subplot(3, 4, 10, projection='3d')
+    qxyz = np.array([1, 10, 100])
+    ax.quiver(qxyz, qxyz, qxyz, qxyz * 0.5, qxyz * 0.5, qxyz * 0.5)
+    ax.set(**log_kw, title='quiver')
+
+    ax = fig.add_subplot(3, 4, 11, projection='3d')
+    ax.text(1, 1, 1, "Point A")
+    ax.text(10, 10, 10, "Point B")
+    ax.text(100, 100, 100, "Point C")
+    ax.set(**log_kw, title='text',
+           xlim=(0.5, 200), ylim=(0.5, 200), zlim=(0.5, 200))
+
+
+@mpl3d_image_comparison(['scale3d_all_scales.png'], style='mpl20', remove_text=False)
+def test_scale3d_all_scales():
+    """Test all scale types with mixed scales on each axis."""
+    fig, axs = plt.subplots(1, 2, subplot_kw={'projection': '3d'}, figsize=(10, 6))
+
+    # Data that works across all scale types
+    t = np.linspace(0.1, 0.9, 30)
+    # x: positive for log/asinh, y: spans neg/pos for symlog, z: (0,1) for logit
+    x = t * 100  # 10 to 90
+    y = (t - 0.5) * 20  # -10 to 10
+    z = t  # 0.1 to 0.9
+
+    # Subplot 1: x=log, y=symlog, z=logit
+    axs[0].scatter(x, y, z)
+    axs[0].set(xscale='log', yscale='symlog', zscale='logit',
+               xlabel='log', ylabel='symlog', zlabel='logit')
+
+    # Subplot 2: x=asinh, y=linear, z=function (square root)
+    axs[1].scatter(x, y, z)
+    axs[1].set_xscale('asinh')
+    axs[1].set_zscale('function', functions=(lambda v: v**0.5, lambda v: v**2))
+    axs[1].set(xlabel='asinh', ylabel='linear', zlabel='function')
+
+
+@pytest.mark.parametrize("scale, expected_lims", [
+    ("linear", (-0.020833333333333332, 1.0208333333333333)),
+    ("log", (0.03640537388223389, 1.1918138759519783)),
+    ("symlog", (-0.020833333333333332, 1.0208333333333333)),
+    ("logit", (0.029640777806688817, 0.9703592221933112)),
+    ("asinh", (-0.020833333333333332, 1.0208333333333333)),
+])
+@mpl.style.context("default")
+def test_scale3d_default_limits(scale, expected_lims):
+    """Default axis limits on an empty plot should be correct for each scale."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_zscale(scale)
+    fig.canvas.draw()
+
+    for get_lim in (ax.get_xlim, ax.get_ylim, ax.get_zlim):
+        np.testing.assert_allclose(get_lim(), expected_lims)
+
+
+@check_figures_equal()
+@pytest.mark.filterwarnings("ignore:Data has no positive values")
+def test_scale3d_all_clipped(fig_test, fig_ref):
+    """Fully clipped data (e.g. negative values on log) should look like an empty plot.
+    """
+    lims = (0.1, 10)
+    for ax in [fig_test.add_subplot(projection='3d'),
+               fig_ref.add_subplot(projection='3d')]:
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_zscale('log')
+        ax.set(xlim=lims, ylim=lims, zlim=lims)
+
+    # All negative data — everything is invalid for log scale
+    fig_test.axes[0].plot([-1, -2, -3], [-4, -5, -6], [-7, -8, -9])
+
+
+@mpl3d_image_comparison(['scale3d_log_bases.png'], style='mpl20', remove_text=False)
+def test_scale3d_log_bases():
+    """Test log scale with different bases and subs."""
+    fig, axs = plt.subplots(2, 2, subplot_kw={'projection': '3d'}, figsize=(10, 8))
+    x, y, z = _make_log_data()
+
+    for ax, base, title in [(axs[0, 0], 10, 'base=10'),
+                            (axs[0, 1], 2, 'base=2'),
+                            (axs[1, 0], np.e, 'base=e')]:
+        ax.scatter(x, y, z, s=10)
+        ax.set_xscale('log', base=base)
+        ax.set_yscale('log', base=base)
+        ax.set_zscale('log', base=base)
+        ax.set_title(title)
+        if base == np.e:
+            # Format tick labels as e^n instead of 2.718...^n
+            def fmt_e(x, pos=None):
+                if x <= 0:
+                    return ''
+                exp = np.log(x)
+                if np.isclose(exp, round(exp)):
+                    return r'$e^{%d}$' % round(exp)
+                return ''
+            ax.xaxis.set_major_formatter(fmt_e)
+            ax.yaxis.set_major_formatter(fmt_e)
+            ax.zaxis.set_major_formatter(fmt_e)
+
+    # subs
+    axs[1, 1].scatter(x, y, z, s=10)
+    axs[1, 1].set_xscale('log', subs=[2, 5])
+    axs[1, 1].set_yscale('log', subs=[2, 5])
+    axs[1, 1].set_zscale('log', subs=[2, 5])
+    axs[1, 1].set_title('subs=[2,5]')
+
+
+@mpl3d_image_comparison(['scale3d_symlog_params.png'], style='mpl20',
+                        remove_text=False)
+def test_scale3d_symlog_params():
+    """Test symlog scale with different linthresh values."""
+    fig, axs = plt.subplots(1, 2, subplot_kw={'projection': '3d'})
+
+    # Data spanning negative, zero, and positive
+    t = np.linspace(-3, 3, 50)
+    x = np.sinh(t) * 10
+    y = t ** 3
+    z = np.sign(t) * np.abs(t) ** 2
+
+    for ax, linthresh in [(axs[0], 0.1), (axs[1], 10)]:
+        ax.scatter(x, y, z, c=np.abs(z), cmap='viridis', s=10)
+        ax.set_xscale('symlog', linthresh=linthresh)
+        ax.set_yscale('symlog', linthresh=linthresh)
+        ax.set_zscale('symlog', linthresh=linthresh)
+        ax.set_title(f'linthresh={linthresh}')
+
+
+@pytest.mark.parametrize('scale_type,kwargs', [
+    ('log', {'base': 10}),
+    ('log', {'base': 2}),
+    ('log', {'subs': [2, 5]}),
+    ('log', {'nonpositive': 'mask'}),
+    ('symlog', {'base': 2}),
+    ('symlog', {'linthresh': 1}),
+    ('symlog', {'linscale': 0.5}),
+    ('symlog', {'subs': [2, 5]}),
+    ('asinh', {'linear_width': 0.5}),
+    ('asinh', {'base': 2}),
+    ('logit', {'nonpositive': 'clip'}),
+])
+def test_scale3d_keywords_accepted(scale_type, kwargs):
+    """Verify that scale keywords are accepted on all 3 axes."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    for setter in [ax.set_xscale, ax.set_yscale, ax.set_zscale]:
+        setter(scale_type, **kwargs)
+    assert (ax.get_xscale(), ax.get_yscale(), ax.get_zscale()) == (scale_type,) * 3
+
+
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
+def test_scale3d_limit_range_log(axis):
+    """Log scale should warn when setting non-positive limits."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    getattr(ax, f'set_{axis}scale')('log')
+
+    # Setting non-positive limits should warn
+    with pytest.warns(UserWarning, match="non-positive"):
+        getattr(ax, f'set_{axis}lim')(-10, 100)
+
+
+def test_scale3d_limit_range_logit():
+    """Logit scale should constrain axis to (0, 1)."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set(xscale='logit', yscale='logit', zscale='logit',
+           xlim=(-0.5, 1.5), ylim=(-0.5, 1.5), zlim=(-0.5, 1.5))
+
+    # Limits should be constrained to (0, 1)
+    for name, lim in [('x', ax.get_xlim()), ('y', ax.get_ylim()),
+                      ('z', ax.get_zlim())]:
+        assert lim[0] > 0, f"{name} lower limit should be > 0 for logit"
+        assert lim[1] < 1, f"{name} upper limit should be < 1 for logit"
+
+
+@pytest.mark.parametrize('scale_type', ['log', 'symlog', 'logit', 'asinh'])
+def test_scale3d_transform_roundtrip(scale_type):
+    """Forward/inverse transform should preserve values."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set(xscale=scale_type, yscale=scale_type, zscale=scale_type)
+
+    # Use appropriate test values for each scale type
+    test_values = {
+        'log': [1, 10, 100, 1000],
+        'symlog': [-100, -1, 0, 1, 100],
+        'asinh': [-100, -1, 0, 1, 100],
+        'logit': [0.01, 0.1, 0.5, 0.9, 0.99],
+    }[scale_type]
+    test_values = np.array(test_values)
+
+    # Test round-trip for each axis
+    for axis in [ax.xaxis, ax.yaxis, ax.zaxis]:
+        trans = axis.get_transform()
+        forward = trans.transform(test_values.reshape(-1, 1))
+        inverse = trans.inverted().transform(forward)
+        np.testing.assert_allclose(inverse.flatten(), test_values, rtol=1e-10)
+
+
+def test_scale3d_invalid_keywords_raise():
+    """Invalid kwargs should raise TypeError."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    with pytest.raises(TypeError):
+        ax.set_xscale('log', invalid_kwarg=True)
+
+    with pytest.raises(TypeError):
+        ax.set_yscale('symlog', invalid_kwarg=True)
+
+    with pytest.raises(TypeError):
+        ax.set_zscale('logit', invalid_kwarg=True)
+
+
+def test_scale3d_persists_after_plot():
+    """Scale should persist after adding plot data."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set(xscale='log', yscale='log', zscale='log')
+    ax.plot(*_make_log_data())
+    assert (ax.get_xscale(), ax.get_yscale(), ax.get_zscale()) == ('log',) * 3
+
+
+def test_scale3d_autoscale_with_log():
+    """Autoscale should work correctly with log scale."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set(xscale='log', yscale='log', zscale='log')
+    ax.scatter([1, 10, 100], [1, 10, 100], [1, 10, 100])
+
+    # All limits should be positive
+    for name, lim in [('x', ax.get_xlim()), ('y', ax.get_ylim()),
+                      ('z', ax.get_zlim())]:
+        assert lim[0] > 0, f"{name} lower limit should be positive"
+        assert lim[1] > 0, f"{name} upper limit should be positive"
+
+
+def test_scale3d_calc_coord():
+    """_calc_coord should return data coordinates with correct pane values."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter([1, 10, 100], [1, 10, 100], [1, 10, 100])
+    ax.set(xscale='log', yscale='log', zscale='log')
+    fig.canvas.draw()
+
+    point, pane_idx = ax._calc_coord(0.5, 0.5)
+    # Pane coordinate should match axis limit (y-pane at max)
+    assert pane_idx == 1
+    assert point[pane_idx] == pytest.approx(ax.get_ylim()[1])
+
+
+def test_plot_surface_log_scale_invalid_values():
+    """Ensure non-positive Z values on a log z-axis does not corrupt zlim."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_zscale('log')
+    X, Y = np.meshgrid(np.linspace(1, 3, 4), np.linspace(1, 3, 4))
+    Z = X * Y - 4  # half the entries are <= 0, invalid for a log scale
+    ax.plot_surface(X, Y, Z)
+    fig.canvas.draw()
+
+    zmin, zmax = ax.get_zlim()
+    assert 1e-3 < zmin < zmax < 1e3, f"zlim corrupted: {(zmin, zmax)}"

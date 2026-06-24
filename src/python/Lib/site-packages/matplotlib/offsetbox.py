@@ -206,10 +206,10 @@ class OffsetBox(martist.Artist):
     The child artists are meant to be drawn at a relative position to its
     parent.
 
-    Being an artist itself, all parameters are passed on to `.Artist`.
+    Being an artist itself, all keyword arguments are passed on to `.Artist`.
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args)
+    def __init__(self, **kwargs):
+        super().__init__()
         self._internal_update(kwargs)
         # Clipping has not been implemented in the OffsetBox family, so
         # disable the clip flag for consistency. It can always be turned back
@@ -799,23 +799,24 @@ class TextArea(OffsetBox):
             ismath="TeX" if self._text.get_usetex() else False,
             dpi=self.get_figure(root=True).dpi)
 
-        bbox, info, yd = self._text._get_layout(renderer)
+        bbox, info, _ = self._text._get_layout(renderer)
+        _last_line, (_last_width, _last_ascent, last_descent), _last_xy = info[-1]
         w, h = bbox.size
 
         self._baseline_transform.clear()
 
         if len(info) > 1 and self._multilinebaseline:
             yd_new = 0.5 * h - 0.5 * (h_ - d_)
-            self._baseline_transform.translate(0, yd - yd_new)
-            yd = yd_new
+            self._baseline_transform.translate(0, last_descent - yd_new)
+            last_descent = yd_new
         else:  # single line
-            h_d = max(h_ - d_, h - yd)
-            h = h_d + yd
+            h_d = max(h_ - d_, h - last_descent)
+            h = h_d + last_descent
 
         ha = self._text.get_horizontalalignment()
         x0 = {"left": 0, "center": -w / 2, "right": -w}[ha]
 
-        return Bbox.from_bounds(x0, -yd, w, h)
+        return Bbox.from_bounds(x0, -last_descent, w, h)
 
     def draw(self, renderer):
         # docstring inherited
@@ -946,8 +947,13 @@ class AnchoredOffsetbox(OffsetBox):
             See the parameter *loc* of `.Legend` for details.
         pad : float, default: 0.4
             Padding around the child as fraction of the fontsize.
-        borderpad : float, default: 0.5
+        borderpad : float or (float, float), default: 0.5
             Padding between the offsetbox frame and the *bbox_to_anchor*.
+            If a float, the same padding is used for both x and y.
+            If a tuple of two floats, it specifies the (x, y) padding.
+
+            .. versionadded:: 3.11
+               The *borderpad* parameter now accepts a tuple of (x, y) paddings.
         child : `.OffsetBox`
             The box that will be anchored.
         prop : `.FontProperties`
@@ -972,7 +978,7 @@ class AnchoredOffsetbox(OffsetBox):
         self.set_child(child)
 
         if isinstance(loc, str):
-            loc = _api.check_getitem(self.codes, loc=loc)
+            loc = _api.getitem_checked(self.codes, loc=loc)
 
         self.loc = loc
         self.borderpad = borderpad
@@ -1054,12 +1060,22 @@ class AnchoredOffsetbox(OffsetBox):
     @_compat_get_offset
     def get_offset(self, bbox, renderer):
         # docstring inherited
-        pad = (self.borderpad
-               * renderer.points_to_pixels(self.prop.get_size_in_points()))
+        fontsize_in_pixels = renderer.points_to_pixels(self.prop.get_size_in_points())
+        try:
+            borderpad_x, borderpad_y = self.borderpad
+        except TypeError:
+            borderpad_x = self.borderpad
+            borderpad_y = self.borderpad
+        pad_x_pixels = borderpad_x * fontsize_in_pixels
+        pad_y_pixels = borderpad_y * fontsize_in_pixels
         bbox_to_anchor = self.get_bbox_to_anchor()
         x0, y0 = _get_anchored_bbox(
-            self.loc, Bbox.from_bounds(0, 0, bbox.width, bbox.height),
-            bbox_to_anchor, pad)
+            self.loc,
+            Bbox.from_bounds(0, 0, bbox.width, bbox.height),
+            bbox_to_anchor,
+            pad_x_pixels,
+            pad_y_pixels
+        )
         return x0 - bbox.x0, y0 - bbox.y0
 
     def update_frame(self, bbox, fontsize=None):
@@ -1084,15 +1100,15 @@ class AnchoredOffsetbox(OffsetBox):
         self.stale = False
 
 
-def _get_anchored_bbox(loc, bbox, parentbbox, borderpad):
+def _get_anchored_bbox(loc, bbox, parentbbox, pad_x, pad_y):
     """
     Return the (x, y) position of the *bbox* anchored at the *parentbbox* with
-    the *loc* code with the *borderpad*.
+    the *loc* code with the *borderpad* and padding *pad_x*, *pad_y*.
     """
     # This is only called internally and *loc* should already have been
     # validated.  If 0 (None), we just let ``bbox.anchored`` raise.
     c = [None, "NE", "NW", "SW", "SE", "E", "W", "E", "S", "N", "C"][loc]
-    container = parentbbox.padded(-borderpad)
+    container = parentbbox.padded(-pad_x, -pad_y)
     return bbox.anchored(c, container=container).p0
 
 
@@ -1140,7 +1156,70 @@ class AnchoredText(AnchoredOffsetbox):
 
 
 class OffsetImage(OffsetBox):
+    """
+    Container artist for images.
 
+    Image data is displayed using `.BboxImage`. This image is meant to be positioned
+    relative to a parent artist.
+
+    Parameters
+    ----------
+    arr: array-like or `PIL.Image.Image`
+        The data to be color-coded. The interpretation depends on the
+        shape:
+
+        - (M, N) `~numpy.ndarray` or masked array: values to be colormapped
+        - (M, N, 3): RGB array
+        - (M, N, 4): RGBA array
+
+    zoom: float, default: 1
+        zoom factor:
+
+        - no zoom: factor =1
+        - zoom in: factor > 1
+        - zoom out: 0< factor < 1
+
+    cmap : str or `~matplotlib.colors.Colormap`, default: :rc:`image.cmap`
+        The Colormap instance or registered colormap name used to map scalar
+        data to colors. This parameter is ignored if X is RGB(A).
+
+    norm : str or `~matplotlib.colors.Normalize`, default: None
+        Maps luminance to 0-1. This parameter is ignored if X is RGB(A).
+
+    interpolation : str, default: :rc:`image.interpolation`
+        Supported values are 'none', 'auto', 'nearest', 'bilinear',
+        'bicubic', 'spline16', 'spline36', 'hanning', 'hamming', 'hermite',
+        'kaiser', 'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell',
+        'sinc', 'lanczos', 'blackman'.
+
+    origin : {'upper', 'lower'}, default: :rc:`image.origin`
+        Place the [0, 0] index of the array in the upper left or lower left
+        corner of the Axes. The convention 'upper' is typically used for
+        matrices and images.
+
+    filternorm : bool, default: True
+        A parameter for the antigrain image resize filter
+        (see the antigrain documentation).
+        If filternorm is set, the filter normalizes integer values and corrects
+        the rounding errors. It doesn't do anything with the source floating
+        point values, it corrects only integers according to the rule of 1.0
+        which means that any sum of pixel weights must be equal to 1.0. So,
+        the filter function must produce a graph of the proper shape.
+
+    filterrad : float > 0, default: 4
+        The filter radius for filters that have a radius parameter, i.e. when
+        interpolation is one of: 'sinc', 'lanczos' or 'blackman'.
+
+    resample : bool, default: False
+        When True, use a full resampling method. When False, only resample when
+        the output image is larger than the input image.
+
+    dpi_cor: bool, default: True
+        Correct for the backend DPI setting
+
+    **kwargs : `.BboxImage` properties
+
+    """
     def __init__(self, arr, *,
                  zoom=1,
                  cmap=None,
@@ -1153,7 +1232,6 @@ class OffsetImage(OffsetBox):
                  dpi_cor=True,
                  **kwargs
                  ):
-
         super().__init__()
         self._dpi_cor = dpi_cor
 
@@ -1376,9 +1454,7 @@ or callable, default: value of *xycoords*
 
         If *s* is not given, reset to :rc:`legend.fontsize`.
         """
-        if s is None:
-            s = mpl.rcParams["legend.fontsize"]
-
+        s = mpl._val_or_rc(s, "legend.fontsize")
         self.prop = FontProperties(size=s)
         self.stale = True
 

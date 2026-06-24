@@ -7,7 +7,7 @@ from matplotlib.testing.decorators import check_figures_equal, image_comparison
 import matplotlib.patches as mpatches
 import matplotlib.units as munits
 from matplotlib.category import StrCategoryConverter, UnitData
-from matplotlib.dates import DateConverter
+from matplotlib.dates import DateConverter  # type: ignore[attr-defined]
 import numpy as np
 import pytest
 
@@ -191,7 +191,7 @@ def test_errorbar_mixed_units():
     fig.canvas.draw()
 
 
-@check_figures_equal(extensions=["png"])
+@check_figures_equal()
 def test_subclass(fig_test, fig_ref):
     class subdate(datetime):
         pass

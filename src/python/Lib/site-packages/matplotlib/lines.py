@@ -36,7 +36,7 @@ def _get_dash_pattern(style):
     if isinstance(style, str):
         style = ls_mapper.get(style, style)
     # un-dashed styles
-    if style in ['solid', 'None']:
+    if style in ['solid', 'None', 'none', '', ' ']:
         offset = 0
         dashes = None
     # dashed styles
@@ -183,7 +183,7 @@ def _mark_every_path(markevery, tpath, affine, ax):
             if ax is None:
                 raise ValueError(
                     "markevery is specified relative to the Axes size, but "
-                    "the line does not have a Axes as parent")
+                    "the line does not have an Axes as parent")
 
             # calc cumulative distance along path (in display coords):
             fin = np.isfinite(verts).all(axis=1)
@@ -341,28 +341,16 @@ class Line2D(Artist):
         if not np.iterable(ydata):
             raise RuntimeError('ydata must be a sequence')
 
-        if linewidth is None:
-            linewidth = mpl.rcParams['lines.linewidth']
-
-        if linestyle is None:
-            linestyle = mpl.rcParams['lines.linestyle']
-        if marker is None:
-            marker = mpl.rcParams['lines.marker']
-        if color is None:
-            color = mpl.rcParams['lines.color']
-
-        if markersize is None:
-            markersize = mpl.rcParams['lines.markersize']
-        if antialiased is None:
-            antialiased = mpl.rcParams['lines.antialiased']
-        if dash_capstyle is None:
-            dash_capstyle = mpl.rcParams['lines.dash_capstyle']
-        if dash_joinstyle is None:
-            dash_joinstyle = mpl.rcParams['lines.dash_joinstyle']
-        if solid_capstyle is None:
-            solid_capstyle = mpl.rcParams['lines.solid_capstyle']
-        if solid_joinstyle is None:
-            solid_joinstyle = mpl.rcParams['lines.solid_joinstyle']
+        linewidth = mpl._val_or_rc(linewidth, 'lines.linewidth')
+        linestyle = mpl._val_or_rc(linestyle, 'lines.linestyle')
+        marker = mpl._val_or_rc(marker, 'lines.marker')
+        color = mpl._val_or_rc(color, 'lines.color')
+        markersize = mpl._val_or_rc(markersize, 'lines.markersize')
+        antialiased = mpl._val_or_rc(antialiased, 'lines.antialiased')
+        dash_capstyle = mpl._val_or_rc(dash_capstyle, 'lines.dash_capstyle')
+        dash_joinstyle = mpl._val_or_rc(dash_joinstyle, 'lines.dash_joinstyle')
+        solid_capstyle = mpl._val_or_rc(solid_capstyle, 'lines.solid_capstyle')
+        solid_joinstyle = mpl._val_or_rc(solid_joinstyle, 'lines.solid_joinstyle')
 
         if drawstyle is None:
             drawstyle = 'default'
@@ -696,7 +684,8 @@ class Line2D(Artist):
             y = self._y
 
         self._xy = np.column_stack(np.broadcast_arrays(x, y)).astype(float)
-        self._x, self._y = self._xy.T  # views
+        self._x = self._xy[:, 0]  # views of the x and y data
+        self._y = self._xy[:, 1]
 
         self._subslice = False
         if (self.axes
@@ -721,9 +710,12 @@ class Line2D(Artist):
             interpolation_steps = self._path._interpolation_steps
         else:
             interpolation_steps = 1
-        xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy.T)
-        self._path = Path(np.asarray(xy).T,
-                          _interpolation_steps=interpolation_steps)
+        if self._drawstyle == 'default':
+            vertices = self._xy
+        else:
+            step_func = STEP_LOOKUP_MAP[self._drawstyle]
+            vertices = np.asarray(step_func(*self._xy.T)).T
+        self._path = Path(vertices, _interpolation_steps=interpolation_steps)
         self._transformed_path = None
         self._invalidx = False
         self._invalidy = False
@@ -736,8 +728,12 @@ class Line2D(Artist):
         """
         # Masked arrays are now handled by the Path class itself
         if subslice is not None:
-            xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy[subslice, :].T)
-            _path = Path(np.asarray(xy).T,
+            if self._drawstyle == 'default':
+                vertices = self._xy[subslice]
+            else:
+                step_func = STEP_LOOKUP_MAP[self._drawstyle]
+                vertices = np.asarray(step_func(*self._xy[subslice, :].T)).T
+            _path = Path(vertices,
                          _interpolation_steps=self._path._interpolation_steps)
         else:
             _path = self._path
@@ -803,8 +799,11 @@ class Line2D(Artist):
                 if self.get_sketch_params() is not None:
                     gc.set_sketch_params(*self.get_sketch_params())
 
-                # We first draw a path within the gaps if needed.
-                if self.is_dashed() and self._gapcolor is not None:
+                # We first draw a path within the gaps if needed, but only for
+                # visible dashed lines; zero-width lines would otherwise yield
+                # all-zero dashes.
+                if (self._linewidth > 0 and self.is_dashed()
+                        and self._gapcolor is not None):
                     lc_rgba = mcolors.to_rgba(self._gapcolor, self._alpha)
                     gc.set_foreground(lc_rgba, isRGBA=True)
 
@@ -817,7 +816,10 @@ class Line2D(Artist):
                 lc_rgba = mcolors.to_rgba(self._color, self._alpha)
                 gc.set_foreground(lc_rgba, isRGBA=True)
 
-                gc.set_dashes(*self._dash_pattern)
+                if self._linewidth > 0:
+                    gc.set_dashes(*self._dash_pattern)
+                else:
+                    gc.set_dashes(0, None)
                 renderer.draw_path(gc, tpath, affine.frozen())
                 gc.restore()
 
@@ -1161,28 +1163,38 @@ class Line2D(Artist):
 
         Parameters
         ----------
-        ls : {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+        ls : {'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)
             Possible values:
 
             - A string:
 
-              ==========================================  =================
-              linestyle                                   description
-              ==========================================  =================
-              ``'-'`` or ``'solid'``                      solid line
-              ``'--'`` or  ``'dashed'``                   dashed line
-              ``'-.'`` or  ``'dashdot'``                  dash-dotted line
-              ``':'`` or ``'dotted'``                     dotted line
-              ``'none'``, ``'None'``, ``' '``, or ``''``  draw nothing
-              ==========================================  =================
+              =======================================================  ================
+              linestyle                                                description
+              =======================================================  ================
+              ``'-'`` or ``'solid'``                                   solid line
+              ``'--'`` or ``'dashed'``                                 dashed line
+              ``'-.'`` or ``'dashdot'``                                dash-dotted line
+              ``':'`` or ``'dotted'``                                  dotted line
+              ``''`` or ``'none'`` (discouraged: ``'None'``, ``' '``)  draw nothing
+              =======================================================  ================
 
-            - Alternatively a dash tuple of the following form can be
-              provided::
+            - A tuple describing the start position and lengths of dashes and spaces:
 
                   (offset, onoffseq)
 
-              where ``onoffseq`` is an even length tuple of on and off ink
-              in points. See also :meth:`set_dashes`.
+              where
+
+              - *offset* is a float specifying the offset (in points); i.e. how much
+                is the dash pattern shifted.
+              - *onoffseq* is a sequence of on and off ink in points. There can be
+                arbitrary many pairs of on and off values.
+
+              Example: The tuple ``(0, (10, 5, 1, 5))`` means that the pattern starts
+              at the beginning of the line. It draws a 10 point long dash,
+              then a 5 point long space, then a 1 point long dash, followed by a 5 point
+              long space, and then the pattern repeats.
+
+              See also :meth:`set_dashes`.
 
             For examples see :doc:`/gallery/lines_bars_and_markers/linestyles`.
         """
@@ -1267,8 +1279,7 @@ class Line2D(Artist):
         ew : float
              Marker edge width, in points.
         """
-        if ew is None:
-            ew = mpl.rcParams['lines.markeredgewidth']
+        ew = mpl._val_or_rc(ew, 'lines.markeredgewidth')
         if self._markeredgewidth != ew:
             self.stale = True
         self._markeredgewidth = ew
@@ -1368,7 +1379,6 @@ class Line2D(Artist):
         self._solidcapstyle = other._solidcapstyle
         self._solidjoinstyle = other._solidjoinstyle
 
-        self._linestyle = other._linestyle
         self._marker = MarkerStyle(marker=other._marker)
         self._drawstyle = other._drawstyle
 

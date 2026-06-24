@@ -160,11 +160,11 @@ def loads(
     allow_duplicate_keys: bool = True,
     consume_trailing: bool = True,
     start: Optional[int] = None,
-):
+) -> Any:
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
 
-    Supports the same arguments as ``json.load()`` except that:
+    Supports the same arguments as ``json.loads()`` except that:
         - the `cls` keyword is ignored.
         - an extra `allow_duplicate_keys` parameter supports checking for
           duplicate keys in a object; by default, this is True for
@@ -222,7 +222,7 @@ def parse(
     allow_duplicate_keys: bool = True,
     consume_trailing: bool = True,
     start: Optional[int] = None,
-):
+) -> Union[Tuple[Any, None, int], Tuple[None, str, int]]:
     """Parse ```s``, returning positional information along with a value.
 
     This works exactly like `loads()`, except that (a) it returns the
@@ -360,7 +360,8 @@ def _walk_ast(
         return False
     ty, v = el
     if ty == 'number':
-        if v.startswith('0x') or v.startswith('0X'):
+        unsigned = v[1:] if v.startswith('-') else v
+        if unsigned.startswith('0x') or unsigned.startswith('0X'):
             return parse_int(v, base=16)
         if '.' in v or 'e' in v or 'E' in v:
             return parse_float(v)
