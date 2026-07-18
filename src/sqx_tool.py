@@ -661,7 +661,7 @@ def newproject(args: argparse.Namespace) -> None:
     first_day_dx = max(datetime(2010, 1, 1, tzinfo=timezone.utc), sym_2_info.first_date)
     last_day_dx = sym_2_info.last_date
 
-    build_start = max(datetime(2018, 1, 1, tzinfo=timezone.utc), first_day)
+    build_start = max(datetime(2019, 1, 1, tzinfo=timezone.utc), first_day)
     build_end = min(datetime(2025, 7, 1, tzinfo=timezone.utc), last_day)
 
     retest_start = max(datetime(2010, 1, 1, tzinfo=timezone.utc), first_day)
