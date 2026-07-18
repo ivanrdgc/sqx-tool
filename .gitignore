@@ -21,8 +21,6 @@ __pycache__/
 *.pywz
 *.pyzw
 *.pyzwz
-Notebooks/.ipynb_checkpoints/
-src/jupyter/
 
 # Include Python embedded files
 !src/python/*

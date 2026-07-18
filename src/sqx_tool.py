@@ -37,23 +37,24 @@ import xml.etree.ElementTree as ET
 #  Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _load_sqx_path(repo_root: Path) -> Path:
-    """Read SQX_PATH from config.ini at the repo root.
+def _load_config_path(repo_root: Path, key: str, fallback: str) -> Path:
+    """Read a path setting from the [sqx] section of config.ini at the repo root.
 
-    Defaults to C:\\SQX_143 when the file or key is missing. Backslashes in
+    Falls back to *fallback* when the file or key is missing. Backslashes in
     the value are normalized so Path behaves sensibly on non-Windows hosts.
     """
     config_path = repo_root / "config.ini"
     parser = configparser.ConfigParser()
     parser.read(config_path, encoding="utf-8")
-    raw = parser.get("sqx", "SQX_PATH", fallback=r"C:\SQX_143")
+    raw = parser.get("sqx", key, fallback=fallback)
     if os.name != "nt":
         raw = raw.replace("\\", "/")
     return Path(raw)
 
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
-_SQX_PATH = _load_sqx_path(_SCRIPT_DIR.parent)
+_SQX_PATH = _load_config_path(_SCRIPT_DIR.parent, "SQX_PATH", r"C:\SQX_143")
+_MT5_PATH = _load_config_path(_SCRIPT_DIR.parent, "MT5_PATH", r"C:\MetaTrader\MetaTrader 5")
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ class Settings:
 
     sqx_path: Path = _SQX_PATH
     symbols_db: Path = (_SQX_PATH / "user" / "data" / "data.db")
+    mt5_path: Path = _MT5_PATH
 
 SETTINGS = Settings()
 
