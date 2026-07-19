@@ -19388,7 +19388,7 @@
           </Params>
         </Predefined>
       </Block>
-      <Block key="Indicators.HighestInRange" weight="1" use="true" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="indicators">
+      <Block key="Indicators.HighestInRange" weight="1" use="false" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="indicators">
         <Generated weight="1">
           <Param key="#Chart#" name="Chart" type="data" paramType="null" generation="random" minValue="null" maxValue="null" step="null" allCharts="true" />
           <Param key="#TimeFrom#" name="Time From" type="int" paramType="null" generation="random" minValue="0" maxValue="2359" step="30" />
@@ -19481,7 +19481,7 @@
           </Params>
         </Predefined>
       </Block>
-      <Block key="Indicators.LowestInRange" weight="1" use="true" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="indicators">
+      <Block key="Indicators.LowestInRange" weight="1" use="false" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="indicators">
         <Generated weight="1">
           <Param key="#Chart#" name="Chart" type="data" paramType="null" generation="random" minValue="null" maxValue="null" step="null" allCharts="true" />
           <Param key="#TimeFrom#" name="Time From" type="int" paramType="null" generation="random" minValue="0" maxValue="2359" step="30" />
@@ -21482,7 +21482,7 @@
           </Params>
         </Predefined>
       </Block>
-      <Block key="Stop/Limit Price Levels.HighestInRange" weight="1" use="true" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="stopLimitBlocks">
+      <Block key="Stop/Limit Price Levels.HighestInRange" weight="1" use="false" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="stopLimitBlocks">
         <Generated weight="1">
           <Param key="#Chart#" name="Chart" type="data" paramType="null" generation="random" minValue="null" maxValue="null" step="null" allCharts="true" />
           <Param key="#TimeFrom#" name="Time From" type="int" paramType="null" generation="random" minValue="0" maxValue="2359" step="30" />
@@ -21575,7 +21575,7 @@
           </Params>
         </Predefined>
       </Block>
-      <Block key="Stop/Limit Price Levels.LowestInRange" weight="1" use="true" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="stopLimitBlocks">
+      <Block key="Stop/Limit Price Levels.LowestInRange" weight="1" use="false" indicatorMin="-1000" indicatorMax="1000" indicatorStep="1" category="stopLimitBlocks">
         <Generated weight="1">
           <Param key="#Chart#" name="Chart" type="data" paramType="null" generation="random" minValue="null" maxValue="null" step="null" allCharts="true" />
           <Param key="#TimeFrom#" name="Time From" type="int" paramType="null" generation="random" minValue="0" maxValue="2359" step="30" />
