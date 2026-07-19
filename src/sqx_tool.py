@@ -65,6 +65,9 @@ class Settings:
     default_log_level: str = "info"
 
     project_dir_tpl: str = "{symbol}/{timestamp}_{symbol}_{timeframe}_{direction}"
+    # Prefix handed to the RenameStrategies custom analysis, so strategies are
+    # named e.g. "XAUUSD H1 Long 12345" instead of "Strategy 12345".
+    strategy_prefix_tpl: str = "{symbol} {timeframe} {direction}"
 
     sqx_path: Path = _SQX_PATH
     symbols_db: Path = (_SQX_PATH / "user" / "data" / "data.db")
@@ -468,6 +471,25 @@ def newproject(args: argparse.Namespace) -> None:
                 setups[1].set("dateFrom", sym_2_info.first_date.strftime("%Y.%m.%d"))
             setups[1].set("dateTo", end_date.strftime("%Y.%m.%d"))
 
+    def patch_custom_analysis(root: ET.Element, method: str, input_args: str) -> None:
+        """Set the inputArgs of a <CustomAnalysis> block driving *method*.
+
+        Only blocks already declaring that method are touched, so a task that
+        uses a different custom analysis - or none at all - is left alone.
+        """
+        found = 0
+        for node in root.iter("CustomAnalysis"):
+            if node.get("method") != method:
+                continue
+            logger.debug("patch_custom_analysis() – %s inputArgs=%s", method, input_args)
+            node.set("inputArgs", input_args)
+            found += 1
+        if found == 0:
+            logging.warning(
+                "no <CustomAnalysis method='%s'> block found – strategies will keep "
+                "their default names", method,
+            )
+
     def patch_disable_task(root: ET.Element, xml_name: str) -> None:
         for task in root.findall(".//Tasks/Task"):
             if task.get("taskXMLFile") == xml_name:
@@ -561,6 +583,18 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
         editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
         editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
+
+    # Strategy naming -------------------------------------------------------
+    # RenameStrategies turns "Strategy 12345" into "XAUUSD H1 Long 12345" at
+    # E-Build. Later tasks leave inputArgs empty: by then the name already
+    # carries the prefix and only "Improved" needs dropping.
+    strategy_prefix = SETTINGS.strategy_prefix_tpl.format(
+        symbol=symbol_dukascopy.split("_")[0],
+        timeframe=timeframe,
+        direction=direction,
+    )
+    editor.patch("Build-Task1.xml", patch_custom_analysis, "RenameStrategies", strategy_prefix)
+    log("strategy prefix: %s", strategy_prefix)
 
     # Save folders ----------------------------------------------------------
     editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
