@@ -1,0 +1,39 @@
+<Settings>
+  <CustomAnalysis>
+    <PerStrategy1>none</PerStrategy1>
+    <PerStrategy2>none</PerStrategy2>
+    <FullDatabank1>SelectBestByIndicatorGroup</FullDatabank1>
+    <FullDatabank2>none</FullDatabank2>
+    <RemoveFailedStrategies>false</RemoveFailedStrategies>
+    <Filter>true</Filter>
+    <InputArgsPerStrategy1 />
+    <InputArgsPerStrategy2 />
+    <InputArgsFullDatabank1 />
+    <InputArgsFullDatabank2 />
+  </CustomAnalysis>
+  <Databanks>
+    <Databank label="Input databank" name="Input" value="S-Final" />
+    <Databank label="Output databank" name="Output" value="S-Final" />
+  </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <SequentialOptimization />
+    <RetestWithHigherPrecision />
+  </CrossChecks>
+  <WhatToBuild>
+    <StrategyType type="simple" additionalCharts="1" templateFile="" improveType="strategy" strategyFile="" improveDatabank="Results" />
+  </WhatToBuild>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

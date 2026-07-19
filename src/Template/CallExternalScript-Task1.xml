@@ -1,6 +1,0 @@
-<Settings>
-  <CallExternalScript>
-    <File params="remove_eab">C:\python.exe</File>
-    <WaitFor hours="0" minutes="0">end</WaitFor>
-  </CallExternalScript>
-</Settings>

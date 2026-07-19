@@ -1,5 +1,12 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="S-WFM" />
+    <Databank name="S-Sys Param" />
   </ClearDatabanks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>

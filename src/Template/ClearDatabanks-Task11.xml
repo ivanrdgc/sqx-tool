@@ -1,5 +1,23 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="S-Sys Param" />
+    <Databank name="S-MCRM" />
   </ClearDatabanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <SequentialOptimization />
+    <RetestWithHigherPrecision />
+  </CrossChecks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>

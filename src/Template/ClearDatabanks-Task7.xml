@@ -1,5 +1,23 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="S-Edges" />
+    <Databank name="E-Final" />
   </ClearDatabanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <SequentialOptimization />
+    <RetestWithHigherPrecision />
+  </CrossChecks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>

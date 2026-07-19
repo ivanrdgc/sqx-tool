@@ -1,21 +1,21 @@
 <Settings>
   <Data>
     <Setups>
-      <Setup dateFrom="2008.01.01" dateTo="2026.01.13" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
-        <Chart symbol="XAUUSD_darwinex" timeframe="H1" spread="69" />
+      <Setup dateFrom="2025.05.28" dateTo="2025.12.11" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+        <Chart symbol="EURUSD_darwinex" timeframe="H1" spread="0.3" />
         <Commissions>
-          <Method type="PercentageBased" use="true">
+          <Method type="SizeBased" use="true">
             <Params>
-              <Param key="Commission" className="PercentageBased">0.01</Param>
+              <Param key="Commission" className="SizeBased">5.71</Param>
             </Params>
           </Method>
         </Commissions>
-        <Swap use="false" />
+        <Swap use="true" type="points" long="-8.80" short="1.40" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
       </Setup>
     </Setups>
     <OutOfSample showGraph="false">
-      <Range dateFrom="2008.01.01" dateTo="2018.01.01" />
-      <Range dateFrom="2025.01.01" dateTo="2026.01.13" type="isv" />
+      <Range dateFrom="2025.10.12" dateTo="2025.10.12" />
+      <Range dateFrom="2025.10.12" dateTo="2025.12.11" type="isv" />
     </OutOfSample>
   </Data>
   <Rankings type="never">
@@ -73,49 +73,119 @@
       <Correlation max="0.3" type="ProfitLoss" period="10" allowNegative="false" addEmptyPeriods="false" />
     </FitPortfolio>
     <CustomAnalysis method="none" filter="false" inputArgs="" />
+    <MaxStrategies>500</MaxStrategies>
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
-    <WalkForwardMatrix use="true">
+    <RetestOnAdditionalMarkets use="false" />
+    <WhatIf use="false" />
+    <MonteCarloManipulation use="false" />
+    <MonteCarloRetest use="true">
       <Settings>
-        <WalkForward type="0" period="10" optimization="15" distributionUp="20" distributionDown="20" maxSteps="6">
-          <Param1 value="undefined" start="20" stop="36" step="2" />
-          <Param2 value="undefined" start="5" stop="9" step="1" />
-        </WalkForward>
-        <MaxTests>10000</MaxTests>
-        <WhatToParametrize type="1" symmetricVariables="false">
-          <Recommended>true</Recommended>
-        </WhatToParametrize>
+        <Methods>
+          <Method use="false" type="RandomizeHistoryData">
+            <Params>
+              <Param key="ProbabilityUp" type="Integer">20</Param>
+              <Param key="MaxChangeUp" type="Integer">10</Param>
+              <Param key="ProbabilityDown" type="Integer">20</Param>
+              <Param key="MaxChangeDown" type="Integer">10</Param>
+              <Param key="KeepConnected" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeHistoryDataFixedRange">
+            <Params>
+              <Param key="MaxChange" type="Integer">40</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeHistoryDataOHLC">
+            <Params>
+              <Param key="ProbabilityOpen" type="Integer">100</Param>
+              <Param key="ProbabilityHigh" type="Integer">100</Param>
+              <Param key="ProbabilityLow" type="Integer">100</Param>
+              <Param key="ProbabilityClose" type="Integer">100</Param>
+              <Param key="MaxChange" type="Integer">10</Param>
+              <Param key="ATRPeriod" type="Integer">14</Param>
+              <Param key="KeepConnected" type="Boolean">true</Param>
+              <Param key="ProbabilityGapChange" type="Integer">100</Param>
+              <Param key="MaxChangeOfGap" type="Integer">10</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeMinDistance">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">10.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeSlippage">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeSpread">
+            <Params>
+              <Param key="Min" type="Double">1.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStartingBar">
+            <Params>
+              <Param key="MaxChange" type="Integer">100</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStrategyParameters">
+            <Params>
+              <Param key="Probability" type="Integer">10</Param>
+              <Param key="MaxChange" type="Integer">20</Param>
+              <Param key="Symmetric" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStrategyParametersCustomizable">
+            <Params>
+              <Param key="Probability" type="Integer">100</Param>
+              <Param key="MaxChange" type="Integer">50</Param>
+              <Param key="Symmetric" type="Boolean">true</Param>
+              <Param key="Period" type="Boolean">true</Param>
+              <Param key="Shift" type="Boolean">false</Param>
+              <Param key="Constant" type="Boolean">false</Param>
+              <Param key="OtherParam" type="Boolean">false</Param>
+              <Param key="ExitUsed" type="Boolean">false</Param>
+              <Param key="ExitUnused" type="Boolean">false</Param>
+              <Param key="Boolean" type="Boolean">false</Param>
+              <Param key="TradingOptions" type="Boolean">false</Param>
+            </Params>
+          </Method>
+        </Methods>
+        <NumberOfSimulations>1000</NumberOfSimulations>
+        <MCUseFullSample>true</MCUseFullSample>
+        <MCBacktestPrecision>-1</MCBacktestPrecision>
       </Settings>
       <AcceptanceSettings>
-        <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="7">
+        <Conditions>
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="ProfitFactor" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ProfitFactor" />
+              <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="MonteCarloRetest" direction="0" sampleType="10" plType="10" confidenceLevel="100" market="1" subresult="30" pctRatio="0" class="NetProfit" />
             </Left-Side>
             <Comparator value="&gt;=" />
             <Right-Side valueType="numeric">
-              <Numeric-Value value="80" />
-            </Right-Side>
-          </Condition>
-          <Condition use="true">
-            <Left-Side valueType="column">
-              <Column-Value column="WinningPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="WinningPct" />
-            </Left-Side>
-            <Comparator value="&gt;=" />
-            <Right-Side valueType="numeric">
-              <Numeric-Value value="80" />
+              <Numeric-Value value="0" />
             </Right-Side>
           </Condition>
         </Conditions>
       </AcceptanceSettings>
-    </WalkForwardMatrix>
+    </MonteCarloRetest>
+    <OptProfileSysParamPermutation use="false" />
+    <WalkForwardOptimization use="false" />
+    <WalkForwardMatrix use="false" />
+    <SequentialOptimization use="false" />
+    <RetestWithHigherPrecision use="false" />
   </CrossChecks>
-  <Notes></Notes>
+  <Notes />
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-WFM" />
-    <Databank label="Input databank" name="Input" value="S-Sys Param" />
+    <Databank label="Output databank" name="Output" value="S-MCRM" />
+    <Databank label="Input databank" name="Input" value="S-OOS1" />
   </Databanks>
+  <SelectedStrategies />
   <Options customSettings="false">
     <BuildTradingOptions>
       <Params>
@@ -162,13 +232,18 @@
       <InitialCapital>100000</InitialCapital>
       <Method type="FixedAmount" use="true">
         <Params>
-          <Param key="RiskedMoney" className="FixedAmount">100</Param>
+          <Param key="RiskedMoney" className="FixedAmount">1000</Param>
           <Param key="Decimals" className="FixedAmount">2</Param>
           <Param key="LotsIfNoMM" className="FixedAmount">0</Param>
           <Param key="MaxLots" className="FixedAmount">1000</Param>
         </Params>
       </Method>
     </MoneyManagement>
+    <RiskManagement>
+      <Method type="AllowAllTrades" use="true">
+        <Params />
+      </Method>
+    </RiskManagement>
   </RiskMoneyManagement>
   <Resources>
     <Symbols />

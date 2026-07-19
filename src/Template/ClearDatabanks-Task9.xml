@@ -2,4 +2,11 @@
   <ClearDatabanks>
     <Databank name="S-OOS1" />
   </ClearDatabanks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>

@@ -4,7 +4,6 @@
 sqx_tool.py: StrategyQuant X project helper tool
 
 - Scaffolds new SQX projects from a template
-- Removes ExitAfterBars blocks from .sqx files
 - Provides an interactive CLI for non-technical users
 - Handles all file and directory management, XML patching, and logging
 """
@@ -15,13 +14,10 @@ from __future__ import annotations
 #  Standard library imports
 # ─────────────────────────────────────────────────────────────────────────────
 import argparse
-import base64
-import concurrent.futures as cf
 import configparser
 import io
 import logging
 import os
-import platform
 import re
 import sqlite3
 import sys
@@ -30,7 +26,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Any, List, Union
 import zipfile
-import multiprocessing as mp
 import xml.etree.ElementTree as ET
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -65,13 +60,11 @@ class Settings:
     template_dir: Path = (_SCRIPT_DIR / "Template").resolve()
     projects_base: Path = (_SCRIPT_DIR / "../Projects").resolve()
     log_file: Path = (_SCRIPT_DIR / "sqx_tool.log").resolve()
-    unix_sh: Path = (_SCRIPT_DIR / "../run.sh").resolve()
     # Default log level when no -v/-q flags are provided.
     # One of: "trace", "debug", "info", "warning", "error", "critical"
     default_log_level: str = "info"
 
     project_dir_tpl: str = "{symbol}/{timestamp}_{symbol}_{timeframe}_{direction}"
-    file_prefix_tpl: str = "{symbol} {timeframe} {direction}"
 
     sqx_path: Path = _SQX_PATH
     symbols_db: Path = (_SQX_PATH / "user" / "data" / "data.db")
@@ -257,126 +250,6 @@ def _clean_path(path_str: str) -> str:
     return path_str
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  remove_eab implementation
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _strip_eab_single(args: Tuple[Path, Path]) -> Tuple[str, str]:
-    """Worker function run in a *separate* process.
-
-    Removes the *ExitAfterBars* building block from an ``.sqx`` file and writes
-    the result to *dst_dir*.  Returns a tuple ``(basename, status)`` for
-    progress reporting.
-    """
-    src, dst_dir = args
-    dst = dst_dir / src.name
-    xml_name = "strategy_Portfolio.xml"
-
-    logging.debug("_strip_eab_single(src=%s, dst=%s)", src, dst)
-
-    # ---- 1. read the inner XML -------------------------------------------
-    try:
-        with zipfile.ZipFile(src, "r") as z:
-            xml_data = z.read(xml_name)
-    except (KeyError, zipfile.BadZipFile):
-        return src.name, "no strategy_Portfolio.xml – skipped"
-
-    # ---- 2. parse + mutate -----------------------------------------------
-    try:
-        root = ET.fromstring(xml_data)
-    except ET.ParseError:
-        return src.name, "XML parse error – skipped"
-
-    # 2a. collect ids to remove
-    ids_to_remove: list[str] = []
-    for parent in root.iter():
-        for child in list(parent):
-            if child.tag == "Param" and child.get("key") == "#ExitAfterBars.ExitAfterBars#":
-                if child.text:
-                    ids_to_remove.append(child.text)
-                parent.remove(child)
-
-    # 2b. purge matching <variable> blocks
-    vars_parent = root.find(".//Variables")
-    if ids_to_remove and vars_parent is not None:
-        for var in list(vars_parent):
-            id_elem = var.find("id")
-            if id_elem is not None and id_elem.text in ids_to_remove:
-                vars_parent.remove(var)
-
-    # 2c. prune lone Boolean <Item>
-    for signal in root.findall(".//signals/signal"):
-        items = [e for e in signal if e.tag == "Item"]
-        if len(items) == 1 and items[0].get("key") == "Boolean":
-            signal.remove(items[0])
-
-    # 2d. write back to new archive
-    buf = io.BytesIO()
-    ET.ElementTree(root).write(buf, encoding="utf-8", xml_declaration=True)
-
-    try:
-        with zipfile.ZipFile(dst, "w") as zout, zipfile.ZipFile(src, "r") as zin:
-            for item in zin.infolist():
-                data = buf.getvalue() if item.filename == xml_name else zin.read(item.filename)
-                zout.writestr(item, data)
-    except Exception as exc:
-        logging.error(f"Error writing zip file {dst}: {exc}")
-        return src.name, f"ERROR: {exc}"
-
-    return src.name, "ok"
-
-
-def remove_eab(args: argparse.Namespace) -> None:
-    """CLI entry point for **remove_eab** sub-command."""
-    logging.debug("remove_eab(args=%s)", args)
-
-    # Clean paths to handle Windows quoting issues
-    src_dir = Path(_clean_path(args.path_from)).expanduser().resolve()
-    dst_dir = Path(_clean_path(args.path_to)).expanduser().resolve()
-
-    dst_dir.mkdir(parents=True, exist_ok=True)
-    files = [p for p in src_dir.iterdir() if p.suffix.lower() == ".sqx"]
-    log("found %d .sqx files in %s", len(files), src_dir)
-    logger.log(TRACE_LEVEL, "Files to process: %s", [str(f) for f in files])
-
-    tasks: List[Tuple[Path, Path]] = [(p, dst_dir) for p in files]
-
-    with cf.ProcessPoolExecutor(max_workers=args.jobs) as pool:
-        for basename, status in pool.map(_strip_eab_single, tasks):
-            log("  %-30s %s", basename, status)
-            logger.log(TRACE_LEVEL, "Processed %s: %s", basename, status)
-
-
-def remove_eab_b64(args: argparse.Namespace) -> None:
-    """CLI entry point for **remove_eab_b64** sub-command.
-    
-    Works exactly like remove_eab but accepts base64-encoded paths.
-    Decodes the paths and delegates to the core remove_eab functionality.
-    """
-    logger.debug("remove_eab_b64(args=%s)", args)
-    
-    try:
-        # Decode base64 strings to get the actual paths
-        path_from_decoded = base64.b64decode(args.path_from_b64).decode('utf-8')
-        path_to_decoded = base64.b64decode(args.path_to_b64).decode('utf-8')
-        
-        logger.debug("Decoded paths - from: %s, to: %s", path_from_decoded, path_to_decoded)
-        
-        # Create a new args object with decoded paths
-        decoded_args = argparse.Namespace(
-            path_from=path_from_decoded,
-            path_to=path_to_decoded,
-            jobs=args.jobs
-        )
-        
-        # Delegate to the existing remove_eab function
-        remove_eab(decoded_args)
-        
-    except Exception as e:
-        logging.error("Error in remove_eab_b64: %s", str(e))
-        print(f"Error decoding base64 paths: {e}")
-        raise
-
-# ─────────────────────────────────────────────────────────────────────────────
 #  newproject implementation
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -436,7 +309,7 @@ def newproject(args: argparse.Namespace) -> None:
     log("project dir: %s", project_dir)
     logger.debug("Created project directory: %s", project_dir)
 
-    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Edges", "04 - S-Edges Final", "05 - S-Build", "06 - S-Final", "07 - S-Final Demo", "08 - S-Darwinex")
+    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Build", "04 - S-Final", "05 - S-Final Demo", "06 - S-Darwinex")
     for sub in subdirs:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.log(TRACE_LEVEL, "Created subdir %s", sub)
@@ -445,27 +318,7 @@ def newproject(args: argparse.Namespace) -> None:
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
     project_dirs = [(project_dir / sub).resolve() for sub in subdirs]
-    e_build_dir, e_final_dir, s_edges_dir, s_edges_final_dir, s_build_dir, s_final_dir, s_final_demo_dir, s_darwinex_dir = project_dirs
-
-    is_windows = platform.system() == "Windows"
-
-    def make_remove_eab_command(src_dir: Path, dst_dir: Path) -> str:
-        if is_windows:
-            return f'remove_eab "{src_dir}" "{dst_dir}"'
-        src_b64 = base64.b64encode(str(src_dir).encode("utf-8")).decode("utf-8")
-        dst_b64 = base64.b64encode(str(dst_dir).encode("utf-8")).decode("utf-8")
-        return f"remove_eab_b64 {src_b64} {dst_b64}"
-
-    def make_rename_command(prefix: str, directories: List[Path]) -> str:
-        if is_windows:
-            quoted_dirs = " ".join(f'"{str(d)}"' for d in directories)
-            return f'rename_files "{prefix}" {quoted_dirs}'
-        prefix_b64 = base64.b64encode(prefix.encode("utf-8")).decode("utf-8")
-        dirs_b64 = [
-            base64.b64encode(str(d).encode("utf-8")).decode("utf-8")
-            for d in directories
-        ]
-        return f"rename_files_b64 {prefix_b64} {' '.join(dirs_b64)}"
+    e_build_dir, e_final_dir, s_build_dir, s_final_dir, s_final_demo_dir, s_darwinex_dir = project_dirs
 
     # ----------------------------------------------------------------------
     #  Helper mutators – declared *inside* newproject so they can capture
@@ -475,12 +328,6 @@ def newproject(args: argparse.Namespace) -> None:
     def patch_config(root: ET.Element) -> None:
         logger.debug("patch_config() – setting project name → %s", project_dir.name)
         root.set("name", project_dir.name)
-
-    def patch_load_from_files(root: ET.Element, subdir: Path) -> None:
-        node = root.find(".//LoadFromFiles/SourceDirectory")
-        if node is not None:
-            logger.log(TRACE_LEVEL, "patch_load_from_files() – %s", subdir)
-            node.text = str(subdir.resolve())
 
     def patch_save_to_files(root: ET.Element,
                             sqx_dir: Optional[Path] = None,
@@ -495,19 +342,6 @@ def newproject(args: argparse.Namespace) -> None:
             if node_sc is not None:
                 logger.log(TRACE_LEVEL, "patch_save_to_files() – sc_dir=%s", sc_dir)
                 node_sc.text = str(sc_dir.resolve())
-
-    def patch_call_external(root: ET.Element, command: str) -> None:
-        call = root.find(".//CallExternalScript/File")
-        if call is not None:
-            logger.debug("patch_call_external() – cmd=%s", command)
-            if platform.system() == "Windows":
-                # Windows: use sys.executable directly
-                call.text = sys.executable
-                call.set("params", f'"{Path(__file__).resolve()}" {command}')
-            else:
-                # Linux / Mac
-                call.text = str(Settings.unix_sh)
-                call.set("params",  command)
 
     def patch_market_side(root: ET.Element) -> None:
         ms = root.find(".//MarketSides")
@@ -668,37 +502,35 @@ def newproject(args: argparse.Namespace) -> None:
 
     retest_start = max(datetime(2010, 1, 1, tzinfo=timezone.utc), first_day)
     retest_start_dx = max(datetime(2010, 1, 1, tzinfo=timezone.utc), first_day_dx)
-    retest_end_edge = build_end
-    retest_end_strategy = last_day
-    retest_end_strategy_dx = last_day_dx
+    retest_end = build_end
+    retest_end_final = last_day
+    retest_end_final_dx = last_day_dx
 
-    oos_ranges_edge: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+    oos_ranges: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
         (retest_start, build_start, "oos"),
     ]
-    oos_ranges_strategy: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+    oos_ranges_final: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
         (retest_start, build_start, "oos"),
-        (build_end, retest_end_strategy, "isv"),
+        (build_end, retest_end_final, "oos"),
     ]
-    oos_ranges_strategy_dx: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
-        (build_end, retest_end_strategy, "isv"),
+    oos_ranges_final_dx: List[Tuple[Union[datetime, str], Union[datetime, str], Optional[str]]] = [
+        (build_end, retest_end_final_dx, "oos"),
     ]
     if build_start > retest_start_dx:
-        oos_ranges_strategy_dx.insert(0, (retest_start_dx, build_start, "oos"))
+        oos_ranges_final_dx.insert(0, (retest_start_dx, build_start, "oos"))
 
     for i in range(1, 3):
         xml = f"Build-Task{i}.xml"
         editor.patch(xml, patch_dates, build_start, build_end)
 
-    for i in range(1, 5):
+    for i in range(1, 14):
         xml = f"Retest-Task{i}.xml"
-        editor.patch(xml, patch_dates, retest_start, retest_end_edge, oos_ranges_edge)
-
-    for i in range(5, 11):
-        xml = f"Retest-Task{i}.xml"
-        editor.patch(xml, patch_dates, retest_start, retest_end_strategy, oos_ranges_strategy)
-
-    # Darwinex
-    editor.patch("Retest-Task11.xml", patch_dates, retest_start_dx, retest_end_strategy_dx, oos_ranges_strategy_dx)
+        if i in {6, 12}:
+            editor.patch(xml, patch_dates, retest_start, retest_end_final, oos_ranges_final)
+        elif i == 13:
+            editor.patch(xml, patch_dates, retest_start_dx, retest_end_final_dx, oos_ranges_final_dx)
+        else:
+            editor.patch(xml, patch_dates, retest_start, retest_end, oos_ranges)
 
     # Config & global market side
     editor.patch("config.xml", patch_config)
@@ -710,54 +542,33 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Retest tasks ----------------------------------------------------------
-    for i in range(1, 11):
+    for i in range(1, 14):
         xml = f"Retest-Task{i}.xml"
-        if i == 10:
+        if i == 12:
             editor.patch(xml, patch_setup, symbol_t_darwinex, sym_t_info, False, False, False)
+        elif i == 13:
+            # Darwinex
+            editor.patch(xml, patch_setup, symbol_darwinex or symbol_t_dukascopy, sym_2_info)
         else:
             editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
-    # Darwinex
-    editor.patch(
-        "Retest-Task11.xml",
-        patch_setup,
-        symbol_darwinex or symbol_dukascopy,
-        sym_2_info,
-    )
-
     # Other markets / Spread / Dates ---------------------------------------
     editor.patch("Retest-Task2.xml", patch_other_markets, build_end)
-    editor.patch("Retest-Task7.xml", patch_other_markets)
+    editor.patch("Retest-Task8.xml", patch_other_markets, build_end)
 
     if symbol_darwinex is None:
         editor.patch("config.xml", patch_disable_task, "Retest-Task2.xml")
         editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
         editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
-        editor.patch("Retest-Task8.xml", patch_input_databank, "S-OOS1")
+        editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
 
-    # Save / Load folders ---------------------------------------------------
+    # Save folders ----------------------------------------------------------
     editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
     editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_final_dir)
-    editor.patch("LoadFromFiles-Task1.xml", patch_load_from_files, s_edges_dir)
-    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_edges_final_dir)
-    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_build_dir)
-    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_dir)
-    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_demo_dir)
-    editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_darwinex_dir)
-
-    # External script -------------------------------------------------------
-    cmd = make_remove_eab_command(e_final_dir, s_edges_dir)
-    editor.patch("CallExternalScript-Task1.xml", patch_call_external, cmd)
-
-    # Rename files in all project directories (symbol = base name before first '_')
-    symbol_base = symbol_dukascopy.split("_")[0]
-    file_prefix = SETTINGS.file_prefix_tpl.format(
-        symbol=symbol_base,
-        timeframe=timeframe,
-        direction=direction,
-    )
-    rename_cmd = make_rename_command(file_prefix, project_dirs)
-    editor.patch("CallExternalScript-Task2.xml", patch_call_external, rename_cmd)
+    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
+    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
+    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_demo_dir)
+    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_darwinex_dir)
 
     # ---- finally write out -------------------------------------------------
     editor.write(dest_cfx)
@@ -945,80 +756,6 @@ def remove_duplicates(args: argparse.Namespace) -> None:
     remove_duplicate_files(src_dir, dest_dir)
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  rename_files implementation
-# ─────────────────────────────────────────────────────────────────────────────
-
-def rename_files(args: argparse.Namespace) -> None:
-    """Rename all *.sqx, *.mq4, *.mq5 files in given directories according to prefix and format rules."""
-    prefix = args.prefix.strip()
-    directories = args.directories
-    logging.debug(f"rename_files(prefix={prefix}, directories={directories})")
-    exts = {'.sqx', '.mq4', '.mq5'}
-    # Regex for Format 1: Strategy XXX.sqx/mq4/mq5
-    re_fmt1 = re.compile(r'^Strategy (.+?)(\.[sm]q[45x])$')
-    # Regex for Format 2: Strategy XXX - Improved YYY.sqx/mq4/mq5
-    re_fmt2 = re.compile(r'^Strategy (.+?) - Improved (.+?)(\.[sm]q[45x])$')
-    for dir_path in directories:
-        # Clean path to handle Windows quoting issues
-        dir_path = Path(_clean_path(dir_path)).expanduser().resolve()
-        if not dir_path.is_dir():
-            logging.warning(f"Directory not found: {dir_path}")
-            continue
-        for file in dir_path.iterdir():
-            if not file.is_file() or file.suffix.lower() not in exts:
-                continue
-            m2 = re_fmt2.match(file.name)
-            m1 = re_fmt1.match(file.name)
-            if m2:
-                # Format 2
-                xxx, yyy, ext = m2.groups()
-                new_name = f"{prefix} {xxx} - {yyy}{ext}"
-            elif m1:
-                # Format 1
-                xxx, ext = m1.groups()
-                new_name = f"{prefix} {xxx}{ext}"
-            else:
-                logging.info(f"Skipping file (no match): {file}")
-                continue
-            new_path = file.with_name(new_name)
-            if new_path.exists():
-                logging.warning(f"Target file already exists, skipping: {new_path}")
-                continue
-            logging.info(f"Renaming {file} -> {new_path}")
-            file.rename(new_path)
-
-
-def rename_files_b64(args: argparse.Namespace) -> None:
-    """CLI entry point for **rename_files_b64** sub-command.
-    
-    Works exactly like rename_files but accepts base64-encoded prefix and directories.
-    Decodes the base64 strings and delegates to the core rename_files functionality.
-    """
-    logging.debug("rename_files_b64(args=%s)", args)
-    
-    try:
-        # Decode base64 strings to get the actual values
-        prefix_decoded = base64.b64decode(args.prefix_b64).decode('utf-8')
-        directories_decoded = [base64.b64decode(d).decode('utf-8') for d in args.directories_b64]
-        
-        logging.info("Decoded prefix: %s", prefix_decoded)
-        logging.info("Decoded directories: %s", directories_decoded)
-        
-        # Create a new args object with decoded values
-        decoded_args = argparse.Namespace(
-            prefix=prefix_decoded,
-            directories=directories_decoded
-        )
-        
-        # Delegate to the existing rename_files function
-        rename_files(decoded_args)
-        
-    except Exception as e:
-        logging.error("Error in rename_files_b64: %s", str(e))
-        print(f"Error decoding base64 parameters: {e}")
-        raise
-
-# ─────────────────────────────────────────────────────────────────────────────
 #  CLI boilerplate – sub-commands & argument parsing
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1044,20 +781,6 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(dest="command", required=False)
 
-    # remove_eab ------------------------------------------------------------
-    p_eab = subparsers.add_parser("remove_eab", help="strip ExitAfterBars from .sqx files")
-    p_eab.add_argument("path_from")
-    p_eab.add_argument("path_to")
-    p_eab.add_argument("-j", "--jobs", type=int, help="workers (default: CPU count)")
-    p_eab.set_defaults(func=remove_eab)
-
-    # remove_eab_b64 --------------------------------------------------------
-    p_eab_b64 = subparsers.add_parser("remove_eab_b64", help="strip ExitAfterBars from .sqx files using base64-encoded paths")
-    p_eab_b64.add_argument("path_from_b64", help="base64-encoded source directory path")
-    p_eab_b64.add_argument("path_to_b64", help="base64-encoded destination directory path")
-    p_eab_b64.add_argument("-j", "--jobs", type=int, help="workers (default: CPU count)")
-    p_eab_b64.set_defaults(func=remove_eab_b64)
-
     # newproject ------------------------------------------------------------
     p_new = subparsers.add_parser("newproject", help="scaffold a new SQX project")
     p_new.add_argument("symbol_dukascopy")
@@ -1065,18 +788,6 @@ def main() -> None:
     p_new.add_argument("timeframe")
     p_new.add_argument("direction", choices=["Long", "Short"])
     p_new.set_defaults(func=newproject)
-
-    # rename_files ----------------------------------------------------------
-    p_rename = subparsers.add_parser("rename_files", help="rename strategy files with a prefix in given directories")
-    p_rename.add_argument("prefix", help="Prefix to use for renamed files")
-    p_rename.add_argument("directories", nargs='+', help="Directories to process")
-    p_rename.set_defaults(func=rename_files)
-
-    # rename_files_b64 ------------------------------------------------------
-    p_rename_b64 = subparsers.add_parser("rename_files_b64", help="rename strategy files with a prefix using base64-encoded parameters")
-    p_rename_b64.add_argument("prefix_b64", help="base64-encoded prefix to use for renamed files")
-    p_rename_b64.add_argument("directories_b64", nargs='+', help="base64-encoded directories to process")
-    p_rename_b64.set_defaults(func=rename_files_b64)
 
     # remove_duplicates ------------------------------------------------------
     p_remove_dup = subparsers.add_parser("remove_duplicates", help="remove files from src_dir that exist in dest_dir (matching by filename)")
@@ -1096,10 +807,6 @@ def main() -> None:
             logging.info("No command specified, launching interactive CLI")
             launch_cli()
         else:
-            # Default for jobs → CPU count when not specified
-            if args.command in ("remove_eab", "remove_eab_b64") and args.jobs is None:
-                args.jobs = os.cpu_count() or 1
-                logging.info("Set jobs to CPU count: %s", args.jobs)
             logging.info("Executing command: %s", args.command)
             args.func(args)
             logging.info("Command completed successfully: %s", args.command)
@@ -1121,15 +828,5 @@ def main() -> None:
     finally:
         logging.info("=== SQX Tool Finished ===")
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  Guard – freeze-support for pyinstaller, spawn on Windows
-# ─────────────────────────────────────────────────────────────────────────────
-
 if __name__ == "__main__":
-    mp.freeze_support()
-    try:
-        mp.set_start_method("spawn")
-    except RuntimeError:
-        pass
-
     main()

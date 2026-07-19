@@ -8,8 +8,8 @@ venv/
 # Log files
 src/sqx_tool.log
 
-# Template .cfx is built on demand from src/Templates/Template/
-src/Templates/*.cfx
+# Template .cfx is built on demand from src/Template/
+src/*.cfx
 
 # Python cache files
 __pycache__/

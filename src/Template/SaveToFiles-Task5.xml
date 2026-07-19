@@ -27,4 +27,11 @@
   <Databanks>
     <Databank label="Input databank" name="Input" value="S-Final" />
   </Databanks>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>

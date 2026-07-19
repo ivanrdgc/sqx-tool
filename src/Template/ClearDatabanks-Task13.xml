@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="E-Sys Param" />
+    <Databank name="S-WFM" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />

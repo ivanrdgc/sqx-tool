@@ -1,6 +1,0 @@
-<Settings>
-  <CallExternalScript>
-    <File params="rename_files">C:\python.exe</File>
-    <WaitFor hours="0" minutes="0">end</WaitFor>
-  </CallExternalScript>
-</Settings>

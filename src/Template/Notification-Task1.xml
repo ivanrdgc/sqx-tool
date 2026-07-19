@@ -4,4 +4,12 @@
     <Email>ivanrdgc@gmail.com</Email>
     <Wait>true</Wait>
   </Notification>
+  <Databanks />
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
 </Settings>
