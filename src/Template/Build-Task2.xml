@@ -21516,7 +21516,7 @@
         </Generated>
         <Predefined changed="false" />
       </Block>
-      <Block key="Stop/Limit Price Ranges.FixedPips" weight="1" use="true" category="stopLimitBlocks">
+      <Block key="Stop/Limit Price Ranges.FixedPips" weight="1" use="false" category="stopLimitBlocks">
         <Generated weight="1">
           <Param key="#Value#" name="Value" type="double" paramType="null" generation="random" minValue="5" maxValue="500" step="5" />
         </Generated>
