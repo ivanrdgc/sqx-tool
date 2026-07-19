@@ -196,7 +196,7 @@
     <FitPortfolio active="false" databank="Existing portfolio">
       <Correlation max="0.3" type="ProfitLoss" period="10" allowNegative="false" addEmptyPeriods="false" />
     </FitPortfolio>
-    <CustomAnalysis method="WFMStability" filter="true" inputArgs="EdgeRatioInPips" />
+    <CustomAnalysis method="WFMStability" filter="true" inputArgs="EdgeRatioNoAtr" />
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
     <WalkForwardMatrix use="true">
@@ -223,7 +223,7 @@
         <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="9">
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="EdgeRatioInPips" />
+              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="EdgeRatioNoAtr" />
             </Left-Side>
             <Comparator value="&gt;=" />
             <Right-Side valueType="numeric">

@@ -6,6 +6,7 @@
 | [`RemoveExitAfterBars`](#removeexitafterbars) | Disables the Exit After Bars block on every strategy of a databank, replacing the old external-script round trip. |
 | [`SelectBestByIndicatorGroup`](#selectbestbyindicatorgroup) | Keeps the best strategy of each unique **Entry + Price** indicator combination. |
 | [`RenameStrategies`](#renamestrategies) | Renames `Strategy 12345` to `EURUSD H1 Long 12345` across the whole databank. |
+| [`EdgeRatioNoAtr`](#edgerationoatr) | Edge Ratio without the ATR term, for the Walk-Forward Matrix where the native one reads 0. |
 
 ## Install
 
@@ -14,6 +15,8 @@ Copy the snippets into your SQX user folder (paths mirror SQX's own layout):
 ```
 src/SQX_extend/Snippets/SQ/CustomAnalysis/*.java
         ->  <SQX_PATH>/user/extend/Snippets/SQ/CustomAnalysis/
+src/SQX_extend/Snippets/SQ/Columns/Databanks/*.java
+        ->  <SQX_PATH>/user/extend/Snippets/SQ/Columns/Databanks/
 ```
 
 With the current `config.ini` (`SQX_PATH=C:\SQX_144`) that is:
@@ -390,3 +393,92 @@ longer patches it.
   the E-Build / S-Build pipeline, repeated improvements, idempotency and the
   leave-alone cases; 11 more drive both entry points against a real
   `ResultsGroup` and confirm they produce identical names.
+
+---
+
+# EdgeRatioNoAtr
+
+MFE/MAE edge ratio built only from data a Walk-Forward Matrix sub-result
+actually carries:
+
+```
+sum(|order.MFE|) / sum(|order.MAE|)      both in money
+```
+
+Same idea as SQX's native Edge Ratio — how far the average trade runs in your
+favour versus against you before it closes — without the two inputs that go
+missing in a WFM.
+
+## Why the native column reads 0 in a WFM
+
+Measured on real WFM sub-results, of the fields the native column needs:
+
+| field | coverage in WFM runs |
+|---|---|
+| `order.MAE` / `order.MFE` (money) | **100%** |
+| `order.PipsMAE` / `order.PipsMFE` | **0%** |
+| `order.ATROnOpen` | **0%** |
+
+That matches how `OrdersList` restores them: the money MAE/MFE are read by every
+order load format, while the pips variants and `ATROnOpen` live in the optional
+additional-data block that WF sub-results do not carry.
+
+`EdgeRatioInPips` needs both of the missing ones. It divides by `ATROnOpen`, so
+at that field's default of `0` the arithmetic collapses silently:
+
+| step | value |
+|------|-------|
+| `PipsMAE / 0` | `Infinity` |
+| sum of `Infinity` | `Infinity` |
+| `safeDivide(Inf, Inf)` | `NaN` |
+| `round2(NaN)` | **`0.0`** — `Math.round(NaN)` is `0` in Java |
+
+So missing data surfaces as a plausible-looking `0` rather than `N/A`.
+
+## Why money is fine here
+
+It is a ratio of two excursions, so the unit largely cancels — at a fixed
+position size the money ratio equals the pips ratio exactly (verified). They
+diverge only under money management: the money ratio weights bigger positions
+more heavily, a pips ratio weights every trade equally. For comparing runs of
+one strategy across a WFM that is not a problem, and it is the only thing
+computable there at all.
+
+Magnitudes are taken with `abs()`, so whichever sign convention SQX stores the
+excursions in cannot flip the result or trip the guard in `ratio()`.
+
+## Deliberately not adaptive
+
+It always uses the money fields — whatever the **Result in** selector says, and
+whether or not the ATR happens to be available. One input, one scale, no silent
+switching. In particular it never returns a quiet `0` just because *Pips* was
+selected and the pips fields are empty.
+
+**Use it in the Walk-Forward Matrix; keep the native Edge Ratio everywhere
+else** — that one is volatility-normalised and therefore comparable across
+symbols, which this is not.
+
+## Using it as a WFMStability metric
+
+If you filter the WFM surface with [`WFMStability`](#wfmstability), point it at
+this column:
+
+```
+EdgeRatioNoAtr           instead of   EdgeRatioInPips
+```
+
+With the native column the surface is all zeros, and since Edge Ratio is
+higher-is-better `WFMStability` rejects every strategy with
+`best WF run is not positive (0.00)` — so a `filter="true"` task on that metric
+silently drops the entire databank.
+
+## Notes
+
+- These are databank **columns**, not custom analyses — they deploy to
+  `Snippets/SQ/Columns/Databanks/`.
+- Higher is better: above 1, the average trade runs further in your favour than
+  against you before it closes.
+- The trade count cancels out of the ratio, so unlike the native column this one
+  never reads `NumberOfTrades`.
+- Verified: compiles against `SQTradingLib.jar` (SQX 144), with 11 assertions
+  covering sign conventions, unit-cancellation and the degenerate cases.
