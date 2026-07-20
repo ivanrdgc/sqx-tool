@@ -152,47 +152,35 @@
     <Conditions>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth"/>
         </Left-Side>
-        <Comparator value="&gt;=" />
+        <Comparator value="&gt;="/>
         <Right-Side valueType="numeric">
-          <Numeric-Value value="3" />
+          <Numeric-Value value="3"/>
         </Right-Side>
       </Condition>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+          <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips"/>
         </Left-Side>
-        <Comparator value="&gt;=" />
+        <Comparator value="&gt;="/>
         <Right-Side valueType="numeric">
-          <Numeric-Value value="1.1" />
-        </Right-Side>
-      </Condition>
-      <Condition use="false">
-        <Left-Side valueType="column">
-          <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="40" class="NetProfit" />
-        </Left-Side>
-        <Comparator value="&lt;=" />
-        <Right-Side valueType="column">
-          <Column-Value column="NetProfit" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="NetProfit" />
-        </Right-Side>
-      </Condition>
-      <Condition use="false">
-        <Left-Side valueType="column">
-          <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="Stagnation" />
-        </Left-Side>
-        <Comparator value="&lt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2000" />
+          <Numeric-Value value="1.1"/>
         </Right-Side>
       </Condition>
       <Condition use="true">
+        <Left-Side valueType="column"><Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="40" class="EdgeRatioInPips"/></Left-Side>
+        <Comparator value="&lt;="/>
+        <Right-Side valueType="column"><Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips"/></Right-Side>
+      </Condition>
+      
+      <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade"/>
         </Left-Side>
-        <Comparator value="&gt;=" />
+        <Comparator value="&gt;="/>
         <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
+          <Numeric-Value value="2"/>
         </Right-Side>
       </Condition>
     </Conditions>

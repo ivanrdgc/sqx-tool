@@ -223,29 +223,38 @@
         <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="9">
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="EdgeRatioNoAtr" />
+              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="EdgeRatioNoAtr"/>
             </Left-Side>
-            <Comparator value="&gt;=" />
+            <Comparator value="&gt;="/>
             <Right-Side valueType="numeric">
-              <Numeric-Value value="80" />
+              <Numeric-Value value="80"/>
             </Right-Side>
           </Condition>
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth"/>
             </Left-Side>
-            <Comparator value="&gt;=" />
+            <Comparator value="&gt;="/>
             <Right-Side valueType="numeric">
-              <Numeric-Value value="1" />
+              <Numeric-Value value="1"/>
             </Right-Side>
           </Condition>
           <Condition use="true">
             <Left-Side valueType="column">
-              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade"/>
             </Left-Side>
-            <Comparator value="&gt;=" />
+            <Comparator value="&gt;="/>
             <Right-Side valueType="numeric">
-              <Numeric-Value value="2" />
+              <Numeric-Value value="2"/>
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioNoAtr"/>
+            </Left-Side>
+            <Comparator value="&gt;="/>
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1"/>
             </Right-Side>
           </Condition>
         </Conditions>
