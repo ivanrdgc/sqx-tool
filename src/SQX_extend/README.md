@@ -276,8 +276,10 @@ Add as a **Full databank analysis** task in a Custom Project:
 
 | Input args | Effect |
 |------------|--------|
-| *(empty)*  | Keep the best 1 per group by **Fitness** |
-| `Fitness,2`| Keep the best 2 per group by Fitness |
+| *(empty)*  | Keep the best 1 per group by **full-sample Fitness** |
+| `Fitness,2`| Keep the best 2 per group by full-sample Fitness |
+| `Fitness,1,IS` | Keep the best 1 per group by **in-sample** Fitness |
+| `Fitness,1,OOS2` | Keep the best 1 per group by Fitness on OOS range 2 |
 | `RetDD`    | Keep the best 1 per group by Ret/DD, full sample |
 | `RetDD,3,OOS` | Keep the best 3 per group by Ret/DD, out of sample |
 | `Drawdown` | Keep the *lowest* drawdown per group |
@@ -287,8 +289,30 @@ Format is `Criterion,N,Sample` — same shape as `SelectBestByEntryGroupArgs`.
 - **Criterion**: `Fitness` (default), `RetDD`, `Sharpe`, `ProfitFactor`,
   `NetProfit`, `Calmar`, `WinRate`, `Drawdown` (smaller is better)
 - **N**: how many to keep per group, `1`–`10` (default `1`)
-- **Sample**: `Full` (default), `IS`, `OOS`. Ignored for `Fitness`, which is a
-  single value per strategy.
+- **Sample**: `Full` (default), `IS`, `IST`, `ISV`, `ISV1`–`ISV10`, `OOS`,
+  `OOS1`–`OOS10`. An unrecognised name falls back to `Full` with a logged warning.
+
+### Fitness and samples
+
+`ResultsGroup.getFitness()` with no argument is **hardcoded** to
+`getFitness(SampleTypes.InSample)`, so anything built on it ranks on in-sample
+fitness no matter what the task is configured for. This snippet passes the
+configured sample through to `getFitness(byte)` instead, and defaults to the full
+sample.
+
+`FitnessCollection` keeps a separate field per sample type and returns that
+field's default when the sample was never computed. Asking for a sample the
+project does not define therefore yields `0` for *every* strategy — which ties
+them all and quietly degenerates selection into databank order rather than
+failing. Since fitness runs 0–1, an all-zero databank is treated as that case and
+logged loudly to both the SQX log and the project log:
+
+```
+!!! Every strategy scored fitness 0 for sample [OOS2]. ...
+```
+
+If you see that, the sample does not exist in the task that produced the
+databank — not that every strategy is worthless.
 
 ## Behaviour worth knowing
 

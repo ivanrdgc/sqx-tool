@@ -51,8 +51,11 @@ import java.util.Set;
  *
  * INPUT ARGUMENTS (optional): Criterion,N,Sample
  *
- *   (empty)            best 1 per group by Fitness          <- the default
- *   Fitness,2          best 2 per group by Fitness
+ *   (empty)            best 1 per group by full-sample Fitness   <- the default
+ *   Fitness,2          best 2 per group by full-sample Fitness
+ *   Fitness,1,IS       best 1 per group by in-sample Fitness
+ *   Fitness,1,OOS      best 1 per group by out-of-sample Fitness
+ *   Fitness,1,OOS2     best 1 per group by Fitness on OOS range 2
  *   RetDD              best 1 per group by Ret/DD, full sample
  *   RetDD,3,OOS        best 3 per group by Ret/DD, out of sample
  *   NetProfit,1,IS     best 1 per group by Net Profit, in sample
@@ -60,8 +63,21 @@ import java.util.Set;
  *   Criterion: Fitness (default), RetDD, Sharpe, ProfitFactor, NetProfit,
  *              Calmar, WinRate, Drawdown (smaller is better)
  *   N        : how many to keep per group, 1..10 (default 1)
- *   Sample   : Full (default), IS, OOS. Ignored when Criterion is Fitness,
- *              which is a single value per strategy.
+ *   Sample   : Full (default), IS, IST, ISV, ISV1..ISV10, OOS, OOS1..OOS10
+ *
+ * A NOTE ON FITNESS AND SAMPLES
+ *
+ * ResultsGroup.getFitness() with no argument is hardcoded to
+ * getFitness(SampleTypes.InSample), so anything built on it silently ranks on
+ * in-sample fitness whatever the task says. This passes the configured sample
+ * through to getFitness(byte) instead, and defaults to the full sample.
+ *
+ * FitnessCollection holds a separate field per sample type and hands back that
+ * field's default when the sample was never computed. Asking for a sample the
+ * project does not define therefore returns 0 for every strategy - which ties
+ * them all and quietly degenerates selection into databank order rather than
+ * failing. Since fitness runs 0..1, an all-zero databank is treated as that
+ * case and logged loudly, to both the SQX log and the project log.
  *
  * Strategies whose indicators cannot be determined (either column returns
  * "N/A", e.g. the strategy XML is unreadable) are never grouped with anything
@@ -133,18 +149,71 @@ public class SelectBestByIndicatorGroup extends CustomAnalysisMethod {
             }
         }
 
-        if (parts.length >= 3) {
+        if (parts.length >= 3 && !parts[2].trim().isEmpty()) {
             String sample = parts[2].trim().toUpperCase(Locale.US);
-            if (sample.equals("IS")) {
-                c.sampleType = SampleTypes.InSample;
-                c.sampleLabel = "IS";
-            } else if (sample.equals("OOS")) {
-                c.sampleType = SampleTypes.OutOfSample;
-                c.sampleLabel = "OOS";
+            byte parsed = parseSampleType(sample);
+            if (parsed >= 0) {
+                c.sampleType = parsed;
+                c.sampleLabel = sample;
+            } else {
+                Log.warn("Unknown sample [{}], using {}. Valid: Full, IS, IST, ISV, "
+                       + "ISV1..ISV10, OOS, OOS1..OOS10", parts[2].trim(), c.sampleLabel);
             }
         }
 
         return finish(c);
+    }
+
+    /**
+     * Maps a sample name onto its SampleTypes constant, or -1 if unrecognised.
+     *
+     * The numbered variants are contiguous in SampleTypes - OutOfSample is 20 and
+     * OOS1..OOS10 are 21..30, InSampleValidation is 40 and ISV1..ISV10 are 41..50
+     * - so they are derived by offset and then range checked, rather than written
+     * out as twenty separate branches.
+     */
+    static byte parseSampleType(String sample) {
+        if (sample.equals("FULL") || sample.equals("FS") || sample.equals("FULLSAMPLE")) {
+            return SampleTypes.FullSample;
+        }
+        if (sample.equals("IS") || sample.equals("INSAMPLE")) {
+            return SampleTypes.InSample;
+        }
+        if (sample.equals("IST")) {
+            return SampleTypes.InSampleTraining;
+        }
+        if (sample.equals("ISV")) {
+            return SampleTypes.InSampleValidation;
+        }
+        if (sample.equals("OOS") || sample.equals("OUTOFSAMPLE")) {
+            return SampleTypes.OutOfSample;
+        }
+
+        byte numbered = parseNumbered(sample, "ISV", SampleTypes.InSampleValidation,
+                                      SampleTypes.InSampleValidation10);
+        if (numbered >= 0) return numbered;
+
+        return parseNumbered(sample, "OOS", SampleTypes.OutOfSample, SampleTypes.OutOfSample10);
+    }
+
+    /** "OOS3" -> base+3, provided that lands inside [base+1, max]. */
+    private static byte parseNumbered(String sample, String prefix, byte base, byte max) {
+        if (!sample.startsWith(prefix)) return -1;
+
+        String suffix = sample.substring(prefix.length());
+        if (suffix.isEmpty()) return -1;
+
+        int n;
+        try {
+            n = Integer.parseInt(suffix);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+
+        int value = base + n;
+        if (n < 1 || value > max) return -1;
+
+        return (byte) value;
     }
 
     private static Config finish(Config c) {
@@ -251,8 +320,7 @@ public class SelectBestByIndicatorGroup extends CustomAnalysisMethod {
         Config c = parseArgs(getInputArgs());
 
         Log.info("=== SelectBestByIndicatorGroup: {} strategies | criterion {} | top {} | sample {} ===",
-                 databankRG.size(), c.criterion, c.topN,
-                 c.criterion.equalsIgnoreCase("Fitness") ? "n/a" : c.sampleLabel);
+                 databankRG.size(), c.criterion, c.topN, c.sampleLabel);
 
         EntryIndicators entryCol = new EntryIndicators();
         PriceIndicators priceCol = new PriceIndicators();
@@ -289,6 +357,16 @@ public class SelectBestByIndicatorGroup extends CustomAnalysisMethod {
             }
         }
 
+        boolean sampleSuspect = isSampleLikelyMissing(items, c);
+        if (sampleSuspect) {
+            Log.warn("!!! Every strategy scored fitness 0 for sample [{}]. Fitness is a "
+                   + "0..1 score, so this is far more likely to be a sample with no "
+                   + "fitness computed than a databank of worthless strategies. Every "
+                   + "score ties, so selection has degenerated into databank order. "
+                   + "Check that sample exists in the task that produced this databank.",
+                   c.sampleLabel);
+        }
+
         int groups = countGroups(items);
         List<Integer> winnerIndices = selectWinners(items, c.topN, c.minimize);
 
@@ -305,9 +383,34 @@ public class SelectBestByIndicatorGroup extends CustomAnalysisMethod {
         }
 
         setProjectLog("SelectBestByIndicatorGroup: kept " + winners.size() + " of "
-                    + databankRG.size() + " (" + groups + " unique Entry+Price groups)");
+                    + databankRG.size() + " (" + groups + " unique Entry+Price groups)"
+                    + (sampleSuspect ? " [WARNING: no fitness found for sample "
+                                     + c.sampleLabel + "]" : ""));
 
         return winners;
+    }
+
+    /**
+     * True when every scored strategy came back with fitness exactly 0.
+     *
+     * FitnessCollection stores one field per sample type and returns that field's
+     * default when the sample was never computed, so asking for a sample the
+     * project does not define yields 0 for everything - indistinguishable from a
+     * real score, and it makes every strategy tie so the stable sort just keeps
+     * whatever came first. Fitness runs 0..1, so an all-zero databank is far more
+     * likely to be the missing-sample case than a genuine result.
+     */
+    static boolean isSampleLikelyMissing(List<Scored> items, Config c) {
+        if (!c.criterion.equalsIgnoreCase("Fitness")) return false;
+
+        int scored = 0;
+        for (Scored s : items) {
+            if (Double.isNaN(s.score)) continue;   // unresolved / errored, not a real score
+            if (s.score != 0.0) return false;
+            scored++;
+        }
+
+        return scored > 0;
     }
 
     // ------------------------------------------------------------------
@@ -316,7 +419,10 @@ public class SelectBestByIndicatorGroup extends CustomAnalysisMethod {
 
     private double calcScore(ResultsGroup rg, Config c) throws Exception {
         if (c.criterion.equalsIgnoreCase("Fitness")) {
-            return rg.getFitness();
+            // rg.getFitness() with no argument is hardcoded to getFitness(InSample),
+            // so it would silently ignore the Sample setting. FitnessCollection
+            // keeps a separate field per sample type, so pass ours through.
+            return rg.getFitness(c.sampleType);
         }
 
         String mainKey = getMainResultKey(rg);
