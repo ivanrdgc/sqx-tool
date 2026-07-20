@@ -4,7 +4,7 @@
       <Condition type="ResultsCount">
         <Field type="databank">E-Final</Field>
         <Field type="comparator">&lt;</Field>
-        <Field type="number">500</Field>
+        <Field type="number">200</Field>
       </Condition>
     </Conditions>
   </GoToTask>

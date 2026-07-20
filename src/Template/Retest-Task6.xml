@@ -29,7 +29,7 @@
       </Setup>
     </Setups>
     <OutOfSample showGraph="false">
-      <Range dateFrom="2017.12.31" dateTo="2025.10.12" />
+      <Range dateFrom="2025.10.12" dateTo="2025.10.12" />
       <Range dateFrom="2025.10.12" dateTo="2025.12.11" type="isv" />
     </OutOfSample>
   </Data>
@@ -153,83 +153,83 @@
     <Conditions>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth"/>
+          <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="3"/>
-        </Right-Side>
-      </Condition>
-        <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth"/>
-        </Left-Side>
-        <Comparator value="&gt;="/>
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="3"/>
-        </Right-Side>
-      </Condition>
-        <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth"/>
-        </Left-Side>
-        <Comparator value="&gt;="/>
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="3"/>
+          <Numeric-Value value="3" />
         </Right-Side>
       </Condition>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade"/>
+          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="2"/>
+          <Numeric-Value value="3" />
         </Right-Side>
       </Condition>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade"/>
+          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="2"/>
+          <Numeric-Value value="3" />
         </Right-Side>
       </Condition>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade"/>
+          <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="2"/>
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
-        <Condition use="true">
+      <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="EdgeRatioInPips" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="EdgeRatioInPips"/>
+          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="1.5"/>
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
-        <Condition use="true">
+      <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips"/>
+          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="1.1"/>
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
-        <Condition use="true">
-          <Left-Side valueType="column">
-        <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips"/>
+      <Condition use="true">
+        <Left-Side valueType="column">
+          <Column-Value column="EdgeRatioInPips" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="EdgeRatioInPips" />
         </Left-Side>
-        <Comparator value="&gt;="/>
+        <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="1"/>
+          <Numeric-Value value="1.5" />
+        </Right-Side>
+      </Condition>
+      <Condition use="true">
+        <Left-Side valueType="column">
+          <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="1.1" />
+        </Right-Side>
+      </Condition>
+      <Condition use="true">
+        <Left-Side valueType="column">
+          <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+        </Left-Side>
+        <Comparator value="&gt;=" />
+        <Right-Side valueType="numeric">
+          <Numeric-Value value="1" />
         </Right-Side>
       </Condition>
     </Conditions>

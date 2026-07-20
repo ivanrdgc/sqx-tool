@@ -2,6 +2,17 @@
   <ClearDatabanks>
     <Databank name="S-OOS1" />
   </ClearDatabanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
   <Resources>
     <Symbols />
     <Brokers />

@@ -29,7 +29,7 @@
       </Setup>
     </Setups>
     <OutOfSample showGraph="false">
-      <Range dateFrom="2018.01.01" dateTo="2026.03.09" />
+      <Range dateFrom="2026.03.09" dateTo="2026.03.09" />
     </OutOfSample>
   </Data>
   <Rankings type="never">
