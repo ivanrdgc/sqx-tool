@@ -27,9 +27,13 @@ import com.strategyquant.tradinglib.ValueTypes;
  *     order.PipsMAE / order.PipsMFE  present on 0%
  *     order.ATROnOpen                present on 0%
  *
- * which matches how OrdersList restores them: MAE and MFE in money are read by
- * every order load format, while the pips variants and ATROnOpen live in the
- * optional additional-data block that WF sub-results do not carry.
+ * ATROnOpen is the one field OrdersList.readAdditionalData() restores, and that
+ * optional block is not carried by WF sub-results, so it is always absent there.
+ * The pips excursions are a different story: loadOrderFormat10() does restore
+ * them, they simply come back as 0 in a WF sub-result, which is why
+ * OrderPLComputer's "derive MAE in money from PipsMAE" step is skipped and the
+ * stored money values survive intact. Either way only the money fields can be
+ * relied on here.
  *
  * The native EdgeRatioInPips needs the two that are missing. It divides by
  * ATROnOpen, so with that field at its default of 0 the arithmetic collapses

@@ -7,6 +7,7 @@
 | [`SelectBestByIndicatorGroup`](#selectbestbyindicatorgroup) | Keeps the best strategy of each unique **Entry + Price** indicator combination. |
 | [`RenameStrategies`](#renamestrategies) | Renames `Strategy 12345` to `EURUSD H1 Long 12345` across the whole databank. |
 | [`EdgeRatioNoAtr`](#edgerationoatr) | Edge Ratio without the ATR term, for the Walk-Forward Matrix where the native one reads 0. |
+| [`ReturnOnRisk`](#returnonrisk) | Net profit per unit of money actually risked (summed MAE + costs). Independent of backtest length. |
 
 ## Install
 
@@ -482,3 +483,114 @@ silently drops the entire databank.
   never reads `NumberOfTrades`.
 - Verified: compiles against `SQTradingLib.jar` (SQX 144), with 11 assertions
   covering sign conventions, unit-cancellation and the degenerate cases.
+
+---
+
+# ReturnOnRisk
+
+Realised profit per unit of money actually put at risk.
+
+```
+A = sum of net P/L of every trade          (money, costs included)
+B = sum of |MAE| + |commission and swap|   (money)
+
+value = A / B
+```
+
+Answers *"for every dollar that went underwater or went to the broker, how many
+dollars did I keep?"*. Higher is better; `0.20` means you cleared 20 cents per
+dollar of risk you actually lived through.
+
+Linear, not compounded — it matches fixed-amount risk sizing, where profit does
+not get reinvested.
+
+## Why none of the built-ins do this
+
+SQX has no column that uses summed MAE as the denominator. The near relatives
+all define risk differently:
+
+| Column | Risk denominator | Why it is not the same |
+|---|---|---|
+| `Ret/DD Ratio` | max drawdown | one worst moment of the equity curve |
+| `Profit factor` | gross loss | only counts trades that ended badly |
+| `CAGR/Max DD %` | max drawdown % | compounded, assumes reinvestment |
+| `Total MFE` | — | sums the *favourable* excursion; there is no `TotalMAE` |
+
+Summed MAE counts the heat of **every** trade, including the winners that were
+deeply underwater before they came back — the exposure you actually lived
+through rather than the one the closed trade admits to.
+
+## Why there is no division by years
+
+`A` and `B` are both cumulative sums over trades, so a longer backtest grows both
+at roughly the same rate and the ratio converges on
+
+```
+mean(profit per trade) / mean(risk per trade)
+```
+
+which is **already independent of backtest length**. Dividing by the number of
+years would not remove a length dependence, it would introduce one — a 20-year
+backtest would score half a 10-year backtest of identical quality.
+
+The rule of thumb:
+
+| Risk denominator | Behaviour over time | Annualise? |
+|---|---|---|
+| cumulative (summed MAE, gross loss) | grows with length | **no** — already time-free |
+| peak / stock (max drawdown) | roughly flat with length | **yes** |
+
+That second row is why `CAGR/Max DD %` exists: max DD does not grow the way
+profit does, so the ratio needs the correction. Summed MAE does grow, so it does
+not.
+
+### What it deliberately does not measure
+
+Speed. Two strategies both scoring `0.50`, one trading 10 times a year and one
+1000 times, are equally efficient per dollar risked but earn wildly different
+absolute amounts. Read trade frequency or `Avg. Profit Per Year` alongside this
+rather than folding it in.
+
+## Costs are counted once, on each side
+
+When a project has `AddCommissionSwapToPL` enabled, SQX folds commission, swap
+and slippage into `Order.PL` as orders are computed, and records that it did so
+in `Order.CommSwapApplied`:
+
+```java
+order.PL = order.PL + order.CommSwap - order.SlippageInMoney;
+order.CommSwapApplied = true;
+```
+
+So `Order.PL` is normally **already net**, and adding `CommSwap` to it again
+would count the costs twice. The column reads the flag and only applies the costs
+itself when SQX has not.
+
+On the risk side the costs are added as magnitudes on top of `|MAE|`: money paid
+to the broker is money put at risk however the trade turned out.
+
+## Works in a Walk-Forward Matrix
+
+Every field it touches — `PL`, `CommSwap`, `CommSwapApplied`, `MAE` — is restored
+by `loadOrderFormat10()`, the main order load path. Only `ATROnOpen` lives in the
+optional additional-data block that WF sub-results drop, which is why
+[`EdgeRatioInPips`](#edgerationoatr) collapses there and this does not.
+
+Because it needs no date range and no chart setup, there is nothing else to go
+missing either.
+
+Like `EdgeRatioNoAtr` it ignores the *Result in* selector and always computes in
+money, so it never silently returns 0 because Pips was selected.
+
+## Notes
+
+- This is a databank **column**, not a custom analysis — it deploys to
+  `Snippets/SQ/Columns/Databanks/`.
+- Displayed with 4 decimals, since the interesting spread between strategies
+  often sits in the third decimal.
+- A losing strategy reads negative; it is not clamped at 0.
+- A trade that never went underwater still carries its commission and swap as
+  risk, so a zero-MAE strategy does not divide by zero.
+- Verified: compiles against `SQTradingLib.jar` (SQX 144), with 10 assertions
+  covering the cost-double-counting flag, MAE sign conventions, balance and
+  cancelled orders, NaN trades, and a 20× longer backtest scoring identically.
