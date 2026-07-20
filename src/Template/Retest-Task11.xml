@@ -184,7 +184,7 @@
     <FitPortfolio active="false" databank="Existing portfolio">
       <Correlation max="0.3" type="ProfitLoss" period="10" allowNegative="false" addEmptyPeriods="false" />
     </FitPortfolio>
-    <CustomAnalysis method="WFMStability" filter="true" inputArgs="Stagnation+ReturnDDRatio" />
+    <CustomAnalysis method="WFMStability" filter="true" inputArgs="ReturnOnRisk" />
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
     <WalkForwardMatrix use="true">
