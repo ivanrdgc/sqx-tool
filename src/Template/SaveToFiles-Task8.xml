@@ -25,19 +25,8 @@
     <SetNoteCustom />
   </SaveToFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="S-Final" />
+    <Databank label="Input databank" name="Input" value="S-Darwinex" />
   </Databanks>
-  <CrossChecks>
-    <RetestOnAdditionalMarkets />
-    <WhatIf />
-    <MonteCarloManipulation />
-    <MonteCarloRetest />
-    <OptProfileSysParamPermutation />
-    <WalkForwardOptimization />
-    <WalkForwardMatrix />
-    <SequentialOptimization />
-    <RetestWithHigherPrecision />
-  </CrossChecks>
   <Resources>
     <Symbols />
     <Brokers />

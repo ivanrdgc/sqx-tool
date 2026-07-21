@@ -1,0 +1,34 @@
+<Settings>
+  <Filtering>
+    <ActionType>0</ActionType>
+    <MaxStrategies>0</MaxStrategies>
+    <ConditionsType>3</ConditionsType>
+    <Conditions />
+  </Filtering>
+  <Databanks>
+    <Databank label="Source databank" name="Source" value="E-Retests" />
+    <Databank label="Target databank" name="Target" value="Results" />
+    <Databank label="Output databank" name="Output" value="Results" />
+  </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <WhatToBuild>
+    <StrategyType type="simple" additionalCharts="1" templateFile="" improveType="strategy" strategyFile="" improveDatabank="Results" />
+  </WhatToBuild>
+  <Resources>
+    <Symbols />
+    <Brokers />
+    <Instruments />
+    <Sessions />
+    <CustomIndicators />
+  </Resources>
+</Settings>

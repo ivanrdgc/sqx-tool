@@ -1,7 +1,14 @@
 <Settings>
-  <ClearDatabanks>
-    <Databank name="S-OOS1" />
-  </ClearDatabanks>
+  <Filtering>
+    <ActionType>0</ActionType>
+    <MaxStrategies>0</MaxStrategies>
+    <ConditionsType>3</ConditionsType>
+    <Conditions />
+  </Filtering>
+  <Databanks>
+    <Databank label="Source databank" name="Source" value="S-Retests" />
+    <Databank label="Target databank" name="Target" value="Results" />
+  </Databanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
     <WhatIf />

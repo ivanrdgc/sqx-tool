@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="E-OOS1" />
+    <Databank name="E-Retests" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />

@@ -207,21 +207,327 @@
     </FitPortfolio>
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
-  <CrossChecks use="false" evaluateAll="true">
-    <RetestOnAdditionalMarkets use="false" />
+  <CrossChecks use="true" evaluateAll="false">
+    <RetestOnAdditionalMarkets use="true">
+      <Settings>
+        <Setups detailed="true">
+          <Setup dateFrom="2025.05.28" dateTo="2026.07.10" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
+            <Chart symbol="EURUSD_darwinex" timeframe="H1" spread="0" />
+            <Commissions>
+              <Method type="None" use="true">
+                <Params />
+              </Method>
+            </Commissions>
+            <Swap use="false" type="money" long="0" short="0" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
+          </Setup>
+          <Setup dateFrom="2025.05.28" dateTo="2026.07.10" testPrecision="1" session="No Session" slippage="0" minDist="0" engine="MetaTrader5 (hedged)">
+            <Chart symbol="EURUSD_darwinex" timeframe="H1" spread="0" />
+            <Commissions>
+              <Method type="None" use="true">
+                <Params />
+              </Method>
+            </Commissions>
+            <Swap use="false" type="money" long="0" short="0" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
+            <MainTestValues timeframe="true" dates="false" subcharts="true" precision="true" distance="true" spread="false" slippage="true" commissions="false" swap="false" session="true" />
+          </Setup>
+        </Setups>
+      </Settings>
+      <AcceptanceSettings>
+        <Check>all</Check>
+        <MinConditions>2</MinConditions>
+        <MinMarkets>1</MinMarkets>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="EdgeRatioInPips" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2Pct" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="2" subresult="30" pctRatio="70" class="EdgeRatioInPips" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="0" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="RetestOnAdditionalMarkets" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="0" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </RetestOnAdditionalMarkets>
     <WhatIf use="false" />
     <MonteCarloManipulation use="false" />
-    <MonteCarloRetest use="false" />
-    <OptProfileSysParamPermutation use="false" />
+    <MonteCarloRetest use="true">
+      <Settings>
+        <Methods>
+          <Method use="false" type="RandomizeHistoryData">
+            <Params>
+              <Param key="ProbabilityUp" type="Integer">20</Param>
+              <Param key="MaxChangeUp" type="Integer">10</Param>
+              <Param key="ProbabilityDown" type="Integer">20</Param>
+              <Param key="MaxChangeDown" type="Integer">10</Param>
+              <Param key="KeepConnected" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeHistoryDataFixedRange">
+            <Params>
+              <Param key="MaxChange" type="Integer">40</Param>
+            </Params>
+          </Method>
+          <Method use="true" type="RandomizeHistoryDataOHLC">
+            <Params>
+              <Param key="ProbabilityOpen" type="Integer">100</Param>
+              <Param key="ProbabilityHigh" type="Integer">100</Param>
+              <Param key="ProbabilityLow" type="Integer">100</Param>
+              <Param key="ProbabilityClose" type="Integer">100</Param>
+              <Param key="MaxChange" type="Integer">10</Param>
+              <Param key="ATRPeriod" type="Integer">14</Param>
+              <Param key="KeepConnected" type="Boolean">true</Param>
+              <Param key="ProbabilityGapChange" type="Integer">100</Param>
+              <Param key="MaxChangeOfGap" type="Integer">10</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeMinDistance">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">10.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeSlippage">
+            <Params>
+              <Param key="Min" type="Double">0.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeSpread">
+            <Params>
+              <Param key="Min" type="Double">1.0</Param>
+              <Param key="Max" type="Double">5.0</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStartingBar">
+            <Params>
+              <Param key="MaxChange" type="Integer">100</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStrategyParameters">
+            <Params>
+              <Param key="Probability" type="Integer">10</Param>
+              <Param key="MaxChange" type="Integer">20</Param>
+              <Param key="Symmetric" type="Boolean">true</Param>
+            </Params>
+          </Method>
+          <Method use="false" type="RandomizeStrategyParametersCustomizable">
+            <Params>
+              <Param key="Probability" type="Integer">100</Param>
+              <Param key="MaxChange" type="Integer">50</Param>
+              <Param key="Symmetric" type="Boolean">true</Param>
+              <Param key="Period" type="Boolean">true</Param>
+              <Param key="Shift" type="Boolean">false</Param>
+              <Param key="Constant" type="Boolean">false</Param>
+              <Param key="OtherParam" type="Boolean">false</Param>
+              <Param key="ExitUsed" type="Boolean">false</Param>
+              <Param key="ExitUnused" type="Boolean">false</Param>
+              <Param key="Boolean" type="Boolean">false</Param>
+              <Param key="TradingOptions" type="Boolean">false</Param>
+            </Params>
+          </Method>
+        </Methods>
+        <NumberOfSimulations>1000</NumberOfSimulations>
+        <MCUseFullSample>true</MCUseFullSample>
+        <MCBacktestPrecision>-1</MCBacktestPrecision>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2" resultType="MonteCarloRetest" direction="0" sampleType="10" plType="10" confidenceLevel="70" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="MonteCarloRetest" direction="0" sampleType="10" plType="10" confidenceLevel="70" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="MonteCarloRetest" direction="0" sampleType="10" plType="10" confidenceLevel="70" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </MonteCarloRetest>
+    <OptProfileSysParamPermutation use="true">
+      <Settings>
+        <MaxTests>15000</MaxTests>
+        <DistributionUp>20</DistributionUp>
+        <DistributionDown>20</DistributionDown>
+        <Steps>6</Steps>
+        <WhatToParametrize type="0" symmetricVariables="false">
+          <Recommended>true</Recommended>
+          <Periods>false</Periods>
+          <Shifts>false</Shifts>
+          <Constants>false</Constants>
+          <OtherParams>false</OtherParams>
+          <EntryParams>false</EntryParams>
+          <EntryLogic>false</EntryLogic>
+          <ExitParamsUsed>false</ExitParamsUsed>
+          <ExitParamsUnused>false</ExitParamsUnused>
+          <BooleanParams>false</BooleanParams>
+        </WhatToParametrize>
+      </Settings>
+      <AcceptanceSettings>
+        <ProfitOptPct>95</ProfitOptPct>
+        <AvgProfit>0</AvgProfit>
+        <UniformDistrChanges>5</UniformDistrChanges>
+        <StdevAvgProfit>1</StdevAvgProfit>
+        <EvalProfitOptCheck>false</EvalProfitOptCheck>
+        <EvalAvgProfitCheck>false</EvalAvgProfitCheck>
+        <EvalUniformDistrCheck>false</EvalUniformDistrCheck>
+        <EvalTopProfitCheck>false</EvalTopProfitCheck>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="EdgeRatioInPips" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="EdgeRatioInPips" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="EdgeRatioInPips" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioInPips" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="OptProfileSysParamPermutation" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="OptProfileSysParamPermutation" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </OptProfileSysParamPermutation>
     <WalkForwardOptimization use="false" />
-    <WalkForwardMatrix use="false" />
+    <WalkForwardMatrix use="true">
+      <Settings>
+        <WalkForward type="0" period="10" optimization="15" distributionUp="20" distributionDown="20" maxSteps="6">
+          <Param1 value="undefined" start="20" stop="36" step="2" />
+          <Param2 value="undefined" start="4" stop="10" step="1" />
+        </WalkForward>
+        <MaxTests>15000</MaxTests>
+        <WhatToParametrize type="0" symmetricVariables="false">
+          <Recommended>true</Recommended>
+          <Periods>false</Periods>
+          <Shifts>false</Shifts>
+          <Constants>false</Constants>
+          <OtherParams>false</OtherParams>
+          <EntryParams>false</EntryParams>
+          <EntryLogic>false</EntryLogic>
+          <ExitParamsUsed>false</ExitParamsUsed>
+          <ExitParamsUnused>false</ExitParamsUnused>
+          <BooleanParams>false</BooleanParams>
+        </WhatToParametrize>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="9">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="EdgeRatioNoAtr" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="80" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="EdgeRatioNoAtr" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="EdgeRatioNoAtr" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </WalkForwardMatrix>
     <SequentialOptimization use="false" />
     <RetestWithHigherPrecision use="false" />
   </CrossChecks>
   <Notes />
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="E-OOS1" />
+    <Databank label="Output databank" name="Output" value="E-Retests" />
     <Databank label="Input databank" name="Input" value="E-Build" />
   </Databanks>
   <Options customSettings="false">

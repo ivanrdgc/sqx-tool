@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="E-MCRM" />
+    <Databank name="S-Build" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />

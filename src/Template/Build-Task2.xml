@@ -103,6 +103,9 @@
       <FreshBloodReplaceWeakest>false</FreshBloodReplaceWeakest>
       <FreshBloodWeakestPct>10</FreshBloodWeakestPct>
       <FreshBloodWeakestGenerations>2</FreshBloodWeakestGenerations>
+      <FilterInitialPopulation>true</FilterInitialPopulation>
+      <EvoFitnessRestartType>0</EvoFitnessRestartType>
+      <EvoStagnationRestartGenerations>3</EvoStagnationRestartGenerations>
     </BuildMode>
   </WhatToBuild>
   <RiskMoneyManagement customSettings="false">

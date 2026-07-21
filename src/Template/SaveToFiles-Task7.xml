@@ -27,17 +27,6 @@
   <Databanks>
     <Databank label="Input databank" name="Input" value="S-Final" />
   </Databanks>
-  <CrossChecks>
-    <RetestOnAdditionalMarkets />
-    <WhatIf />
-    <MonteCarloManipulation />
-    <MonteCarloRetest />
-    <OptProfileSysParamPermutation />
-    <WalkForwardOptimization />
-    <WalkForwardMatrix />
-    <SequentialOptimization />
-    <RetestWithHigherPrecision />
-  </CrossChecks>
   <Resources>
     <Symbols />
     <Brokers />

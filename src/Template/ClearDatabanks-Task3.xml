@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="E-Other Markets" />
+    <Databank name="E-Final" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />

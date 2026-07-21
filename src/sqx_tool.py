@@ -282,14 +282,14 @@ def newproject(args: argparse.Namespace) -> None:
     sym_info = get_symbol_info(symbol_dukascopy)
     sym_2_info = get_symbol_info(symbol_darwinex) if symbol_darwinex else sym_info
 
-    # Derive the _t_darwinex variant (used only for Retest-Task10)
+    # Derive the _t_darwinex variant (used only for Retest-Task4, S-Clean Strategy)
     base_symbol = symbol_dukascopy.split("_")[0]
     symbol_t_darwinex = f"{base_symbol}_t_darwinex"
     if symbol_exists(symbol_t_darwinex):
         sym_t_info = get_symbol_info(symbol_t_darwinex)
     else:
         logging.warning(
-            "symbol '%s' not found in symbols DB – Retest-Task10 will fall back to '%s'",
+            "symbol '%s' not found in symbols DB – Retest-Task4 will fall back to '%s'",
             symbol_t_darwinex, symbol_dukascopy,
         )
         symbol_t_darwinex = symbol_dukascopy
@@ -312,7 +312,11 @@ def newproject(args: argparse.Namespace) -> None:
     log("project dir: %s", project_dir)
     logger.debug("Created project directory: %s", project_dir)
 
-    subdirs = ("01 - E-Build", "02 - E-Final", "03 - S-Build", "04 - S-Final", "05 - S-Final Demo", "06 - S-Darwinex")
+    subdirs = (
+        "01 - E-Build", "02 - E-Retests", "03 - E-Final",
+        "04 - S-Build", "05 - S-Retests", "06 - S-Final",
+        "07 - S-Final Demo", "08 - S-Darwinex",
+    )
     for sub in subdirs:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
         logger.log(TRACE_LEVEL, "Created subdir %s", sub)
@@ -321,7 +325,8 @@ def newproject(args: argparse.Namespace) -> None:
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
     project_dirs = [(project_dir / sub).resolve() for sub in subdirs]
-    e_build_dir, e_final_dir, s_build_dir, s_final_dir, s_final_demo_dir, s_darwinex_dir = project_dirs
+    (e_build_dir, e_retests_dir, e_final_dir, s_build_dir, s_retests_dir,
+     s_final_dir, s_final_demo_dir, s_darwinex_dir) = project_dirs
 
     # ----------------------------------------------------------------------
     #  Helper mutators – declared *inside* newproject so they can capture
@@ -490,17 +495,21 @@ def newproject(args: argparse.Namespace) -> None:
                 "their default names", method,
             )
 
-    def patch_disable_task(root: ET.Element, xml_name: str) -> None:
-        for task in root.findall(".//Tasks/Task"):
-            if task.get("taskXMLFile") == xml_name:
-                logger.debug("patch_disable_task() – disabling %s", xml_name)
-                task.set("active", "false")
+    def patch_disable_crosscheck(root: ET.Element, name: str) -> None:
+        """Turn off a single cross-check inside a Retest task's <CrossChecks>.
 
-    def patch_input_databank(root: ET.Element, new_value: str = "E-OOS1") -> None:
-        for db in root.findall(".//Databank[@label='Input databank'][@name='Input']"):
-            if db.get("value") != new_value:
-                logger.debug("patch_input_databank() – %s → %s", db.get("value"), new_value)
-                db.set("value", new_value)
+        Used for the additional-markets comparison when no Darwinex symbol is
+        given: the rest of the retest, including its other cross-checks, still
+        runs, and the task's databank chain is untouched (the check lives inside
+        the retest rather than being a standalone task).
+        """
+        found = 0
+        for cc in root.findall(f".//CrossChecks/{name}"):
+            logger.debug("patch_disable_crosscheck() – disabling %s", name)
+            cc.set("use", "false")
+            found += 1
+        if found == 0:
+            logging.warning("no <%s> cross-check found to disable", name)
 
     # ------------------------------------------------------------------
     #  Perform all mutations in a *single* ZipEditor instance ---------------
@@ -541,48 +550,52 @@ def newproject(args: argparse.Namespace) -> None:
     if build_start > retest_start_dx:
         oos_ranges_final_dx.insert(0, (retest_start_dx, build_start, "oos"))
 
+    # Build tasks: date range ----------------------------------------------
     for i in range(1, 3):
-        xml = f"Build-Task{i}.xml"
-        editor.patch(xml, patch_dates, build_start, build_end)
+        editor.patch(f"Build-Task{i}.xml", patch_dates, build_start, build_end)
 
-    for i in range(1, 14):
-        xml = f"Retest-Task{i}.xml"
-        if i in {6, 12}:
-            editor.patch(xml, patch_dates, retest_start, retest_end_final, oos_ranges_final)
-        elif i == 13:
-            editor.patch(xml, patch_dates, retest_start_dx, retest_end_final_dx, oos_ranges_final_dx)
-        else:
-            editor.patch(xml, patch_dates, retest_start, retest_end, oos_ranges)
+    # Retest tasks: date range. Numbering follows config.xml execution order:
+    #   1 E-Retests        OOS retest + cross-checks   normal OOS
+    #   2 E-Final          final retest                final OOS
+    #   3 S-Retests        OOS retest + cross-checks   normal OOS
+    #   4 S-Clean Strategy final retest                final OOS
+    #   5 S-Darwinex Tick  tick retest on Darwinex     Darwinex final OOS
+    editor.patch("Retest-Task1.xml", patch_dates, retest_start,    retest_end,          oos_ranges)
+    editor.patch("Retest-Task2.xml", patch_dates, retest_start,    retest_end_final,    oos_ranges_final)
+    editor.patch("Retest-Task3.xml", patch_dates, retest_start,    retest_end,          oos_ranges)
+    editor.patch("Retest-Task4.xml", patch_dates, retest_start,    retest_end_final,    oos_ranges_final)
+    editor.patch("Retest-Task5.xml", patch_dates, retest_start_dx, retest_end_final_dx, oos_ranges_final_dx)
 
-    # Config & global market side
+    # Config name
     editor.patch("config.xml", patch_config)
 
-    # Build tasks -----------------------------------------------------------
+    # Build tasks: market side + main-chart setup --------------------------
     for i in range(1, 3):
-        xml = f"Build-Task{i}.xml"
-        editor.patch(xml, patch_market_side)
-        editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
+        editor.patch(f"Build-Task{i}.xml", patch_market_side)
+        editor.patch(f"Build-Task{i}.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
-    # Retest tasks ----------------------------------------------------------
-    for i in range(1, 14):
-        xml = f"Retest-Task{i}.xml"
-        if i == 12:
-            editor.patch(xml, patch_setup, symbol_t_darwinex, sym_t_info, False, False, False)
-        elif i == 13:
-            # Darwinex
-            editor.patch(xml, patch_setup, symbol_darwinex or symbol_t_dukascopy, sym_2_info)
-        else:
-            editor.patch(xml, patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    # Retest tasks: main-chart setup ---------------------------------------
+    #   E/S retests and E-Final trade the Dukascopy symbol; S-Clean Strategy
+    #   uses the _t_darwinex tick variant; S-Darwinex Tick uses the Darwinex
+    #   symbol (with real swap/commission/spread), falling back to _t_darwinex.
+    editor.patch("Retest-Task1.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    editor.patch("Retest-Task2.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    editor.patch("Retest-Task3.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    editor.patch("Retest-Task4.xml", patch_setup, symbol_t_darwinex, sym_t_info, False, False, False)
+    editor.patch("Retest-Task5.xml", patch_setup, symbol_darwinex or symbol_t_darwinex, sym_2_info)
 
-    # Other markets / Spread / Dates ---------------------------------------
-    editor.patch("Retest-Task2.xml", patch_other_markets, build_end)
-    editor.patch("Retest-Task8.xml", patch_other_markets, build_end)
+    # "Other markets" is now a cross-check inside E-Retests and S-Retests
+    # (merged from the old standalone tasks), so its two extra market setups
+    # are patched there rather than in a task of their own.
+    editor.patch("Retest-Task1.xml", patch_other_markets, build_end)
+    editor.patch("Retest-Task3.xml", patch_other_markets, build_end)
 
+    # Without a Darwinex symbol the additional-market comparison is
+    # meaningless, so disable just that cross-check – the rest of each retest,
+    # including its other cross-checks, still runs.
     if symbol_darwinex is None:
-        editor.patch("config.xml", patch_disable_task, "Retest-Task2.xml")
-        editor.patch("config.xml", patch_disable_task, "Retest-Task8.xml")
-        editor.patch("Retest-Task3.xml", patch_input_databank, "E-OOS1")
-        editor.patch("Retest-Task9.xml", patch_input_databank, "S-OOS1")
+        editor.patch("Retest-Task1.xml", patch_disable_crosscheck, "RetestOnAdditionalMarkets")
+        editor.patch("Retest-Task3.xml", patch_disable_crosscheck, "RetestOnAdditionalMarkets")
 
     # Strategy naming -------------------------------------------------------
     # RenameStrategies turns "Strategy 12345" into "XAUUSD H1 Long 12345" at
@@ -596,13 +609,15 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("Build-Task1.xml", patch_custom_analysis, "RenameStrategies", strategy_prefix)
     log("strategy prefix: %s", strategy_prefix)
 
-    # Save folders ----------------------------------------------------------
-    editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)
-    editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_final_dir)
-    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, s_build_dir)
-    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_final_dir)
-    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_final_demo_dir)
-    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_darwinex_dir)
+    # Save folders – one per SaveToFiles task, matching its title ----------
+    editor.patch("SaveToFiles-Task1.xml", patch_save_to_files, e_build_dir)       # E-Build Save
+    editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_retests_dir)     # E-Retests Save
+    editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, e_final_dir)       # E-Save Final
+    editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_build_dir)       # S-Build Save
+    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_retests_dir)     # S-Retests Save
+    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_dir)       # S-Save Final
+    editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_final_demo_dir)  # S-Save Final Demo
+    editor.patch("SaveToFiles-Task8.xml", patch_save_to_files, s_darwinex_dir)    # S-Save Darwinex
 
     # ---- finally write out -------------------------------------------------
     editor.write(dest_cfx)

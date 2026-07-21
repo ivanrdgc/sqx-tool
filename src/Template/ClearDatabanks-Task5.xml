@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="E-Sys Param" />
+    <Databank name="S-Retests" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
@@ -10,8 +10,8 @@
     <OptProfileSysParamPermutation />
     <WalkForwardOptimization />
     <WalkForwardMatrix />
-    <SequentialOptimization />
     <RetestWithHigherPrecision />
+    <SequentialOptimization />
   </CrossChecks>
   <Resources>
     <Symbols />

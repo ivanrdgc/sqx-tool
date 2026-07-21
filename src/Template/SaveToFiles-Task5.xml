@@ -1,6 +1,6 @@
 <Settings>
   <SaveToFiles>
-    <DestDirectorySqx>C:\</DestDirectorySqx>
+    <DestDirectorySqx>/</DestDirectorySqx>
     <DestDirectoryStr />
     <SaveInSqxFormat>true</SaveInSqxFormat>
     <SaveInStrFormat>false</SaveInStrFormat>
@@ -13,7 +13,7 @@
     <ExportTrades>false</ExportTrades>
     <SaveInHtmlFormat>false</SaveInHtmlFormat>
     <SaveInPdfFormat>false</SaveInPdfFormat>
-    <SaveSourceCode type="EasyLanguage for Tradestation / MultiCharts (*.el)">false</SaveSourceCode>
+    <SaveSourceCode type="EasyLanguage for Tradestation / MultiCharts (*.el)" format="el">false</SaveSourceCode>
     <OverwriteFiles>false</OverwriteFiles>
     <MNActive>false</MNActive>
     <MNValue>12345</MNValue>
@@ -25,8 +25,23 @@
     <SetNoteCustom />
   </SaveToFiles>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="S-Final" />
+    <Databank label="Input databank" name="Input" value="S-Retests" />
+    <Databank label="Output databank" name="Output" value="Results" />
   </Databanks>
+  <CrossChecks>
+    <RetestOnAdditionalMarkets />
+    <WhatIf />
+    <MonteCarloManipulation />
+    <MonteCarloRetest />
+    <OptProfileSysParamPermutation />
+    <WalkForwardOptimization />
+    <WalkForwardMatrix />
+    <RetestWithHigherPrecision />
+    <SequentialOptimization />
+  </CrossChecks>
+  <WhatToBuild>
+    <StrategyType type="simple" additionalCharts="1" templateFile="" improveType="strategy" strategyFile="" improveDatabank="Results" />
+  </WhatToBuild>
   <Resources>
     <Symbols />
     <Brokers />
