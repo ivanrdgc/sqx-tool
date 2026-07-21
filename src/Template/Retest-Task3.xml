@@ -175,7 +175,7 @@
         </Right-Side>
       </Condition>
     </Conditions>
-    <DeleteFailedStrategies>true</DeleteFailedStrategies>
+    <DeleteFailedStrategies>false</DeleteFailedStrategies>
     <ForceRunCrossChecks>false</ForceRunCrossChecks>
     <AutomaticDismissal warnings="true">
       <Problem code="1" dismiss="true" />
