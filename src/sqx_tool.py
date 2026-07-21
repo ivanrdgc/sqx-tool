@@ -282,18 +282,9 @@ def newproject(args: argparse.Namespace) -> None:
     sym_info = get_symbol_info(symbol_dukascopy)
     sym_2_info = get_symbol_info(symbol_darwinex) if symbol_darwinex else sym_info
 
-    # Derive the _t_darwinex variant (used only for Retest-Task4, S-Clean Strategy)
+    # Raw symbol, without the _darwinex/_dx suffix, e.g. "EURUSD" from
+    # "EURUSD_darwinex". Drives the project/folder name and the strategy prefix.
     base_symbol = symbol_dukascopy.split("_")[0]
-    symbol_t_darwinex = f"{base_symbol}_t_darwinex"
-    if symbol_exists(symbol_t_darwinex):
-        sym_t_info = get_symbol_info(symbol_t_darwinex)
-    else:
-        logging.warning(
-            "symbol '%s' not found in symbols DB – Retest-Task4 will fall back to '%s'",
-            symbol_t_darwinex, symbol_dukascopy,
-        )
-        symbol_t_darwinex = symbol_dukascopy
-        sym_t_info = sym_info
 
     if not template.is_dir():
         logging.error("template not found in %s", template)
@@ -302,7 +293,7 @@ def newproject(args: argparse.Namespace) -> None:
 
     # ---- 3. Create project directory tree ---------------------------------
     project_rel = SETTINGS.project_dir_tpl.format(
-        symbol=symbol_dukascopy,
+        symbol=base_symbol,
         timestamp=ts,
         timeframe=timeframe,
         direction=direction,
@@ -575,14 +566,14 @@ def newproject(args: argparse.Namespace) -> None:
         editor.patch(f"Build-Task{i}.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
 
     # Retest tasks: main-chart setup ---------------------------------------
-    #   E/S retests and E-Final trade the Dukascopy symbol; S-Clean Strategy
-    #   uses the _t_darwinex tick variant; S-Darwinex Tick uses the Darwinex
-    #   symbol (with real swap/commission/spread), falling back to _t_darwinex.
+    #   E/S retests, E-Final and S-Clean Strategy all trade the Dukascopy
+    #   symbol; S-Darwinex Tick uses the Darwinex symbol (with real swap/
+    #   commission/spread), falling back to the Dukascopy symbol when none.
     editor.patch("Retest-Task1.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
     editor.patch("Retest-Task2.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
     editor.patch("Retest-Task3.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
-    editor.patch("Retest-Task4.xml", patch_setup, symbol_t_darwinex, sym_t_info, False, False, False)
-    editor.patch("Retest-Task5.xml", patch_setup, symbol_darwinex or symbol_t_darwinex, sym_2_info)
+    editor.patch("Retest-Task4.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    editor.patch("Retest-Task5.xml", patch_setup, symbol_darwinex or symbol_dukascopy, sym_2_info)
 
     # "Other markets" is now a cross-check inside E-Retests and S-Retests
     # (merged from the old standalone tasks), so its two extra market setups
@@ -602,7 +593,7 @@ def newproject(args: argparse.Namespace) -> None:
     # E-Build. Later tasks leave inputArgs empty: by then the name already
     # carries the prefix and only "Improved" needs dropping.
     strategy_prefix = SETTINGS.strategy_prefix_tpl.format(
-        symbol=symbol_dukascopy.split("_")[0],
+        symbol=base_symbol,
         timeframe=timeframe,
         direction=direction,
     )
