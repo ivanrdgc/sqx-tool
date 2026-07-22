@@ -14,6 +14,7 @@
     <Task type="Notification" name="Notification" taskXMLFile="Notification-Task1.xml" title="E-Notification" active="false" />
     <Task name="Custom analysis 2" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task2.xml" title="S-Remove EAB" active="true" />
     <Task type="Build" name="Build strategies 2" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Build-Task2.xml" title="S-Build" />
+    <Task name="Custom analysis 3" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task3.xml" title="S-Rename Strategies" active="true" />
     <Task name="Clear databanks 3" type="ClearDatabanks" taskXMLFile="ClearDatabanks-Task3.xml" title="E-Final Clear" active="true" />
     <Task type="SaveToFiles" name="Save to files 4" taskXMLFile="SaveToFiles-Task4.xml" active="true" title="S-Build Save" />
     <Task type="Retest" name="Retest strategies 3" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task3.xml" title="S-Retests" />
@@ -23,7 +24,7 @@
     <Task type="Retest" name="Retest strategies 4" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task4.xml" title="S-Clean Strategy" />
     <Task type="ClearDatabanks" name="Clear databanks 5" taskXMLFile="ClearDatabanks-Task5.xml" title="S-Retests Clear" active="true" />
     <Task type="SaveToFiles" name="Save to files 6" taskXMLFile="SaveToFiles-Task6.xml" title="S-Save Final" active="true" />
-    <Task name="Custom analysis 3" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task3.xml" title="S-Filter Unique" active="true" />
+    <Task name="Custom analysis 4" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task4.xml" title="S-Filter Unique" active="true" />
     <Task type="Notification" name="Notification 2" taskXMLFile="Notification-Task2.xml" title="S-Notification" active="true" />
     <Task type="SaveToFiles" name="Save to files 7" taskXMLFile="SaveToFiles-Task7.xml" title="S-Save Final Demo" active="true" />
     <Task type="Retest" name="Retest strategies 5" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task5.xml" title="S-Darwinex Tick" />

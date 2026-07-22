@@ -1,11 +1,11 @@
 <Settings>
   <CustomAnalysis>
-    <PerStrategy1>RenameStrategies</PerStrategy1>
+    <PerStrategy1>none</PerStrategy1>
     <PerStrategy2>none</PerStrategy2>
-    <FullDatabank1>none</FullDatabank1>
+    <FullDatabank1>SelectBestByIndicatorGroup</FullDatabank1>
     <FullDatabank2>none</FullDatabank2>
     <RemoveFailedStrategies>false</RemoveFailedStrategies>
-    <Filter>false</Filter>
+    <Filter>true</Filter>
     <InputArgsPerStrategy1 />
     <InputArgsPerStrategy2 />
     <InputArgsFullDatabank1 />

@@ -277,7 +277,7 @@
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="1.5" />
+          <Numeric-Value value="0" />
         </Right-Side>
       </Condition>
       <Condition use="true">
@@ -316,7 +316,6 @@
     <FitPortfolio active="false" databank="Existing portfolio">
       <Correlation max="0.3" type="ProfitLoss" period="10" allowNegative="false" addEmptyPeriods="false" />
     </FitPortfolio>
-    <CustomAnalysis method="RenameStrategies" filter="false" inputArgs="" />
   </Rankings>
   <PartsToImprove improveATM="false">
     <EntryRules symmetry="true">

@@ -166,7 +166,7 @@
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="3" />
+          <Numeric-Value value="1" />
         </Right-Side>
       </Condition>
       <Condition use="true">
@@ -175,7 +175,7 @@
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="3" />
+          <Numeric-Value value="1" />
         </Right-Side>
       </Condition>
       <Condition use="true">
