@@ -47,13 +47,13 @@
       <MaxPTInPercent>10</MaxPTInPercent>
     </SLPTOptions>
     <BuildMode generationType="genetic-evolution">
-      <PopulationSize>100</PopulationSize>
-      <MaxGenerations>100</MaxGenerations>
+      <PopulationSize>50</PopulationSize>
+      <MaxGenerations>50</MaxGenerations>
       <CrossoverProbability>93</CrossoverProbability>
       <MutationProbability>30</MutationProbability>
       <ShowAdvancedGeneticSettings>false</ShowAdvancedGeneticSettings>
-      <Islands>10</Islands>
-      <MigrationModulo>87</MigrationModulo>
+      <Islands>5</Islands>
+      <MigrationModulo>43</MigrationModulo>
       <MigrationRate>6</MigrationRate>
       <ShowLastGenerationDatabank>false</ShowLastGenerationDatabank>
       <InitGenerationType>1</InitGenerationType>
@@ -65,7 +65,7 @@
           </Left-Side>
           <Comparator value="&gt;=" />
           <Right-Side valueType="numeric">
-            <Numeric-Value value="2" />
+            <Numeric-Value value="1" />
           </Right-Side>
         </Condition>
         <Condition use="false">
@@ -77,7 +77,7 @@
             <Numeric-Value value="3" />
           </Right-Side>
         </Condition>
-        <Condition use="true">
+        <Condition use="false">
           <Left-Side valueType="column">
             <Column-Value column="WinningPct" format="Decimal2Pct" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="WinningPct" />
           </Left-Side>
@@ -268,7 +268,7 @@
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="3" />
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
       <Condition use="true">
@@ -280,7 +280,7 @@
           <Numeric-Value value="0" />
         </Right-Side>
       </Condition>
-      <Condition use="true">
+      <Condition use="false">
         <Left-Side valueType="column">
           <Column-Value column="WinningPct" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="WinningPct" />
         </Left-Side>
