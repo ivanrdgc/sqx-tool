@@ -12,8 +12,8 @@
     <InputArgsFullDatabank2 />
   </CustomAnalysis>
   <Databanks>
-    <Databank label="Input databank" name="Input" value="S-Final" />
-    <Databank label="Output databank" name="Output" value="S-Final" />
+    <Databank label="Input databank" name="Input" value="S-Build" />
+    <Databank label="Output databank" name="Output" value="S-Build" />
   </Databanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />
