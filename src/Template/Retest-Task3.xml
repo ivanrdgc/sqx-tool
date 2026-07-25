@@ -390,7 +390,7 @@
     </MonteCarloRetest>
     <OptProfileSysParamPermutation use="true">
       <Settings>
-        <MaxTests>15000</MaxTests>
+        <MaxTests>1000</MaxTests>
         <DistributionUp>20</DistributionUp>
         <DistributionDown>20</DistributionDown>
         <Steps>6</Steps>
@@ -499,7 +499,7 @@
           <Param1 value="undefined" start="20" stop="36" step="2" />
           <Param2 value="undefined" start="4" stop="10" step="1" />
         </WalkForward>
-        <MaxTests>15000</MaxTests>
+        <MaxTests>1000</MaxTests>
         <WhatToParametrize type="0" symmetricVariables="false">
           <Recommended>true</Recommended>
           <Periods>false</Periods>
@@ -578,7 +578,7 @@
   <Notes />
   <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-Retests" />
+    <Databank label="Output databank" name="Output" value="S-Retests 1" />
     <Databank label="Input databank" name="Input" value="S-Build" />
   </Databanks>
   <SelectedStrategies />

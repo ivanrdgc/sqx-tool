@@ -1,6 +1,6 @@
 <Settings>
   <ClearDatabanks>
-    <Databank name="S-Retests 1" />
+    <Databank name="S-Retests 2" />
   </ClearDatabanks>
   <CrossChecks>
     <RetestOnAdditionalMarkets />

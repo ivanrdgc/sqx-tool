@@ -1,8 +1,7 @@
 <Settings>
-  <ATMs enable="false" />
   <Data>
     <Setups>
-      <Setup dateFrom="2025.05.28" dateTo="2026.01.13" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+      <Setup dateFrom="2025.05.28" dateTo="2025.12.11" testPrecision="2" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
         <Chart symbol="EURUSD_darwinex" timeframe="H1" spread="0.3" />
         <Commissions>
           <Method type="SizeBased" use="true">
@@ -15,8 +14,8 @@
       </Setup>
     </Setups>
     <OutOfSample showGraph="false">
-      <Range dateFrom="2025.11.05" dateTo="2025.11.05" />
-      <Range dateFrom="2025.11.05" dateTo="2026.01.13" type="isv" />
+      <Range dateFrom="2025.10.12" dateTo="2025.10.12" />
+      <Range dateFrom="2025.10.12" dateTo="2025.12.11" type="isv" />
     </OutOfSample>
   </Data>
   <Rankings type="never">
@@ -141,65 +140,11 @@
     <Conditions>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
           <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
           <Numeric-Value value="1" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="1" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="0" />
         </Right-Side>
       </Condition>
       <Condition use="true">
@@ -213,15 +158,24 @@
       </Condition>
       <Condition use="true">
         <Left-Side valueType="column">
-          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
+          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="40" class="ReturnOnRisk" />
+        </Left-Side>
+        <Comparator value="&lt;=" />
+        <Right-Side valueType="column">
+          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
+        </Right-Side>
+      </Condition>
+      <Condition use="true">
+        <Left-Side valueType="column">
+          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="0" />
+          <Numeric-Value value="2" />
         </Right-Side>
       </Condition>
     </Conditions>
-    <DeleteFailedStrategies>true</DeleteFailedStrategies>
+    <DeleteFailedStrategies>false</DeleteFailedStrategies>
     <ForceRunCrossChecks>false</ForceRunCrossChecks>
     <AutomaticDismissal warnings="true">
       <Problem code="1" dismiss="true" />
@@ -242,28 +196,202 @@
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
   <CrossChecks use="true" evaluateAll="false">
-    <RetestWithHigherPrecision use="true">
-      <Settings>
-        <Precision>2</Precision>
-        <Spread>0</Spread>
-      </Settings>
-      <AcceptanceSettings>
-        <Conditions CrossCheck="RetestWithHigherPrecision" />
-      </AcceptanceSettings>
-    </RetestWithHigherPrecision>
     <RetestOnAdditionalMarkets use="false" />
     <WhatIf use="false" />
     <MonteCarloManipulation use="false" />
     <MonteCarloRetest use="false" />
-    <OptProfileSysParamPermutation use="false" />
+    <OptProfileSysParamPermutation use="true">
+      <Settings>
+        <MaxTests>15000</MaxTests>
+        <DistributionUp>20</DistributionUp>
+        <DistributionDown>20</DistributionDown>
+        <Steps>6</Steps>
+        <WhatToParametrize type="0" symmetricVariables="false">
+          <Recommended>true</Recommended>
+          <Periods>false</Periods>
+          <Shifts>false</Shifts>
+          <Constants>false</Constants>
+          <OtherParams>false</OtherParams>
+          <EntryParams>false</EntryParams>
+          <EntryLogic>false</EntryLogic>
+          <ExitParamsUsed>false</ExitParamsUsed>
+          <ExitParamsUnused>false</ExitParamsUnused>
+          <BooleanParams>false</BooleanParams>
+        </WhatToParametrize>
+      </Settings>
+      <AcceptanceSettings>
+        <ProfitOptPct>95</ProfitOptPct>
+        <AvgProfit>0</AvgProfit>
+        <UniformDistrChanges>5</UniformDistrChanges>
+        <StdevAvgProfit>1</StdevAvgProfit>
+        <EvalProfitOptCheck>true</EvalProfitOptCheck>
+        <EvalAvgProfitCheck>false</EvalAvgProfitCheck>
+        <EvalUniformDistrCheck>false</EvalUniformDistrCheck>
+        <EvalTopProfitCheck>false</EvalTopProfitCheck>
+        <Conditions>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Drawdown" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Drawdown" columnType="0" format="Decimal2PL" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Drawdown" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="Stagnation" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="Stagnation" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="Stagnation" columnType="0" format="Integer" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="Stagnation" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="OptProfileSysParamPermutation" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="OptProfileSysParamPermutation" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal4" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="130" class="ReturnOnRisk" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal4" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="ReturnOnRisk" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal4" resultType="OptProfileSysParamPermutation" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="70" class="ReturnOnRisk" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="column">
+              <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal4" resultType="main" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="undefined" subresult="30" pctRatio="0" class="ReturnOnRisk" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </OptProfileSysParamPermutation>
     <WalkForwardOptimization use="false" />
-    <WalkForwardMatrix use="false" />
+    <WalkForwardMatrix use="true">
+      <Settings>
+        <WalkForward type="0" period="10" optimization="15" distributionUp="20" distributionDown="20" maxSteps="6">
+          <Param1 value="undefined" start="20" stop="36" step="2" />
+          <Param2 value="undefined" start="4" stop="10" step="1" />
+        </WalkForward>
+        <MaxTests>15000</MaxTests>
+        <WhatToParametrize type="0" symmetricVariables="false">
+          <Recommended>true</Recommended>
+          <Periods>false</Periods>
+          <Shifts>false</Shifts>
+          <Constants>false</Constants>
+          <OtherParams>false</OtherParams>
+          <EntryParams>false</EntryParams>
+          <EntryLogic>false</EntryLogic>
+          <ExitParamsUsed>false</ExitParamsUsed>
+          <ExitParamsUnused>false</ExitParamsUnused>
+          <BooleanParams>false</BooleanParams>
+        </WhatToParametrize>
+      </Settings>
+      <AcceptanceSettings>
+        <Conditions thresholdPct="100" robCombRows="3" robCombCols="3" robMinComb="9">
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ReturnOnRisk" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="80" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="WinningPct" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="WinningPct" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="80" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgConsecLosses" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="AvgConsecLosses" />
+            </Left-Side>
+            <Comparator value="&lt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="125" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="2" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="WalkForwardMatrix" direction="0" sampleType="127" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="1" />
+            </Right-Side>
+          </Condition>
+          <Condition use="true">
+            <Left-Side valueType="column">
+              <Column-Value column="ProfitFactor" columnType="0" format="Decimal2Pct" resultType="WalkForwardMatrix" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="31" pctRatio="0" class="ProfitFactor" />
+            </Left-Side>
+            <Comparator value="&gt;=" />
+            <Right-Side valueType="numeric">
+              <Numeric-Value value="80" />
+            </Right-Side>
+          </Condition>
+        </Conditions>
+      </AcceptanceSettings>
+    </WalkForwardMatrix>
     <SequentialOptimization use="false" />
+    <RetestWithHigherPrecision use="false" />
   </CrossChecks>
   <Notes />
+  <ATMs enable="false" />
   <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-Final" />
-    <Databank label="Input databank" name="Input" value="S-Retests" />
+    <Databank label="Output databank" name="Output" value="S-Retests 2" />
+    <Databank label="Input databank" name="Input" value="S-Retests 1" />
   </Databanks>
   <SelectedStrategies />
   <Options customSettings="false">

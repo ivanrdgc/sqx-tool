@@ -305,8 +305,8 @@ def newproject(args: argparse.Namespace) -> None:
 
     subdirs = (
         "01 - E-Build", "02 - E-Retests", "03 - E-Final",
-        "04 - S-Build", "05 - S-Retests", "06 - S-Final",
-        "07 - S-Final Demo", "08 - S-Darwinex",
+        "04 - S-Build", "05 - S-Retests 1", "06 - S-Retests 2", "07 - S-Final",
+        "08 - S-Final Demo", "09 - S-Darwinex",
     )
     for sub in subdirs:
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
@@ -316,7 +316,7 @@ def newproject(args: argparse.Namespace) -> None:
     dest_cfx = project_dir / f"{project_dir.name}.cfx"
     logger.debug("Project .cfx will be built at %s from template dir %s", dest_cfx, template)
     project_dirs = [(project_dir / sub).resolve() for sub in subdirs]
-    (e_build_dir, e_retests_dir, e_final_dir, s_build_dir, s_retests_dir,
+    (e_build_dir, e_retests_dir, e_final_dir, s_build_dir, s_retests_1_dir, s_retests_2_dir,
      s_final_dir, s_final_demo_dir, s_darwinex_dir) = project_dirs
 
     # ----------------------------------------------------------------------
@@ -548,14 +548,16 @@ def newproject(args: argparse.Namespace) -> None:
     # Retest tasks: date range. Numbering follows config.xml execution order:
     #   1 E-Retests        OOS retest + cross-checks   normal OOS
     #   2 E-Final          final retest                final OOS
-    #   3 S-Retests        OOS retest + cross-checks   normal OOS
-    #   4 S-Clean Strategy final retest                final OOS
-    #   5 S-Darwinex Tick  tick retest on Darwinex     Darwinex final OOS
+    #   3 S-Retests 1      OOS retest + cross-checks   normal OOS
+    #   4 S-Retests 2      advanced cross-checks       normal OOS
+    #   5 S-Clean Strategy final retest                final OOS
+    #   6 S-Darwinex Tick  tick retest on Darwinex     Darwinex final OOS
     editor.patch("Retest-Task1.xml", patch_dates, retest_start,    retest_end,          oos_ranges)
     editor.patch("Retest-Task2.xml", patch_dates, retest_start,    retest_end_final,    oos_ranges_final)
     editor.patch("Retest-Task3.xml", patch_dates, retest_start,    retest_end,          oos_ranges)
-    editor.patch("Retest-Task4.xml", patch_dates, retest_start,    retest_end_final,    oos_ranges_final)
-    editor.patch("Retest-Task5.xml", patch_dates, retest_start_dx, retest_end_final_dx, oos_ranges_final_dx)
+    editor.patch("Retest-Task4.xml", patch_dates, retest_start,    retest_end,          oos_ranges)
+    editor.patch("Retest-Task5.xml", patch_dates, retest_start,    retest_end_final,    oos_ranges_final)
+    editor.patch("Retest-Task6.xml", patch_dates, retest_start_dx, retest_end_final_dx, oos_ranges_final_dx)
 
     # Config name
     editor.patch("config.xml", patch_config)
@@ -573,7 +575,8 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("Retest-Task2.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
     editor.patch("Retest-Task3.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
     editor.patch("Retest-Task4.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
-    editor.patch("Retest-Task5.xml", patch_setup, symbol_darwinex or symbol_dukascopy, sym_2_info)
+    editor.patch("Retest-Task5.xml", patch_setup, symbol_dukascopy, sym_info, False, False, False)
+    editor.patch("Retest-Task6.xml", patch_setup, symbol_darwinex or symbol_dukascopy, sym_2_info)
 
     # "Other markets" is now a cross-check inside E-Retests and S-Retests
     # (merged from the old standalone tasks), so its two extra market setups
@@ -605,10 +608,11 @@ def newproject(args: argparse.Namespace) -> None:
     editor.patch("SaveToFiles-Task2.xml", patch_save_to_files, e_retests_dir)     # E-Retests Save
     editor.patch("SaveToFiles-Task3.xml", patch_save_to_files, e_final_dir)       # E-Save Final
     editor.patch("SaveToFiles-Task4.xml", patch_save_to_files, s_build_dir)       # S-Build Save
-    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_retests_dir)     # S-Retests Save
-    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_final_dir)       # S-Save Final
-    editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_final_demo_dir)  # S-Save Final Demo
-    editor.patch("SaveToFiles-Task8.xml", patch_save_to_files, s_darwinex_dir)    # S-Save Darwinex
+    editor.patch("SaveToFiles-Task5.xml", patch_save_to_files, s_retests_1_dir)   # S-Retests 1 Save
+    editor.patch("SaveToFiles-Task6.xml", patch_save_to_files, s_retests_2_dir)   # S-Retests 2 Save
+    editor.patch("SaveToFiles-Task7.xml", patch_save_to_files, s_final_dir)       # S-Save Final
+    editor.patch("SaveToFiles-Task8.xml", patch_save_to_files, s_final_demo_dir)  # S-Save Final Demo
+    editor.patch("SaveToFiles-Task9.xml", patch_save_to_files, s_darwinex_dir)    # S-Save Darwinex
 
     # ---- finally write out -------------------------------------------------
     editor.write(dest_cfx)

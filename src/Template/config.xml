@@ -17,18 +17,22 @@
     <Task name="Custom analysis 3" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task3.xml" title="S-Rename Strategies" active="true" />
     <Task name="Clear databanks 3" type="ClearDatabanks" taskXMLFile="ClearDatabanks-Task3.xml" title="E-Final Clear" active="true" />
     <Task type="SaveToFiles" name="Save to files 4" taskXMLFile="SaveToFiles-Task4.xml" active="true" title="S-Build Save" />
-    <Task type="Retest" name="Retest strategies 3" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task3.xml" title="S-Retests" />
+    <Task type="Retest" name="Retest strategies 3" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task3.xml" title="S-Retests 1" />
     <Task type="ClearDatabanks" name="Clear databanks 4" taskXMLFile="ClearDatabanks-Task4.xml" title="S-Build Clear" active="true" />
-    <Task name="Save to files 5" type="SaveToFiles" taskXMLFile="SaveToFiles-Task5.xml" title="S-Retests Save" />
-    <Task name="Filter strategies 2" type="Filtering" taskXMLFile="Filtering-Task2.xml" title="S-Retests Filter" />
-    <Task type="Retest" name="Retest strategies 4" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task4.xml" title="S-Clean Strategy" />
-    <Task type="ClearDatabanks" name="Clear databanks 5" taskXMLFile="ClearDatabanks-Task5.xml" title="S-Retests Clear" active="true" />
-    <Task type="SaveToFiles" name="Save to files 6" taskXMLFile="SaveToFiles-Task6.xml" title="S-Save Final" active="true" />
+    <Task name="Save to files 5" type="SaveToFiles" taskXMLFile="SaveToFiles-Task5.xml" title="S-Retests 1 Save" />
+    <Task name="Filter strategies 2" type="Filtering" taskXMLFile="Filtering-Task2.xml" title="S-Retests 1 Filter" />
+    <Task type="Retest" name="Retest strategies 4" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task4.xml" title="S-Retests 2" />
+    <Task type="ClearDatabanks" name="Clear databanks 5" taskXMLFile="ClearDatabanks-Task5.xml" title="S-Retests 1 Clear" active="true" />
+    <Task name="Save to files 6" type="SaveToFiles" taskXMLFile="SaveToFiles-Task6.xml" title="S-Retests 2 Save" />
+    <Task name="Filter strategies 3" type="Filtering" taskXMLFile="Filtering-Task3.xml" title="S-Retests 2 Filter" />
+    <Task type="Retest" name="Retest strategies 5" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task5.xml" title="S-Clean Strategy" />
+    <Task type="ClearDatabanks" name="Clear databanks 6" taskXMLFile="ClearDatabanks-Task6.xml" title="S-Retests 2 Clear" active="true" />
+    <Task type="SaveToFiles" name="Save to files 7" taskXMLFile="SaveToFiles-Task7.xml" title="S-Save Final" active="true" />
     <Task name="Custom analysis 4" type="CustomAnalysis" taskXMLFile="CustomAnalysis-Task4.xml" title="S-Filter Unique" active="true" />
     <Task type="Notification" name="Notification 2" taskXMLFile="Notification-Task2.xml" title="S-Notification" active="true" />
-    <Task type="SaveToFiles" name="Save to files 7" taskXMLFile="SaveToFiles-Task7.xml" title="S-Save Final Demo" active="true" />
-    <Task type="Retest" name="Retest strategies 5" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task5.xml" title="S-Darwinex Tick" />
-    <Task type="SaveToFiles" name="Save to files 8" taskXMLFile="SaveToFiles-Task8.xml" title="S-Save Darwinex" active="true" />
+    <Task type="SaveToFiles" name="Save to files 8" taskXMLFile="SaveToFiles-Task8.xml" title="S-Save Final Demo" active="true" />
+    <Task type="Retest" name="Retest strategies 6" showSettingsOverview="false" sampleName="Custom" active="true" taskXMLFile="Retest-Task6.xml" title="S-Darwinex Tick" />
+    <Task type="SaveToFiles" name="Save to files 9" taskXMLFile="SaveToFiles-Task9.xml" title="S-Save Darwinex" active="true" />
   </Tasks>
   <Databanks>
     <Databank name="Results" view="Default - Main data" syncType="Auto-sync never" position="0" />
@@ -36,8 +40,9 @@
     <Databank name="E-Retests" view="Default - Main data" syncType="Auto-sync every 1 hour" position="200" />
     <Databank name="E-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="300" />
     <Databank name="S-Build" view="Default - Main data" syncType="Auto-sync every 1 hour" position="400" />
-    <Databank name="S-Retests" view="Default - Main data" syncType="Auto-sync every 1 hour" position="500" />
-    <Databank name="S-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="600" />
-    <Databank name="S-Darwinex" view="Default - Main data" syncType="Auto-sync every 1 hour" position="700" />
+    <Databank name="S-Retests 1" view="Default - Main data" syncType="Auto-sync every 1 hour" position="500" />
+    <Databank name="S-Retests 2" view="Default - Main data" syncType="Auto-sync every 1 hour" position="600" />
+    <Databank name="S-Final" view="Default - Main data" syncType="Auto-sync every 1 hour" position="700" />
+    <Databank name="S-Darwinex" view="Default - Main data" syncType="Auto-sync every 1 hour" position="800" />
   </Databanks>
 </Project>

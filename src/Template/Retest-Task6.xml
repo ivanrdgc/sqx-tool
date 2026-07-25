@@ -1,8 +1,7 @@
 <Settings>
-  <ATMs enable="false" />
   <Data>
     <Setups>
-      <Setup dateFrom="2025.05.28" dateTo="2026.01.13" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
+      <Setup dateFrom="2025.05.28" dateTo="2026.04.10" testPrecision="1" session="No Session" slippage="0.0" minDist="0" engine="MetaTrader5 (hedged)">
         <Chart symbol="EURUSD_darwinex" timeframe="H1" spread="0.3" />
         <Commissions>
           <Method type="SizeBased" use="true">
@@ -14,11 +13,87 @@
         <Swap use="true" type="points" long="-8.80" short="1.40" tripleSwapOn="WEDNESDAY" rolloutHour="23:00" />
       </Setup>
     </Setups>
-    <OutOfSample showGraph="false">
-      <Range dateFrom="2025.11.05" dateTo="2025.11.05" />
-      <Range dateFrom="2025.11.05" dateTo="2026.01.13" type="isv" />
-    </OutOfSample>
+    <OutOfSample showGraph="false" />
   </Data>
+  <Notes />
+  <WhatToBuild>
+    <StrategyType type="simple" additionalCharts="1" templateFile="" improveType="strategy" strategyFile="" improveDatabank="Strategies to improve" />
+  </WhatToBuild>
+  <Options customSettings="false">
+    <BuildTradingOptions>
+      <Params>
+        <Param key="DontTradeOnWeekends" className="DontTradeOnWeekends">true</Param>
+        <Param key="FridayCloseTime" className="DontTradeOnWeekends">79200</Param>
+        <Param key="SundayOpenTime" className="DontTradeOnWeekends">3600</Param>
+        <Param key="ExitAtEndOfDay" className="ExitAtEndOfDay">false</Param>
+        <Param key="EODExitTime" className="ExitAtEndOfDay">83040</Param>
+        <Param key="ExitOnFriday" className="ExitOnFriday">true</Param>
+        <Param key="FridayExitTime" className="ExitOnFriday">84900</Param>
+        <Param key="LimitTimeRange" className="LimitTimeRange">true</Param>
+        <Param key="SignalTimeRangeFrom" className="LimitTimeRange">5400</Param>
+        <Param key="SignalTimeRangeTo" className="LimitTimeRange">84600</Param>
+        <Param key="ExitAtEndOfRange" className="LimitTimeRange">true</Param>
+        <Param key="OrderTypeToExit" className="LimitTimeRange">2</Param>
+        <Param key="MaxDistanceFromMarket" className="MaxDistanceFromMarket">false</Param>
+        <Param key="MaxDistancePct" className="MaxDistanceFromMarket">6</Param>
+        <Param key="MaxTradesPerDay" className="MaxTradesPerDay">0</Param>
+        <Param key="MinimumSL" className="MinMaxSLPT">0</Param>
+        <Param key="MaximumSL" className="MinMaxSLPT">0</Param>
+        <Param key="MinimumPT" className="MinMaxSLPT">0</Param>
+        <Param key="MaximumPT" className="MinMaxSLPT">0</Param>
+        <Param key="UseInitialSLPT" className="UseInitialSLPT">false</Param>
+        <Param key="Session" className="SessionOption">No Session</Param>
+        <Param key="ReservedBars" className="ReservedBars">50</Param>
+        <Param key="StoreChartData" className="StoreChartData">false</Param>
+        <Param key="RealisticGapsHandling" className="RealisticGapsHandling">true</Param>
+        <Param key="PickerEntryType" className="StockpickerOptions">5</Param>
+        <Param key="PickerExitType" className="StockpickerOptions">5</Param>
+        <Param key="PickerEndOfDayLong" className="StockpickerOptions">5</Param>
+        <Param key="PickerEndOfDayShort" className="StockpickerOptions">5</Param>
+        <Param key="PickerMaxOpenPositionsLong" className="StockpickerOptions">8</Param>
+        <Param key="PickerMaxOpenPositionsShort" className="StockpickerOptions">8</Param>
+        <Param key="PickerStoreLogs" className="StockpickerOptions">false</Param>
+        <Param key="PickerAllowBetterLimitFill" className="StockpickerOptions">false</Param>
+        <Param key="PickerBroker" className="BrokerOption">No filter</Param>
+        <Param key="MarketOpenSession" className="MarketOpenSession">No Session</Param>
+        <Param key="LimitOver" className="LimitOver">0</Param>
+      </Params>
+    </BuildTradingOptions>
+  </Options>
+  <ATMs enable="false" />
+  <RiskMoneyManagement customSettings="false">
+    <MoneyManagement>
+      <InitialCapital>100000</InitialCapital>
+      <Method type="FixedAmount" use="true">
+        <Params>
+          <Param key="RiskedMoney" className="FixedAmount">100</Param>
+          <Param key="Decimals" className="FixedAmount">2</Param>
+          <Param key="LotsIfNoMM" className="FixedAmount">0</Param>
+          <Param key="MaxLots" className="FixedAmount">1000</Param>
+        </Params>
+      </Method>
+    </MoneyManagement>
+    <RiskManagement>
+      <Method type="AllowAllTrades" use="true">
+        <Params />
+      </Method>
+    </RiskManagement>
+  </RiskMoneyManagement>
+  <CrossChecks use="false" evaluateAll="true">
+    <RetestOnAdditionalMarkets use="false" />
+    <WhatIf use="false" />
+    <MonteCarloManipulation use="false" />
+    <MonteCarloRetest use="false" />
+    <OptProfileSysParamPermutation use="false" />
+    <WalkForwardOptimization use="false" />
+    <WalkForwardMatrix use="false" />
+    <RetestWithHigherPrecision use="false" />
+    <SequentialOptimization use="false" />
+  </CrossChecks>
+  <Databanks retestSelected="false">
+    <Databank label="Output databank" name="Output" value="S-Darwinex" />
+    <Databank label="Input databank" name="Input" value="S-Final" />
+  </Databanks>
   <Rankings type="never">
     <MaxStrategies>500</MaxStrategies>
     <FitnessCriteria method="ComputeFromStrategyResult" useFitnessByIndex="false">
@@ -139,81 +214,18 @@
     </FitnessCriteria>
     <ConditionsType>1</ConditionsType>
     <Conditions>
-      <Condition use="true">
+      <Condition use="false">
         <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgTradesPerMonth" />
+          <Column-Value column="NumberOfTrades" columnType="0" format="Integer" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NumberOfTrades" />
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
+          <Numeric-Value value="300" />
         </Right-Side>
       </Condition>
-      <Condition use="true">
+      <Condition use="false">
         <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="1" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgTradesPerMonth" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgTradesPerMonth" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="1" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" format="Decimal2" resultType="main" subresult="30" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="AvgBarsInTrade" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="AvgBarsInTrade" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="2" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="10" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="0" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="21" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
-        </Left-Side>
-        <Comparator value="&gt;=" />
-        <Right-Side valueType="numeric">
-          <Numeric-Value value="0" />
-        </Right-Side>
-      </Condition>
-      <Condition use="true">
-        <Left-Side valueType="column">
-          <Column-Value column="ReturnOnRisk" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="22" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="ReturnOnRisk" />
+          <Column-Value column="NetProfit" columnType="0" format="Decimal2" resultType="main" direction="0" sampleType="20" plType="10" confidenceLevel="50" market="1" subresult="30" pctRatio="0" class="NetProfit" />
         </Left-Side>
         <Comparator value="&gt;=" />
         <Right-Side valueType="numeric">
@@ -221,7 +233,7 @@
         </Right-Side>
       </Condition>
     </Conditions>
-    <DeleteFailedStrategies>true</DeleteFailedStrategies>
+    <DeleteFailedStrategies>false</DeleteFailedStrategies>
     <ForceRunCrossChecks>false</ForceRunCrossChecks>
     <AutomaticDismissal warnings="true">
       <Problem code="1" dismiss="true" />
@@ -241,90 +253,6 @@
     </FitPortfolio>
     <CustomAnalysis method="none" filter="false" inputArgs="" />
   </Rankings>
-  <CrossChecks use="true" evaluateAll="false">
-    <RetestWithHigherPrecision use="true">
-      <Settings>
-        <Precision>2</Precision>
-        <Spread>0</Spread>
-      </Settings>
-      <AcceptanceSettings>
-        <Conditions CrossCheck="RetestWithHigherPrecision" />
-      </AcceptanceSettings>
-    </RetestWithHigherPrecision>
-    <RetestOnAdditionalMarkets use="false" />
-    <WhatIf use="false" />
-    <MonteCarloManipulation use="false" />
-    <MonteCarloRetest use="false" />
-    <OptProfileSysParamPermutation use="false" />
-    <WalkForwardOptimization use="false" />
-    <WalkForwardMatrix use="false" />
-    <SequentialOptimization use="false" />
-  </CrossChecks>
-  <Notes />
-  <Databanks retestSelected="false">
-    <Databank label="Output databank" name="Output" value="S-Final" />
-    <Databank label="Input databank" name="Input" value="S-Retests 2" />
-  </Databanks>
-  <SelectedStrategies />
-  <Options customSettings="false">
-    <BuildTradingOptions>
-      <Params>
-        <Param key="DontTradeOnWeekends" className="DontTradeOnWeekends">true</Param>
-        <Param key="FridayCloseTime" className="DontTradeOnWeekends">79200</Param>
-        <Param key="SundayOpenTime" className="DontTradeOnWeekends">3600</Param>
-        <Param key="ExitAtEndOfDay" className="ExitAtEndOfDay">false</Param>
-        <Param key="EODExitTime" className="ExitAtEndOfDay">83040</Param>
-        <Param key="ExitOnFriday" className="ExitOnFriday">true</Param>
-        <Param key="FridayExitTime" className="ExitOnFriday">84900</Param>
-        <Param key="LimitTimeRange" className="LimitTimeRange">true</Param>
-        <Param key="SignalTimeRangeFrom" className="LimitTimeRange">5400</Param>
-        <Param key="SignalTimeRangeTo" className="LimitTimeRange">84600</Param>
-        <Param key="ExitAtEndOfRange" className="LimitTimeRange">true</Param>
-        <Param key="OrderTypeToExit" className="LimitTimeRange">2</Param>
-        <Param key="MaxDistanceFromMarket" className="MaxDistanceFromMarket">false</Param>
-        <Param key="MaxDistancePct" className="MaxDistanceFromMarket">6</Param>
-        <Param key="MaxTradesPerDay" className="MaxTradesPerDay">0</Param>
-        <Param key="MinimumSL" className="MinMaxSLPT">0</Param>
-        <Param key="MaximumSL" className="MinMaxSLPT">0</Param>
-        <Param key="MinimumPT" className="MinMaxSLPT">0</Param>
-        <Param key="MaximumPT" className="MinMaxSLPT">0</Param>
-        <Param key="UseInitialSLPT" className="UseInitialSLPT">false</Param>
-        <Param key="Session" className="SessionOption">No Session</Param>
-        <Param key="ReservedBars" className="ReservedBars">50</Param>
-        <Param key="StoreChartData" className="StoreChartData">false</Param>
-        <Param key="RealisticGapsHandling" className="RealisticGapsHandling">true</Param>
-        <Param key="PickerEntryType" className="StockpickerOptions">5</Param>
-        <Param key="PickerExitType" className="StockpickerOptions">5</Param>
-        <Param key="PickerEndOfDayLong" className="StockpickerOptions">5</Param>
-        <Param key="PickerEndOfDayShort" className="StockpickerOptions">5</Param>
-        <Param key="PickerMaxOpenPositionsLong" className="StockpickerOptions">8</Param>
-        <Param key="PickerMaxOpenPositionsShort" className="StockpickerOptions">8</Param>
-        <Param key="PickerStoreLogs" className="StockpickerOptions">false</Param>
-        <Param key="PickerAllowBetterLimitFill" className="StockpickerOptions">false</Param>
-        <Param key="PickerBroker" className="BrokerOption">No filter</Param>
-        <Param key="MarketOpenSession" className="MarketOpenSession">No Session</Param>
-        <Param key="LimitOver" className="LimitOver">0</Param>
-      </Params>
-    </BuildTradingOptions>
-  </Options>
-  <RiskMoneyManagement customSettings="false">
-    <MoneyManagement>
-      <InitialCapital>100000</InitialCapital>
-      <Method type="FixedAmount" use="true">
-        <Params>
-          <Param key="RiskedMoney" className="FixedAmount">1000</Param>
-          <Param key="Decimals" className="FixedAmount">2</Param>
-          <Param key="LotsIfNoMM" className="FixedAmount">0</Param>
-          <Param key="MaxLots" className="FixedAmount">1000</Param>
-        </Params>
-      </Method>
-    </MoneyManagement>
-    <RiskManagement>
-      <Method type="AllowAllTrades" use="true">
-        <Params />
-      </Method>
-    </RiskManagement>
-  </RiskMoneyManagement>
   <Resources>
     <Symbols />
     <Brokers />
